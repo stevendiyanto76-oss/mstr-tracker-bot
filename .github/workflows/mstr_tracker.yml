@@ -7,7 +7,7 @@ on:
     # Berjalan pada pukul 23:00 UTC yang setara dengan pukul 06:00 WIB pagi.
     # Cron format: Menit Jam Tanggal Bulan Hari(0-6, 0=Minggu)
     # Ini diatur jalan hari Senin - Jumat (UTC) -> Selasa - Sabtu Pagi (WIB)
-    - cron: '0 23 * * *'
+    - cron: '0 13 * * *'
   
   # Trigger manual agar kamu bisa klik tombol "Run workflow" kapan saja di GitHub
   workflow_dispatch:
