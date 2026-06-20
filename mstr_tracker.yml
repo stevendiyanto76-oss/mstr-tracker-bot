@@ -1,0 +1,36 @@
+name: MSTR Daily Tracker
+
+on:
+  schedule:
+    # Berjalan pada pukul 23:00 UTC yang setara dengan pukul 06:00 WIB pagi.
+    # Cron format: Menit Jam Tanggal Bulan Hari(0-6, 0=Minggu)
+    # Ini diatur jalan hari Senin - Jumat (UTC) -> Selasa - Sabtu Pagi (WIB)
+    - cron: '0 23 * * 1-5'
+  
+  # Trigger manual agar kamu bisa klik tombol "Run workflow" kapan saja di GitHub
+  workflow_dispatch:
+
+jobs:
+  run-tracker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
+
+      - name: Run MSTR Bot
+        env:
+          # Variabel Rahasia ini akan diambil dari GitHub Secrets
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python mstr_bot.py
