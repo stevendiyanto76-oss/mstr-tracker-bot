@@ -115,10 +115,12 @@ def calculate_metrics(dash_data, shares_data):
 # 4. FORMATTER & SENDER TELEGRAM
 # ==========================================
 def format_and_send(metrics):
-    timestamp = datetime.datetime.now().strftime("%d %b %Y | %H:%M WIB")
+    wib = datetime.timezone(datetime.timedelta(hours=7))
+    timestamp = datetime.datetime.now(wib).strftime("%d %b %Y | %H:%M WIB")
+    
     def fmt_num(num):
         return f"{num:,.2f}" if isinstance(num, float) else f"{num:,}"
-    
+
     def fmt_int(num):
         return f"{int(num):,}"
     
