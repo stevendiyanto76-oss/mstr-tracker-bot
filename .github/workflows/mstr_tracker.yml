@@ -92,4 +92,3 @@ steps:
 
       echo "::warning::Laporan berhasil dikirim, tetapi state belum dapat disimpan setelah 3 percobaan."
       exit 0
-```
