@@ -1,94 +1,93 @@
 name: MSTR Daily Tracker
 
 on:
-push:
-branches: ["main"]
-paths:
-- "mstr_bot.py"
-- ".github/workflows/mstr_tracker.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "mstr_bot.py"
+      - ".github/workflows/mstr_tracker.yml"
 
-schedule:
-- cron: "45 5,19 * * *"
-timezone: "Asia/Jakarta"
+  schedule:
+    - cron: "45 5,19 * * *"
+      timezone: "Asia/Jakarta"
 
-workflow_dispatch:
+  workflow_dispatch:
 
 permissions:
-contents: write
+  contents: write
 
 concurrency:
-group: mstr-daily-tracker
-cancel-in-progress: false
+  group: mstr-daily-tracker
+  cancel-in-progress: false
 
 jobs:
-run-tracker:
-runs-on: ubuntu-latest
+  run-tracker:
+    runs-on: ubuntu-latest
 
-```
-steps:
-  - name: Checkout Repository
-    uses: actions/checkout@v4
-    with:
-      fetch-depth: 0
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-  - name: Setup Python
-    uses: actions/setup-python@v5
-    with:
-      python-version: "3.11"
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-  - name: Install Dependencies
-    run: |
-      python -m pip install --upgrade pip
-      pip install requests
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
 
-  - name: Syntax Check
-    run: python -m py_compile mstr_bot.py
+      - name: Syntax Check
+        run: python -m py_compile mstr_bot.py
 
-  - name: Run MSTR Bot
-    env:
-      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-    run: python mstr_bot.py
+      - name: Run MSTR Bot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python mstr_bot.py
 
-  - name: Persist MSTR State
-    shell: bash
-    run: |
-      STATE_FILE="mstr_decision_engine_v2_state.json"
+      - name: Persist MSTR State
+        shell: bash
+        run: |
+          STATE_FILE="mstr_decision_engine_v2_state.json"
 
-      if [ ! -f "$STATE_FILE" ]; then
-        echo "State file tidak ditemukan; tidak ada yang perlu disimpan."
-        exit 0
-      fi
+          if [ ! -f "$STATE_FILE" ]; then
+            echo "State file tidak ditemukan; tidak ada yang perlu disimpan."
+            exit 0
+          fi
 
-      cp "$STATE_FILE" /tmp/mstr-state.json
+          cp "$STATE_FILE" /tmp/mstr-state.json
 
-      git config user.name "github-actions[bot]"
-      git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      for attempt in 1 2 3; do
-        echo "Percobaan penyimpanan state: $attempt"
+          for attempt in 1 2 3; do
+            echo "Percobaan penyimpanan state: $attempt"
 
-        git fetch origin main
-        git reset --hard origin/main
+            git fetch origin main
+            git reset --hard origin/main
 
-        cp /tmp/mstr-state.json "$STATE_FILE"
-        git add "$STATE_FILE"
+            cp /tmp/mstr-state.json "$STATE_FILE"
+            git add "$STATE_FILE"
 
-        if git diff --cached --quiet; then
-          echo "State tidak berubah; tidak perlu commit."
+            if git diff --cached --quiet; then
+              echo "State tidak berubah; tidak perlu commit."
+              exit 0
+            fi
+
+            git commit -m "chore: update MSTR engine state [skip ci]"
+
+            if git push origin HEAD:main; then
+              echo "MSTR state berhasil disimpan."
+              exit 0
+            fi
+
+            echo "Branch main berubah lagi. Mencoba ulang..."
+            sleep 5
+          done
+
+          echo "::warning::Laporan berhasil dikirim, tetapi state belum dapat disimpan setelah 3 percobaan."
           exit 0
-        fi
-
-        git commit -m "chore: update MSTR engine state [skip ci]"
-
-        if git push origin HEAD:main; then
-          echo "MSTR state berhasil disimpan."
-          exit 0
-        fi
-
-        echo "Branch main berubah lagi. Mencoba ulang..."
-        sleep 5
-      done
-
-      echo "::warning::Laporan berhasil dikirim, tetapi state belum dapat disimpan setelah 3 percobaan."
-      exit 0
