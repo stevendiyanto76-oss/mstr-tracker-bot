@@ -1,22 +1,28 @@
+```yaml
 name: MSTR Daily Tracker
 
 on:
+  # Berjalan ketika kode bot atau workflow ini diubah.
+  # Commit otomatis file JSON tidak akan memicu laporan baru.
   push:
     branches: ["main"]
     paths:
       - "mstr_bot.py"
       - ".github/workflows/mstr_tracker.yml"
 
+  # Dua kali sehari: 05:45 dan 19:45 WIB.
   schedule:
-    # Setiap hari pukul 05:45 dan 19:45 WIB
     - cron: "45 5,19 * * *"
       timezone: "Asia/Jakarta"
 
+  # Bisa dijalankan manual melalui tombol Run workflow.
   workflow_dispatch:
 
+# Diperlukan agar github-actions[bot] dapat menyimpan state JSON.
 permissions:
   contents: write
 
+# Mencegah dua proses MSTR berjalan dan menulis state bersamaan.
 concurrency:
   group: mstr-daily-tracker
   cancel-in-progress: false
@@ -51,15 +57,52 @@ jobs:
         run: python mstr_bot.py
 
       - name: Persist MSTR State
+        shell: bash
         run: |
-          if [ -f mstr_decision_engine_v2_state.json ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          STATE_FILE="mstr_decision_engine_v2_state.json"
 
-            git add mstr_decision_engine_v2_state.json
-
-            if ! git diff --cached --quiet; then
-              git commit -m "chore: update MSTR engine state"
-              git push
-            fi
+          if [ ! -f "$STATE_FILE" ]; then
+            echo "State file tidak ditemukan; tidak ada yang perlu disimpan."
+            exit 0
           fi
+
+          # Simpan state yang baru dibuat oleh bot ke lokasi sementara.
+          cp "$STATE_FILE" /tmp/mstr-state.json
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Coba maksimal tiga kali apabila branch main berubah saat workflow berjalan.
+          for attempt in 1 2 3; do
+            echo "Percobaan penyimpanan state: $attempt"
+
+            # Ambil kondisi branch main paling baru.
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Kembalikan state hasil perhitungan run ini.
+            cp /tmp/mstr-state.json "$STATE_FILE"
+            git add "$STATE_FILE"
+
+            # Tidak membuat commit apabila isinya tidak berubah.
+            if git diff --cached --quiet; then
+              echo "State tidak berubah; tidak perlu commit."
+              exit 0
+            fi
+
+            git commit -m "chore: update MSTR engine state [skip ci]"
+
+            if git push origin HEAD:main; then
+              echo "MSTR state berhasil disimpan."
+              exit 0
+            fi
+
+            echo "Branch main berubah lagi. Mencoba ulang..."
+            sleep 5
+          done
+
+          # Penyimpanan state bersifat tambahan.
+          # Laporan Telegram yang sudah terkirim tidak dianggap gagal.
+          echo "::warning::Laporan berhasil dikirim, tetapi state belum dapat disimpan setelah 3 percobaan."
+          exit 0
+```
