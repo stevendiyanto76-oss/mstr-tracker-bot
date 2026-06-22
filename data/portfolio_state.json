@@ -33,14 +33,6 @@
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-06-22T02:57:52+00:00",
-      "id": "OUT-cd3166e7a3fb2880",
-      "text": "⚠️ PERINGATAN\n\nPerintah ini akan mengosongkan seluruh posisi aktif MSTR dan BTC.\n\nUntuk melanjutkan, kirim:\n/clear_all CONFIRM\n\nRiwayat lama tetap disimpan secara internal."
-    }
-  ],
+  "outbox": [],
   "schema_version": 1
 }
