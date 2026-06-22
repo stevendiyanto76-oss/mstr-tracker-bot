@@ -33,21 +33,6 @@
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-06-22T03:24:16+00:00",
-      "id": "OUT-6426bbe98bf7b633",
-      "text": "Format:\n/buy_mstr JUMLAH HARGA\n\nContoh:\n/buy_mstr 10 112.53"
-    },
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-06-22T03:24:16+00:00",
-      "id": "OUT-b61e6ae29f6f7b6c",
-      "text": "✅ BUY MSTR TERCATAT\n\nPembelian: 2 lembar @ $79.10\nPosisi MSTR: 2 lembar\nRata-rata beli: $79.10\nWaktu: 22 Jun 2026, 10:07 WIB\nID: TX-000002"
-    }
-  ],
+  "outbox": [],
   "schema_version": 1
 }
