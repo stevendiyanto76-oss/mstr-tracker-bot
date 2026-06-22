@@ -1,0 +1,25 @@
+{
+  "alert_state": {
+    "BTC": {
+      "negative": [],
+      "positive": []
+    },
+    "MSTR": {
+      "negative": [],
+      "positive": []
+    },
+    "PORTFOLIO": {
+      "negative": [],
+      "positive": []
+    },
+    "mstr_zone": null
+  },
+  "alert_baseline_pending": false,
+  "bot_commands_registered": false,
+  "jisdor_cache": {},
+  "last_daily_report_date_wib": null,
+  "last_update_id": 0,
+  "market_cache": {},
+  "outbox": [],
+  "schema_version": 1
+}
