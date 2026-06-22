@@ -33,21 +33,6 @@
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-06-22T03:28:13+00:00",
-      "id": "OUT-1cca1424cd61a4f9",
-      "text": "⚠️ PERINGATAN\n\nPerintah ini akan mengosongkan seluruh posisi aktif MSTR dan BTC.\n\nUntuk melanjutkan, kirim:\n/clear_all CONFIRM\n\nRiwayat lama tetap disimpan secara internal."
-    },
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-06-22T03:28:13+00:00",
-      "id": "OUT-7f903052a7ccce31",
-      "text": "✅ CLEAR ALL TERCATAT\n\nPosisi aktif MSTR dan BTC dikosongkan.\nID: RESET-000001"
-    }
-  ],
+  "outbox": [],
   "schema_version": 1
 }
