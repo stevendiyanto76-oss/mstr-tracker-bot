@@ -33,14 +33,6 @@
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-06-22T09:23:46+00:00",
-      "id": "OUT-44cc47955175c142",
-      "text": "ℹ️ BANTUAN PORTOFOLIO\n\n/buy - panduan pembelian\n/buy_mstr JUMLAH HARGA\n/buy_btc JUMLAH HARGA\n/sell - panduan penjualan\n/sell_mstr JUMLAH HARGA\n/sell_btc JUMLAH HARGA\n/portofolio - lihat laporan\n/last - lima transaksi aktif terakhir\n/undo ID - batalkan ID dari /last\n/clear_all - panduan reset posisi\n/clear_all CONFIRM - reset posisi aktif"
-    }
-  ],
+  "outbox": [],
   "schema_version": 1
 }
