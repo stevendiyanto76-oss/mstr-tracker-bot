@@ -18,21 +18,29 @@
   "bot_commands_registered": true,
   "jisdor_cache": {},
   "last_daily_report_date_wib": null,
-  "last_update_id": 865839454,
+  "last_update_id": 865839455,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-06-22T02:55:00+00:00",
-      "fetched_at_utc": "2026-06-22T02:55:12+00:00",
-      "price_usd": "64216.02",
+      "as_of": "2026-06-22T02:56:00+00:00",
+      "fetched_at_utc": "2026-06-22T02:56:23+00:00",
+      "price_usd": "64221.95",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
       "as_of": "2026-06-18T20:00:00+00:00",
-      "fetched_at_utc": "2026-06-22T02:55:12+00:00",
+      "fetched_at_utc": "2026-06-22T02:56:23+00:00",
       "price_usd": "112.53",
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [],
+  "outbox": [
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-22T02:56:23+00:00",
+      "id": "OUT-510359030d41a3a5",
+      "text": "✅ UNDO TERCATAT\n\nEvent dibatalkan: TX-000001\nID: UNDO-000001"
+    }
+  ],
   "schema_version": 1
 }
