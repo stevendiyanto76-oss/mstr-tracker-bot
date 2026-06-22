@@ -33,14 +33,6 @@
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-06-22T02:56:23+00:00",
-      "id": "OUT-510359030d41a3a5",
-      "text": "✅ UNDO TERCATAT\n\nEvent dibatalkan: TX-000001\nID: UNDO-000001"
-    }
-  ],
+  "outbox": [],
   "schema_version": 1
 }
