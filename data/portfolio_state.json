@@ -1,4 +1,5 @@
 {
+  "alert_baseline_pending": false,
   "alert_state": {
     "BTC": {
       "negative": [],
@@ -12,14 +13,26 @@
       "negative": [],
       "positive": []
     },
-    "mstr_zone": null
+    "mstr_zone": "HOLD"
   },
-  "alert_baseline_pending": false,
-  "bot_commands_registered": false,
+  "bot_commands_registered": true,
   "jisdor_cache": {},
   "last_daily_report_date_wib": null,
   "last_update_id": 0,
-  "market_cache": {},
+  "market_cache": {
+    "BTC": {
+      "as_of": "2026-06-22T02:42:00+00:00",
+      "fetched_at_utc": "2026-06-22T02:42:18+00:00",
+      "price_usd": "64460.01",
+      "source": "fetch_strategy_snapshot"
+    },
+    "MSTR": {
+      "as_of": "2026-06-18T20:00:00+00:00",
+      "fetched_at_utc": "2026-06-22T02:42:18+00:00",
+      "price_usd": "112.53",
+      "source": "fetch_strategy_snapshot"
+    }
+  },
   "outbox": [],
   "schema_version": 1
 }
