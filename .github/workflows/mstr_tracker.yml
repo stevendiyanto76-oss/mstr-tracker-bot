@@ -7,9 +7,12 @@ on:
       - "mstr_bot.py"
       - ".github/workflows/mstr_tracker.yml"
 
-  schedule:
-    - cron: "45 5,19 * * *"
-      timezone: "Asia/Jakarta"
+ schedule:
+  - cron: "30 4 * * *"
+    timezone: "Asia/Jakarta"
+
+  - cron: "15 16 * * *"
+    timezone: "Asia/Jakarta"
 
   workflow_dispatch:
 
