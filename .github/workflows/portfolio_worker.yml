@@ -4,8 +4,9 @@ on:
   schedule:
     - cron: "15 * * * *"
       timezone: "Asia/Jakarta"
-    - cron: "45 6 * * *"
+    - cron: "30 5 * * *"
       timezone: "Asia/Jakarta"
+
   workflow_dispatch:
     inputs:
       mode:
@@ -16,6 +17,7 @@ on:
         options:
           - poll
           - daily
+
   push:
     paths:
       - "portfolio.py"
@@ -32,6 +34,7 @@ concurrency:
 jobs:
   portfolio:
     runs-on: ubuntu-latest
+
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -62,7 +65,7 @@ jobs:
       - name: Prepare portfolio worker
         run: |
           set -euo pipefail
-          if [[ "${{ github.event_name }}" == "schedule" && "${{ github.event.schedule }}" == "45 6 * * *" ]]; then
+          if [[ "${{ github.event_name }}" == "schedule" && "${{ github.event.schedule }}" == "30 5 * * *" ]]; then
             python portfolio.py prepare --daily-report
           elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.mode }}" == "daily" ]]; then
             python portfolio.py prepare --daily-report --force-report
@@ -82,23 +85,31 @@ jobs:
             local message="$1"
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
             for attempt in 1 2 3 4 5; do
               git fetch origin main
               git reset --hard origin/main
+
               mkdir -p data
               cp /tmp/portfolio-data/data/transactions.jsonl data/transactions.jsonl
               cp /tmp/portfolio-data/data/portfolio_state.json data/portfolio_state.json
               cp /tmp/portfolio-data/data/portfolio_snapshots.jsonl data/portfolio_snapshots.jsonl
-              git add data/transactions.jsonl data/portfolio_state.json data/portfolio_snapshots.jsonl
+
+              git add                 data/transactions.jsonl                 data/portfolio_state.json                 data/portfolio_snapshots.jsonl
+
               if git diff --cached --quiet; then
                 return 0
               fi
+
               git commit -m "$message"
+
               if git push origin HEAD:main; then
                 return 0
               fi
+
               sleep $((attempt * 3))
             done
+
             return 1
           }
 
@@ -122,23 +133,31 @@ jobs:
             local message="$1"
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
             for attempt in 1 2 3 4 5; do
               git fetch origin main
               git reset --hard origin/main
+
               mkdir -p data
               cp /tmp/portfolio-data/data/transactions.jsonl data/transactions.jsonl
               cp /tmp/portfolio-data/data/portfolio_state.json data/portfolio_state.json
               cp /tmp/portfolio-data/data/portfolio_snapshots.jsonl data/portfolio_snapshots.jsonl
-              git add data/transactions.jsonl data/portfolio_state.json data/portfolio_snapshots.jsonl
+
+              git add                 data/transactions.jsonl                 data/portfolio_state.json                 data/portfolio_snapshots.jsonl
+
               if git diff --cached --quiet; then
                 return 0
               fi
+
               git commit -m "$message"
+
               if git push origin HEAD:main; then
                 return 0
               fi
+
               sleep $((attempt * 3))
             done
+
             return 1
           }
 
