@@ -18,21 +18,36 @@
   "bot_commands_registered": true,
   "jisdor_cache": {},
   "last_daily_report_date_wib": null,
-  "last_update_id": 865839457,
+  "last_update_id": 865839459,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-06-22T02:57:00+00:00",
-      "fetched_at_utc": "2026-06-22T02:57:52+00:00",
-      "price_usd": "64187.99",
+      "as_of": "2026-06-22T03:24:00+00:00",
+      "fetched_at_utc": "2026-06-22T03:24:16+00:00",
+      "price_usd": "64249.97",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
       "as_of": "2026-06-18T20:00:00+00:00",
-      "fetched_at_utc": "2026-06-22T02:57:52+00:00",
+      "fetched_at_utc": "2026-06-22T03:24:16+00:00",
       "price_usd": "112.53",
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [],
+  "outbox": [
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-22T03:24:16+00:00",
+      "id": "OUT-6426bbe98bf7b633",
+      "text": "Format:\n/buy_mstr JUMLAH HARGA\n\nContoh:\n/buy_mstr 10 112.53"
+    },
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-22T03:24:16+00:00",
+      "id": "OUT-b61e6ae29f6f7b6c",
+      "text": "✅ BUY MSTR TERCATAT\n\nPembelian: 2 lembar @ $79.10\nPosisi MSTR: 2 lembar\nRata-rata beli: $79.10\nWaktu: 22 Jun 2026, 10:07 WIB\nID: TX-000002"
+    }
+  ],
   "schema_version": 1
 }
