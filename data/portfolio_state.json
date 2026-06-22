@@ -18,21 +18,29 @@
   "bot_commands_registered": true,
   "jisdor_cache": {},
   "last_daily_report_date_wib": null,
-  "last_update_id": 865839456,
+  "last_update_id": 865839457,
   "market_cache": {
     "BTC": {
       "as_of": "2026-06-22T02:57:00+00:00",
-      "fetched_at_utc": "2026-06-22T02:57:12+00:00",
-      "price_usd": "64215.97",
+      "fetched_at_utc": "2026-06-22T02:57:52+00:00",
+      "price_usd": "64187.99",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
       "as_of": "2026-06-18T20:00:00+00:00",
-      "fetched_at_utc": "2026-06-22T02:57:12+00:00",
+      "fetched_at_utc": "2026-06-22T02:57:52+00:00",
       "price_usd": "112.53",
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [],
+  "outbox": [
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-22T02:57:52+00:00",
+      "id": "OUT-cd3166e7a3fb2880",
+      "text": "⚠️ PERINGATAN\n\nPerintah ini akan mengosongkan seluruh posisi aktif MSTR dan BTC.\n\nUntuk melanjutkan, kirim:\n/clear_all CONFIRM\n\nRiwayat lama tetap disimpan secara internal."
+    }
+  ],
   "schema_version": 1
 }
