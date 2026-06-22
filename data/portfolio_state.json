@@ -33,14 +33,6 @@
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-06-22T02:57:12+00:00",
-      "id": "OUT-6e472b9970241708",
-      "text": "💼 PORTOFOLIO MASIH KOSONG\n\nBelum ada posisi MSTR atau BTC.\n\n/buy_mstr JUMLAH HARGA\n/buy_btc JUMLAH HARGA"
-    }
-  ],
+  "outbox": [],
   "schema_version": 1
 }
