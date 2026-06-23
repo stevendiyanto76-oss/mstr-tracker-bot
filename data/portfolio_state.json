@@ -18,21 +18,29 @@
   "bot_commands_registered": true,
   "jisdor_cache": {},
   "last_daily_report_date_wib": null,
-  "last_update_id": 865839462,
+  "last_update_id": 865839463,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-06-23T01:24:00+00:00",
-      "fetched_at_utc": "2026-06-23T01:24:43+00:00",
-      "price_usd": "64092.53",
+      "as_of": "2026-06-23T06:29:00+00:00",
+      "fetched_at_utc": "2026-06-23T06:29:11+00:00",
+      "price_usd": "62673.69",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
       "as_of": "2026-06-22T20:00:00+00:00",
-      "fetched_at_utc": "2026-06-23T01:24:43+00:00",
+      "fetched_at_utc": "2026-06-23T06:29:11+00:00",
       "price_usd": "109.46",
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [],
+  "outbox": [
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-23T06:29:11+00:00",
+      "id": "OUT-e9692578ab176feb",
+      "text": "💼 PORTOFOLIO MASIH KOSONG\n\nBelum ada posisi MSTR atau BTC.\n\n/buy_mstr JUMLAH HARGA\n/buy_btc JUMLAH HARGA"
+    }
+  ],
   "schema_version": 1
 }
