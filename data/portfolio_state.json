@@ -18,21 +18,29 @@
   "bot_commands_registered": true,
   "jisdor_cache": {},
   "last_daily_report_date_wib": null,
-  "last_update_id": 865839463,
+  "last_update_id": 865839464,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-06-23T06:29:00+00:00",
-      "fetched_at_utc": "2026-06-23T06:29:11+00:00",
-      "price_usd": "62673.69",
+      "as_of": "2026-06-23T10:44:00+00:00",
+      "fetched_at_utc": "2026-06-23T10:44:38+00:00",
+      "price_usd": "62181.13",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
       "as_of": "2026-06-22T20:00:00+00:00",
-      "fetched_at_utc": "2026-06-23T06:29:11+00:00",
+      "fetched_at_utc": "2026-06-23T10:44:38+00:00",
       "price_usd": "109.46",
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [],
+  "outbox": [
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-23T10:44:38+00:00",
+      "id": "OUT-6357b65ce6e674f2",
+      "text": "🧾 TRANSAKSI TERAKHIR\n\nRESET-000001 | CLEAR ALL\nTX-000002 | BUY MSTR | 2 @ $79.10"
+    }
+  ],
   "schema_version": 1
 }
