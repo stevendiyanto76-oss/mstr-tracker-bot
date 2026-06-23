@@ -13,7 +13,7 @@
       "negative": [],
       "positive": []
     },
-    "mstr_zone": "HOLD"
+    "mstr_zone": "ACCUMULATE"
   },
   "bot_commands_registered": true,
   "jisdor_cache": {},
@@ -21,15 +21,15 @@
   "last_update_id": 865839465,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-06-23T16:43:00+00:00",
-      "fetched_at_utc": "2026-06-23T16:43:36+00:00",
-      "price_usd": "62547.05",
+      "as_of": "2026-06-23T19:20:00+00:00",
+      "fetched_at_utc": "2026-06-23T19:20:25+00:00",
+      "price_usd": "62214.78",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
-      "as_of": "2026-06-23T16:43:00+00:00",
-      "fetched_at_utc": "2026-06-23T16:43:36+00:00",
-      "price_usd": "105.935",
+      "as_of": "2026-06-23T19:20:00+00:00",
+      "fetched_at_utc": "2026-06-23T19:20:25+00:00",
+      "price_usd": "104.077",
       "source": "fetch_strategy_snapshot"
     }
   },
