@@ -33,14 +33,6 @@
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-06-23T10:44:38+00:00",
-      "id": "OUT-6357b65ce6e674f2",
-      "text": "🧾 TRANSAKSI TERAKHIR\n\nRESET-000001 | CLEAR ALL\nTX-000002 | BUY MSTR | 2 @ $79.10"
-    }
-  ],
+  "outbox": [],
   "schema_version": 1
 }
