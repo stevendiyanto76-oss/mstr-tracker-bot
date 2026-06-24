@@ -18,21 +18,29 @@
   "bot_commands_registered": true,
   "jisdor_cache": {},
   "last_daily_report_date_wib": null,
-  "last_update_id": 865839473,
+  "last_update_id": 865839474,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-06-24T21:48:00+00:00",
-      "fetched_at_utc": "2026-06-24T21:48:38+00:00",
-      "price_usd": "60983.12",
+      "as_of": "2026-06-24T23:35:00+00:00",
+      "fetched_at_utc": "2026-06-24T23:35:29+00:00",
+      "price_usd": "60950",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
       "as_of": "2026-06-24T20:00:00+00:00",
-      "fetched_at_utc": "2026-06-24T21:48:38+00:00",
+      "fetched_at_utc": "2026-06-24T23:35:29+00:00",
       "price_usd": "94.13",
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [],
+  "outbox": [
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-24T23:35:29+00:00",
+      "id": "OUT-11cfd03c8b297471",
+      "text": "✅ BUY MSTR TERCATAT\n\nPembelian: 0.265 lembar @ $97.40\nPosisi MSTR: 0.365 lembar\nRata-rata beli: $98.82\nWaktu: 25 Jun 2026, 05:58 WIB\nID: TX-000004"
+    }
+  ],
   "schema_version": 1
 }
