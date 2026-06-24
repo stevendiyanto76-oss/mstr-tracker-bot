@@ -33,49 +33,6 @@
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-06-24T15:10:25+00:00",
-      "id": "OUT-72669fe9418fb391",
-      "text": "🔴 CATAT PENJUALAN\n\nPilih aset:\n/sell_mstr JUMLAH HARGA\n/sell_btc JUMLAH HARGA\n\nContoh:\n/sell_mstr 10 112.53\n/sell_btc 0.015 64250"
-    },
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-06-24T15:10:25+00:00",
-      "id": "OUT-f24ed3ff8df18694",
-      "text": "💼 PORTOFOLIO MASIH KOSONG\n\nBelum ada posisi MSTR atau BTC.\n\n/buy_mstr JUMLAH HARGA\n/buy_btc JUMLAH HARGA"
-    },
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-06-24T15:10:25+00:00",
-      "id": "OUT-badb3dc2b1698267",
-      "text": "🧾 TRANSAKSI TERAKHIR\n\nRESET-000001 | CLEAR ALL\nTX-000002 | BUY MSTR | 2 @ $79.10"
-    },
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-06-24T15:10:25+00:00",
-      "id": "OUT-d98feb898c1087d0",
-      "text": "Format:\n/buy_mstr JUMLAH HARGA\n\nContoh:\n/buy_mstr 10 112.53"
-    },
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-06-24T15:10:25+00:00",
-      "id": "OUT-024e38bfe2cd1be8",
-      "text": "Format:\n/buy_mstr JUMLAH HARGA\n\nContoh:\n/buy_mstr 10 112.53"
-    },
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-06-24T15:10:25+00:00",
-      "id": "OUT-77397d4e180beec4",
-      "text": "✅ BUY MSTR TERCATAT\n\nPembelian: 0.1 lembar @ $102.60\nPosisi MSTR: 0.1 lembar\nRata-rata beli: $102.60\nWaktu: 24 Jun 2026, 20:26 WIB\nID: TX-000003"
-    }
-  ],
+  "outbox": [],
   "schema_version": 1
 }
