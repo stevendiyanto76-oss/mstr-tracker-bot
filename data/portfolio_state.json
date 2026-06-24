@@ -18,21 +18,29 @@
   "bot_commands_registered": true,
   "jisdor_cache": {},
   "last_daily_report_date_wib": null,
-  "last_update_id": 865839466,
+  "last_update_id": 865839467,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-06-24T08:34:00+00:00",
-      "fetched_at_utc": "2026-06-24T08:34:40+00:00",
-      "price_usd": "62778",
+      "as_of": "2026-06-24T12:02:00+00:00",
+      "fetched_at_utc": "2026-06-24T12:02:13+00:00",
+      "price_usd": "62785.55",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
       "as_of": "2026-06-23T20:00:00+00:00",
-      "fetched_at_utc": "2026-06-24T08:34:40+00:00",
+      "fetched_at_utc": "2026-06-24T12:02:13+00:00",
       "price_usd": "103.84",
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [],
+  "outbox": [
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-24T12:02:13+00:00",
+      "id": "OUT-ba5f72c009044102",
+      "text": "ℹ️ BANTUAN PORTOFOLIO\n\n/buy - panduan pembelian\n/buy_mstr JUMLAH HARGA\n/buy_btc JUMLAH HARGA\n/sell - panduan penjualan\n/sell_mstr JUMLAH HARGA\n/sell_btc JUMLAH HARGA\n/portofolio - lihat laporan\n/last - lima transaksi aktif terakhir\n/undo ID - batalkan ID dari /last\n/clear_all - panduan reset posisi\n/clear_all CONFIRM - reset posisi aktif"
+    }
+  ],
   "schema_version": 1
 }
