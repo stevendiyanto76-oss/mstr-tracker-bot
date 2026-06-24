@@ -33,14 +33,6 @@
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-06-24T23:35:29+00:00",
-      "id": "OUT-11cfd03c8b297471",
-      "text": "✅ BUY MSTR TERCATAT\n\nPembelian: 0.265 lembar @ $97.40\nPosisi MSTR: 0.365 lembar\nRata-rata beli: $98.82\nWaktu: 25 Jun 2026, 05:58 WIB\nID: TX-000004"
-    }
-  ],
+  "outbox": [],
   "schema_version": 1
 }
