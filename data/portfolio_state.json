@@ -23,21 +23,85 @@
     "source": "Bank Indonesia JISDOR"
   },
   "last_daily_report_date_wib": "2026-06-26",
-  "last_update_id": 865839478,
+  "last_update_id": 865839487,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-06-26T21:01:00+00:00",
-      "fetched_at_utc": "2026-06-26T21:01:05+00:00",
-      "price_usd": "59615.8",
+      "as_of": "2026-06-26T22:37:00+00:00",
+      "fetched_at_utc": "2026-06-26T22:37:42+00:00",
+      "price_usd": "59800.12",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
       "as_of": "2026-06-26T20:00:00+00:00",
-      "fetched_at_utc": "2026-06-26T21:01:05+00:00",
+      "fetched_at_utc": "2026-06-26T22:37:42+00:00",
       "price_usd": "82.31",
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [],
+  "outbox": [
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-26T22:37:42+00:00",
+      "id": "OUT-cb3718bbfd0124d2",
+      "text": "✅ BUY MSTR TERCATAT\n\nPembelian: 1 lembar @ $82.00\nPosisi MSTR: 2.365 lembar\nRata-rata beli: $87.70\nWaktu: 27 Jun 2026, 05:13 WIB\nID: TX-000006"
+    },
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-26T22:37:42+00:00",
+      "id": "OUT-de50b427e1466056",
+      "text": "✅ BUY MSTR TERCATAT\n\nPembelian: 1 lembar @ $82.00\nPosisi MSTR: 3.365 lembar\nRata-rata beli: $86.01\nWaktu: 27 Jun 2026, 05:16 WIB\nID: TX-000007"
+    },
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-26T22:37:42+00:00",
+      "id": "OUT-34d415eb5d550090",
+      "text": "✅ UNDO TERCATAT\n\nEvent dibatalkan: TX-000007\nID: UNDO-000002"
+    },
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-26T22:37:42+00:00",
+      "id": "OUT-ae476c98bd7a5e2e",
+      "text": "Jumlah tidak boleh memakai koma. Gunakan titik desimal.\nKetik /help untuk bantuan."
+    },
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-26T22:37:42+00:00",
+      "id": "OUT-ac7d63c5cccdbe2a",
+      "text": "Jumlah tidak boleh memakai koma. Gunakan titik desimal.\nKetik /help untuk bantuan."
+    },
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-26T22:37:42+00:00",
+      "id": "OUT-747a7cbb632c7345",
+      "text": "ID TX-000008 tidak bisa di-undo. Gunakan salah satu ID yang tampil di /last."
+    },
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-26T22:37:42+00:00",
+      "id": "OUT-b895c98937cbd7cb",
+      "text": "ID TX-000009 tidak bisa di-undo. Gunakan salah satu ID yang tampil di /last."
+    },
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-26T22:37:42+00:00",
+      "id": "OUT-0396fe590a0c1a3a",
+      "text": "✅ BUY MSTR TERCATAT\n\nPembelian: 0.9 lembar @ $82.00\nPosisi MSTR: 3.265 lembar\nRata-rata beli: $86.13\nWaktu: 27 Jun 2026, 05:37 WIB\nID: TX-000008"
+    },
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-26T22:37:42+00:00",
+      "id": "OUT-359990b2aaa5a56c",
+      "text": "✅ BUY MSTR TERCATAT\n\nPembelian: 0.2 lembar @ $81.94\nPosisi MSTR: 3.465 lembar\nRata-rata beli: $85.89\nWaktu: 27 Jun 2026, 05:37 WIB\nID: TX-000009"
+    }
+  ],
   "schema_version": 1
 }
