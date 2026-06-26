@@ -17,27 +17,42 @@
   },
   "bot_commands_registered": true,
   "jisdor_cache": {
-    "fetched_at_utc": "2026-06-25T23:49:48+00:00",
-    "official_date": "2026-06-25",
-    "rate": "17942",
+    "fetched_at_utc": "2026-06-26T23:40:17+00:00",
+    "official_date": "2026-06-26",
+    "rate": "17962",
     "source": "Bank Indonesia JISDOR"
   },
-  "last_daily_report_date_wib": "2026-06-26",
-  "last_update_id": 865839487,
+  "last_daily_report_date_wib": "2026-06-27",
+  "last_update_id": 865839488,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-06-26T22:37:00+00:00",
-      "fetched_at_utc": "2026-06-26T22:37:42+00:00",
-      "price_usd": "59800.12",
+      "as_of": "2026-06-26T23:40:00+00:00",
+      "fetched_at_utc": "2026-06-26T23:40:17+00:00",
+      "price_usd": "59954",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
       "as_of": "2026-06-26T20:00:00+00:00",
-      "fetched_at_utc": "2026-06-26T22:37:42+00:00",
+      "fetched_at_utc": "2026-06-26T23:40:17+00:00",
       "price_usd": "82.31",
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [],
+  "outbox": [
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-26T23:40:17+00:00",
+      "id": "OUT-bbc35b706a1a0108",
+      "text": "💼 NEVETS HOLDING | PERSONAL PORTFOLIO\n📅 27 Jun 2026 | 05:45 WIB\n\n💰 TOTAL PORTFOLIO\nMarket Value: $285.20 | Rp5.122.837\nCost Basis: $297.61\nUnrealized P/L: $-12.40 (-4.17%)\nUSD/IDR JISDOR: Rp17.962\n\n📊 ALLOCATION\nMSTR: 100.00%\n\n📈 PORTFOLIO PERFORMANCE\n1D: -2.91%\n1W: N/A\n1M: N/A\n6M: N/A\n1Y: N/A\n3Y: N/A\n5Y: N/A\n10Y: N/A\nSince Inception: -25.21%\n\n📈 MSTR POSITION\nPosition: 3.465 lembar\nAverage Cost: $85.89\nMSTR Last: $82.31\nMarket Value: $285.20\nUnrealized P/L: $-12.40 (-4.17%)\n\n₿ TOTAL BTC EXPOSURE\nDirect BTC: 0 BTC\nBTC via MSTR: 0.00818105 BTC\nTotal Exposure: 0.00818105 BTC\n\n🎯 MSTR ENGINE\nCurrent Zone: ACCUMULATE\nFair Price: $110.96\nStrong Buy: ≤ $67.71\nSell: > $154.22\nEngine Action: ACCUMULATE"
+    },
+    {
+      "category": "daily_report",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-06-26T23:40:17+00:00",
+      "id": "OUT-308a02524f7eb570",
+      "text": "💼 NEVETS HOLDING | PERSONAL PORTFOLIO\n📅 27 Jun 2026 | 06:40 WIB\n\n💰 TOTAL PORTFOLIO\nMarket Value: $285.20 | Rp5.122.837\nCost Basis: $297.61\nUnrealized P/L: $-12.40 (-4.17%)\nUSD/IDR JISDOR: Rp17.962\n\n📊 ALLOCATION\nMSTR: 100.00%\n\n📈 PORTFOLIO PERFORMANCE\n1D: -2.76%\n1W: N/A\n1M: N/A\n6M: N/A\n1Y: N/A\n3Y: N/A\n5Y: N/A\n10Y: N/A\nSince Inception: -25.09%\n\n📈 MSTR POSITION\nPosition: 3.465 lembar\nAverage Cost: $85.89\nMSTR Last: $82.31\nMarket Value: $285.20\nUnrealized P/L: $-12.40 (-4.17%)\n\n₿ TOTAL BTC EXPOSURE\nDirect BTC: 0 BTC\nBTC via MSTR: 0.00818105 BTC\nTotal Exposure: 0.00818105 BTC\n\n🎯 MSTR ENGINE\nCurrent Zone: ACCUMULATE\nFair Price: $110.96\nStrong Buy: ≤ $67.71\nSell: > $154.22\nEngine Action: ACCUMULATE"
+    }
+  ],
   "schema_version": 1
 }
