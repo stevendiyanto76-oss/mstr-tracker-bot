@@ -23,21 +23,29 @@
     "source": "Bank Indonesia JISDOR"
   },
   "last_daily_report_date_wib": "2026-07-01",
-  "last_update_id": 865839494,
+  "last_update_id": 865839495,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-07-01T13:41:00+00:00",
-      "fetched_at_utc": "2026-07-01T13:41:34+00:00",
-      "price_usd": "58961.71",
+      "as_of": "2026-07-01T16:40:00+00:00",
+      "fetched_at_utc": "2026-07-01T16:41:03+00:00",
+      "price_usd": "59986.15",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
-      "as_of": "2026-07-01T13:41:00+00:00",
-      "fetched_at_utc": "2026-07-01T13:41:34+00:00",
-      "price_usd": "91.267",
+      "as_of": "2026-07-01T16:40:00+00:00",
+      "fetched_at_utc": "2026-07-01T16:41:03+00:00",
+      "price_usd": "97.793",
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [],
+  "outbox": [
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-07-01T16:41:03+00:00",
+      "id": "OUT-049dd01ad2a0b397",
+      "text": "✅ SELL MSTR TERCATAT\n\nTerjual: 1 lembar @ $92.40\nSisa posisi: 2.1 lembar\nRata-rata beli: $85.89\nRealized P/L: +$6.51\nWaktu: 01 Jul 2026, 20:51 WIB\nID: TX-000011"
+    }
+  ],
   "schema_version": 1
 }
