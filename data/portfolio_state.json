@@ -38,14 +38,6 @@
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [
-    {
-      "category": "daily_report",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-07-01T23:50:07+00:00",
-      "id": "OUT-2b01fdcc0c601628",
-      "text": "💼 NEVETS HOLDING | PERSONAL PORTFOLIO\n📅 02 Jul 2026 | 06:50 WIB\n\n💰 TOTAL PORTFOLIO\nMarket Value: $196.12 | Rp3.522.493\nCost Basis: $180.37\nUnrealized P/L: +$15.75 (+8.73%)\nUSD/IDR JISDOR: Rp17.961\n\n📊 ALLOCATION\nMSTR: 100.00%\n\n📈 PORTFOLIO PERFORMANCE\n1D: +8.23%\n1W: -0.02%\n1M: N/A\n6M: N/A\n1Y: N/A\n3Y: N/A\n5Y: N/A\n10Y: N/A\nSince Inception: -14.29%\n\n📈 MSTR POSITION\nPosition: 2.1 lembar\nAverage Cost: $85.89\nMSTR Last: $93.39\nMarket Value: $196.12\nUnrealized P/L: +$15.75 (+8.73%)\n\n₿ TOTAL BTC EXPOSURE\nDirect BTC: 0 BTC\nBTC via MSTR: 0.00478847 BTC\nTotal Exposure: 0.00478847 BTC\n\n🎯 MSTR ENGINE\nCurrent Zone: ACCUMULATE\nFair Price: $117.51\nStrong Buy: ≤ $79.76\nSell: > $155.25\nEngine Action: ACCUMULATE"
-    }
-  ],
+  "outbox": [],
   "schema_version": 1
 }
