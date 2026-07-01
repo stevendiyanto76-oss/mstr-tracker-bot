@@ -38,14 +38,6 @@
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-07-01T16:41:03+00:00",
-      "id": "OUT-049dd01ad2a0b397",
-      "text": "✅ SELL MSTR TERCATAT\n\nTerjual: 1 lembar @ $92.40\nSisa posisi: 2.1 lembar\nRata-rata beli: $85.89\nRealized P/L: +$6.51\nWaktu: 01 Jul 2026, 20:51 WIB\nID: TX-000011"
-    }
-  ],
+  "outbox": [],
   "schema_version": 1
 }
