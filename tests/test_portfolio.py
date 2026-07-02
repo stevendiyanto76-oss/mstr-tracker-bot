@@ -285,7 +285,8 @@ class PortfolioTests(unittest.TestCase):
         )
         self.assertIsNone(event)
         self.assertFalse(mutated)
-        self.assertIn("replay", reply)
+        self.assertIn("UNDO DITOLAK", reply)
+        self.assertIn("Portfolio tidak diubah", reply)
 
     def test_24_undo_eligible_id_from_last(self) -> None:
         buy, _, _ = self.trade("BUY", "MSTR", "1", "100", update_id=1)
@@ -810,6 +811,137 @@ class PortfolioTests(unittest.TestCase):
         self.assertIn("MSTR LOSS -50.00%", mstr_alert)
         self.assertIn("-50%", mstr_alert)
         self.assertIn("-25%", mstr_alert)
+
+    def test_74_history_default_shows_20_active_newest(self) -> None:
+        for index in range(25):
+            self.trade("BUY", "MSTR", "1", "100", update_id=index + 1)
+        reply, mutated = portfolio.handle_authorized_text_command(
+            self.base,
+            portfolio.load_state(self.base),
+            self.events(),
+            update_id=100,
+            chat_id="123",
+            message_id=100,
+            message_timestamp_utc=dt(2026, 6, 22),
+            text="/history",
+        )
+        self.assertFalse(mutated)
+        self.assertEqual(reply.count(" | BUY MSTR | "), 20)
+        self.assertIn("TX-000025", reply)
+        self.assertIn("TX-000006", reply)
+        self.assertNotIn("TX-000005", reply)
+
+    def test_75_history_50_shows_maximum_50_active_newest(self) -> None:
+        for index in range(60):
+            self.trade("BUY", "MSTR", "1", "100", update_id=index + 1)
+        reply, mutated = portfolio.handle_authorized_text_command(
+            self.base,
+            portfolio.load_state(self.base),
+            self.events(),
+            update_id=100,
+            chat_id="123",
+            message_id=100,
+            message_timestamp_utc=dt(2026, 6, 22),
+            text="/history 50",
+        )
+        self.assertFalse(mutated)
+        self.assertEqual(reply.count(" | BUY MSTR | "), 50)
+        self.assertIn("TX-000060", reply)
+        self.assertIn("TX-000011", reply)
+        self.assertNotIn("TX-000010", reply)
+
+    def test_76_history_invalid_limits_show_usage(self) -> None:
+        for text in ("/history 0", "/history abc", "/history 101"):
+            with self.subTest(text=text):
+                reply, mutated = portfolio.handle_authorized_text_command(
+                    self.base,
+                    portfolio.load_state(self.base),
+                    self.events(),
+                    update_id=100,
+                    chat_id="123",
+                    message_id=100,
+                    message_timestamp_utc=dt(2026, 6, 22),
+                    text=text,
+                )
+                self.assertFalse(mutated)
+                self.assertIn("/history N", reply)
+                self.assertIn("1 sampai 100", reply)
+
+    def test_77_undo_old_active_event_not_in_last_succeeds(self) -> None:
+        for index in range(6):
+            self.trade("BUY", "MSTR", "1", "100", update_id=index + 1)
+        self.assertNotIn("TX-000001", portfolio.format_last_events(self.events()))
+        event, reply, mutated = portfolio.process_undo(
+            self.base,
+            self.events(),
+            target_event_id="TX-000001",
+            telegram_update_id=100,
+            telegram_message_id=100,
+            chat_id="123",
+            timestamp_utc=dt(2026, 6, 22),
+        )
+        self.assertTrue(mutated)
+        self.assertEqual(event["event_type"], "UNDO")
+        self.assertIn("TX-000001", reply)
+        self.assertEqual(self.positions()["MSTR"].quantity, Decimal("5"))
+
+    def test_78_undo_old_event_rejected_if_replay_oversells(self) -> None:
+        self.trade("BUY", "MSTR", "10", "100", update_id=1)
+        self.trade("SELL", "MSTR", "5", "110", update_id=2)
+        for index in range(5):
+            self.trade("BUY", "BTC", "0.01", "60000", update_id=index + 3)
+        self.assertNotIn("TX-000001", portfolio.format_last_events(self.events()))
+        event, reply, mutated = portfolio.process_undo(
+            self.base,
+            self.events(),
+            target_event_id="TX-000001",
+            telegram_update_id=100,
+            telegram_message_id=100,
+            chat_id="123",
+            timestamp_utc=dt(2026, 6, 22),
+        )
+        self.assertIsNone(event)
+        self.assertFalse(mutated)
+        self.assertIn("UNDO DITOLAK", reply)
+        self.assertEqual(len(self.events()), 7)
+
+    def test_79_undo_already_undone_id_rejected(self) -> None:
+        buy, _, _ = self.trade("BUY", "MSTR", "1", "100", update_id=1)
+        portfolio.process_undo(self.base, self.events(), target_event_id=buy["event_id"], telegram_update_id=2, telegram_message_id=2, chat_id="123", timestamp_utc=dt(2026, 6, 22))
+        event, reply, mutated = portfolio.process_undo(
+            self.base,
+            self.events(),
+            target_event_id=buy["event_id"],
+            telegram_update_id=3,
+            telegram_message_id=3,
+            chat_id="123",
+            timestamp_utc=dt(2026, 6, 22),
+        )
+        self.assertIsNone(event)
+        self.assertFalse(mutated)
+        self.assertIn("sudah tidak aktif", reply)
+        self.assertNotIn(buy["event_id"], portfolio.format_history_events(self.events()))
+
+    def test_80_undo_event_undo_rejected(self) -> None:
+        buy, _, _ = self.trade("BUY", "MSTR", "1", "100", update_id=1)
+        undo, _, _ = portfolio.process_undo(self.base, self.events(), target_event_id=buy["event_id"], telegram_update_id=2, telegram_message_id=2, chat_id="123", timestamp_utc=dt(2026, 6, 22))
+        event, reply, mutated = portfolio.process_undo(
+            self.base,
+            self.events(),
+            target_event_id=undo["event_id"],
+            telegram_update_id=3,
+            telegram_message_id=3,
+            chat_id="123",
+            timestamp_utc=dt(2026, 6, 22),
+        )
+        self.assertIsNone(event)
+        self.assertFalse(mutated)
+        self.assertIn("sudah tidak aktif", reply)
+
+    def test_81_history_in_help_and_menu(self) -> None:
+        self.assertIn("/history", portfolio.help_text())
+        commands = [command for command, _ in portfolio.COMMAND_MENU]
+        self.assertIn("history", commands)
 
 
 if __name__ == "__main__":

@@ -136,6 +136,7 @@ COMMANDS = {
     "sell_btc",
     "portofolio",
     "last",
+    "history",
     "undo",
     "clear_all",
     "help",
@@ -149,7 +150,8 @@ COMMAND_MENU = [
     ("sell_btc", "Catat jual BTC"),
     ("portofolio", "Lihat portofolio"),
     ("last", "Lihat 5 transaksi terakhir"),
-    ("undo", "Batalkan transaksi terakhir"),
+    ("history", "Lihat riwayat transaksi"),
+    ("undo", "Batalkan transaksi aktif"),
     ("clear_all", "Kosongkan posisi aktif"),
     ("help", "Bantuan perintah"),
 ]
@@ -720,24 +722,48 @@ def active_last_events(events: Sequence[Mapping[str, Any]], limit: int = 5) -> l
     return list(reversed(eligible[-limit:]))
 
 
+def format_event_summary_line(event: Mapping[str, Any]) -> str:
+    if event["event_type"] == "RESET":
+        return f"{event['event_id']} | CLEAR ALL"
+    asset = event["asset"]
+    quantity = fmt_quantity(asset, parse_stored_decimal(event["quantity"], "quantity", allow_negative=False))
+    price = fmt_usd(parse_stored_decimal(event["price_usd"], "price_usd", allow_negative=False))
+    return f"{event['event_id']} | {event['event_type']} {asset} | {quantity} @ {price}"
+
+
 def format_last_events(events: Sequence[Mapping[str, Any]]) -> str:
     last = active_last_events(events)
     if not last:
         return "🧾 TRANSAKSI TERAKHIR\n\nBelum ada transaksi aktif."
     lines = ["🧾 TRANSAKSI TERAKHIR", ""]
     for event in last:
-        if event["event_type"] == "RESET":
-            lines.append(f"{event['event_id']} | CLEAR ALL")
-            continue
-        asset = event["asset"]
-        quantity = fmt_quantity(asset, parse_stored_decimal(event["quantity"], "quantity", allow_negative=False))
-        price = fmt_usd(parse_stored_decimal(event["price_usd"], "price_usd", allow_negative=False))
-        lines.append(f"{event['event_id']} | {event['event_type']} {asset} | {quantity} @ {price}")
+        lines.append(format_event_summary_line(event))
     return "\n".join(lines)
 
 
-def eligible_undo_ids(events: Sequence[Mapping[str, Any]]) -> set[str]:
-    return {event["event_id"] for event in active_last_events(events)}
+def format_history_events(events: Sequence[Mapping[str, Any]], limit: int = 20) -> str:
+    history = active_last_events(events, limit)
+    if not history:
+        return "🧾 RIWAYAT TRANSAKSI\n\nBelum ada transaksi aktif."
+    lines = [f"🧾 RIWAYAT TRANSAKSI AKTIF ({len(history)})", ""]
+    for event in history:
+        lines.append(format_event_summary_line(event))
+    return "\n".join(lines)
+
+
+def find_event_by_id(events: Sequence[Mapping[str, Any]], event_id: str) -> Mapping[str, Any] | None:
+    for event in events:
+        if event["event_id"] == event_id:
+            return event
+    return None
+
+
+def active_undoable_event_ids(events: Sequence[Mapping[str, Any]]) -> set[str]:
+    return {
+        event["event_id"]
+        for event in replay_events(events).active_events
+        if event["event_type"] in {"BUY", "SELL", "RESET"}
+    }
 
 
 def format_wib_human(timestamp_utc: datetime) -> str:
@@ -783,10 +809,16 @@ def command_usage(command: str) -> str:
         "sell_mstr": "/sell_mstr 10 112.53",
         "sell_btc": "/sell_btc 0.015 64250",
         "undo": "/undo TX-000012",
+        "history": "/history 20",
     }
     command_name = command.lower().lstrip("/")
     if command_name in examples:
-        usage = f"/{command_name} JUMLAH HARGA" if command_name != "undo" else "/undo ID"
+        if command_name == "undo":
+            usage = "/undo ID"
+        elif command_name == "history":
+            usage = "/history N"
+        else:
+            usage = f"/{command_name} JUMLAH HARGA"
         return f"Format:\n{usage}\n\nContoh:\n{examples[command_name]}"
     return help_text()
 
@@ -804,7 +836,9 @@ def help_text() -> str:
             "/sell_btc JUMLAH HARGA",
             "/portofolio - lihat laporan",
             "/last - lima transaksi aktif terakhir",
-            "/undo ID - batalkan ID dari /last",
+            "/history - dua puluh transaksi aktif terakhir",
+            "/history N - riwayat aktif, 1 sampai 100",
+            "/undo ID - batalkan transaksi aktif",
             "/clear_all - panduan reset posisi",
             "/clear_all CONFIRM - reset posisi aktif",
         ]
@@ -1013,8 +1047,11 @@ def process_undo(
     duplicate = event_by_update_id(events, telegram_update_id)
     if duplicate is not None:
         return None, duplicate_event_reply(events, duplicate), False
-    if target_event_id not in eligible_undo_ids(events):
-        return None, f"ID {target_event_id} tidak bisa di-undo. Gunakan salah satu ID yang tampil di /last.", False
+    target = find_event_by_id(events, target_event_id)
+    if target is None:
+        return None, f"ID {target_event_id} tidak ditemukan.\nGunakan /history untuk melihat transaksi.", False
+    if target["event_type"] not in {"BUY", "SELL", "RESET"} or target_event_id not in active_undoable_event_ids(events):
+        return None, f"ID {target_event_id} sudah tidak aktif atau sudah pernah di-undo.\nGunakan /history untuk melihat transaksi aktif.", False
     event = make_event(
         events,
         "UNDO",
@@ -1029,8 +1066,8 @@ def process_undo(
     )
     try:
         replay_events([*events, event])
-    except DataIntegrityError as exc:
-        return None, f"UNDO ditolak karena replay akan menjadi tidak valid: {exc}", False
+    except DataIntegrityError:
+        return None, f"❌ UNDO DITOLAK\n\nMembatalkan {target_event_id} akan membuat transaksi setelahnya tidak valid.\nPortfolio tidak diubah.", False
     append_event(base_dir, event)
     rebuild_snapshots(base_dir)
     return event, f"✅ UNDO TERCATAT\n\nEvent dibatalkan: {target_event_id}\nID: {event['event_id']}", True
@@ -1109,6 +1146,18 @@ def handle_authorized_text_command(
             if args:
                 return "Perintah /last tidak menerima parameter.\nKetik /help untuk bantuan.", False
             return format_last_events(read_ledger(base_dir)), False
+        if command == "history":
+            if len(args) > 1:
+                return "Parameter /history tidak valid.\n\n" + command_usage(command), False
+            if not args:
+                limit = 20
+            else:
+                if not args[0].isdigit():
+                    return "Parameter /history harus angka 1 sampai 100.\n\n" + command_usage(command), False
+                limit = int(args[0])
+                if limit < 1 or limit > 100:
+                    return "Parameter /history harus angka 1 sampai 100.\n\n" + command_usage(command), False
+            return format_history_events(read_ledger(base_dir), limit), False
         if command == "undo":
             if len(args) == 0:
                 return command_usage(command), False
