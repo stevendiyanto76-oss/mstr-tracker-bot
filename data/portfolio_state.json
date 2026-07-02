@@ -15,7 +15,7 @@
     },
     "mstr_zone": "ACCUMULATE"
   },
-  "bot_commands_registered": true,
+  "bot_commands_registered": false,
   "jisdor_cache": {
     "fetched_at_utc": "2026-07-01T23:50:07+00:00",
     "official_date": "2026-07-01",
