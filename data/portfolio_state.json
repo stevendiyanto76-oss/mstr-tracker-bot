@@ -23,21 +23,36 @@
     "source": "Bank Indonesia JISDOR"
   },
   "last_daily_report_date_wib": "2026-07-02",
-  "last_update_id": 865839500,
+  "last_update_id": 865839502,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-07-02T01:26:00+00:00",
-      "fetched_at_utc": "2026-07-02T01:26:11+00:00",
-      "price_usd": "59934.57",
+      "as_of": "2026-07-02T01:36:00+00:00",
+      "fetched_at_utc": "2026-07-02T01:36:07+00:00",
+      "price_usd": "60087.27",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
       "as_of": "2026-07-01T20:00:00+00:00",
-      "fetched_at_utc": "2026-07-02T01:26:11+00:00",
+      "fetched_at_utc": "2026-07-02T01:36:07+00:00",
       "price_usd": "93.39",
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [],
+  "outbox": [
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-07-02T01:36:07+00:00",
+      "id": "OUT-2f8c870c0338441c",
+      "text": "🧾 TRANSAKSI TERAKHIR\n\nTX-000009 | BUY MSTR | 0.2 @ $81.94\nTX-000008 | BUY MSTR | 0.9 @ $82.00\nTX-000006 | BUY MSTR | 1 @ $82.00\nRESET-000001 | CLEAR ALL\nTX-000002 | BUY MSTR | 2 @ $79.10"
+    },
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-07-02T01:36:07+00:00",
+      "id": "OUT-01447f17578a590f",
+      "text": "💼 NEVETS HOLDING | PERSONAL PORTFOLIO\n📅 02 Jul 2026 | 08:35 WIB\n\n💰 TOTAL PORTFOLIO\nMarket Value: $196.12 | Rp3.522.493\nCost Basis: $172.19\nUnrealized P/L: +$23.93 (+13.90%)\nUSD/IDR JISDOR: Rp17.961\n\n📊 ALLOCATION\nMSTR: 100.00%\n\n📈 PORTFOLIO PERFORMANCE\n1D: -34.89%\n1W: -39.91%\n1M: N/A\n6M: N/A\n1Y: N/A\n3Y: N/A\n5Y: N/A\n10Y: N/A\nSince Inception: -48.49%\n\n📈 MSTR POSITION\nPosition: 2.1 lembar\nAverage Cost: $81.99\nMSTR Last: $93.39\nMarket Value: $196.12\nUnrealized P/L: +$23.93 (+13.90%)\n\n₿ TOTAL BTC EXPOSURE\nDirect BTC: 0 BTC\nBTC via MSTR: 0.00478847 BTC\nTotal Exposure: 0.00478847 BTC\n\n🎯 MSTR ENGINE\nCurrent Zone: ACCUMULATE\nFair Price: $117.51\nStrong Buy: ≤ $79.76\nSell: > $155.25\nEngine Action: ACCUMULATE"
+    }
+  ],
   "schema_version": 1
 }
