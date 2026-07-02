@@ -38,42 +38,6 @@
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-07-02T01:26:11+00:00",
-      "id": "OUT-bcf9a9b833f99790",
-      "text": "ID TX-000005 tidak bisa di-undo. Gunakan salah satu ID yang tampil di /last."
-    },
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-07-02T01:26:11+00:00",
-      "id": "OUT-ee969de431cc23d8",
-      "text": "ID TX-000004 tidak bisa di-undo. Gunakan salah satu ID yang tampil di /last."
-    },
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-07-02T01:26:11+00:00",
-      "id": "OUT-20409c5d4815b8a1",
-      "text": "ID TX-000003 tidak bisa di-undo. Gunakan salah satu ID yang tampil di /last."
-    },
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-07-02T01:26:11+00:00",
-      "id": "OUT-80ce854014286f0b",
-      "text": "✅ UNDO TERCATAT\n\nEvent dibatalkan: TX-000011\nID: UNDO-000003"
-    },
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-07-02T01:26:11+00:00",
-      "id": "OUT-329b9bbdf2e89de5",
-      "text": "✅ UNDO TERCATAT\n\nEvent dibatalkan: TX-000010\nID: UNDO-000004"
-    }
-  ],
+  "outbox": [],
   "schema_version": 1
 }
