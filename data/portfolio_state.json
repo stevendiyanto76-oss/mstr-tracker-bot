@@ -15,7 +15,7 @@
     },
     "mstr_zone": "ACCUMULATE"
   },
-  "bot_commands_registered": false,
+  "bot_commands_registered": true,
   "jisdor_cache": {
     "fetched_at_utc": "2026-07-01T23:50:07+00:00",
     "official_date": "2026-07-01",
@@ -26,14 +26,14 @@
   "last_update_id": 865839504,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-07-02T02:47:00+00:00",
-      "fetched_at_utc": "2026-07-02T02:47:37+00:00",
-      "price_usd": "60407.14",
+      "as_of": "2026-07-02T02:50:00+00:00",
+      "fetched_at_utc": "2026-07-02T02:50:35+00:00",
+      "price_usd": "60313.86",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
       "as_of": "2026-07-01T20:00:00+00:00",
-      "fetched_at_utc": "2026-07-02T02:47:37+00:00",
+      "fetched_at_utc": "2026-07-02T02:50:35+00:00",
       "price_usd": "93.39",
       "source": "fetch_strategy_snapshot"
     }
