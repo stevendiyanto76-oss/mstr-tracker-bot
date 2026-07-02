@@ -23,21 +23,29 @@
     "source": "Bank Indonesia JISDOR"
   },
   "last_daily_report_date_wib": "2026-07-02",
-  "last_update_id": 865839503,
+  "last_update_id": 865839504,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-07-02T02:27:00+00:00",
-      "fetched_at_utc": "2026-07-02T02:27:16+00:00",
-      "price_usd": "60151.16",
+      "as_of": "2026-07-02T02:47:00+00:00",
+      "fetched_at_utc": "2026-07-02T02:47:37+00:00",
+      "price_usd": "60407.14",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
       "as_of": "2026-07-01T20:00:00+00:00",
-      "fetched_at_utc": "2026-07-02T02:27:16+00:00",
+      "fetched_at_utc": "2026-07-02T02:47:37+00:00",
       "price_usd": "93.39",
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [],
+  "outbox": [
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-07-02T02:47:37+00:00",
+      "id": "OUT-f3f3761e6a5d743d",
+      "text": "🧾 RIWAYAT TRANSAKSI AKTIF (5)\n\nTX-000009 | BUY MSTR | 0.2 @ $81.94\nTX-000008 | BUY MSTR | 0.9 @ $82.00\nTX-000006 | BUY MSTR | 1 @ $82.00\nRESET-000001 | CLEAR ALL\nTX-000002 | BUY MSTR | 2 @ $79.10"
+    }
+  ],
   "schema_version": 1
 }
