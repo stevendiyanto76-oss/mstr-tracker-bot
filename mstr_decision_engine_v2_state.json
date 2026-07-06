@@ -1,12 +1,12 @@
 {
   "fingerprint": {
-    "annual_dividends_b": 1.762417,
-    "average_btc_cost": 75651.0,
+    "annual_dividends_b": 1.762781,
+    "average_btc_cost": 75476.0,
     "basic_shares_m": 371.614,
-    "btc_div_coverage_years": 30.583431,
-    "btc_holdings": 847363.0,
-    "btc_price": 63610.0,
-    "btc_yield_ytd_pct": 11.8,
+    "btc_div_coverage_years": 29.559597,
+    "btc_holdings": 843775.0,
+    "btc_price": 61754.74,
+    "btc_yield_ytd_pct": 7.8,
     "debt_b": 6.754,
     "debt_schedule": [
       {
@@ -46,31 +46,31 @@
         "put_date": "2029-06-16"
       }
     ],
-    "diluted_shares_m": 401.295,
-    "preferred_b": 15.461,
-    "usd_div_coverage_months": 17.362519,
-    "usd_reserve_b": 2.551
+    "diluted_shares_m": 401.294,
+    "preferred_b": 15.464,
+    "usd_div_coverage_months": 17.358931,
+    "usd_reserve_b": 2.55
   },
-  "fingerprint_hash": "a1bd2911cac3d493575359790b5626950e75fa4e83ccea909b1e89454bfba0c7",
-  "last_action": "ACCUMULATE",
-  "updated_at_utc": "2026-07-05T22:29:40+00:00",
+  "fingerprint_hash": "d891dadc246e1d2e8c8662ea47c6f88ebb75badce05ea766c84ce8bb1e13cb22",
+  "last_action": "HOLD",
+  "updated_at_utc": "2026-07-06T12:57:34+00:00",
   "zones": {
-    "accretion_score": 0.7499881713684833,
-    "accumulate_mnav": 1.1587337684627224,
-    "accumulate_price": 115.15344216326697,
-    "fair_ev_nav": 1.2479267068284294,
-    "fair_price": 128.09043378063805,
-    "hold_mnav": 1.3371196451941365,
-    "hold_price": 141.0274253980091,
-    "liquidity_score": 0.9575012688632459,
+    "accretion_score": 0.5591278924999694,
+    "accumulate_mnav": 1.0728644050375777,
+    "accumulate_price": 97.50940223385093,
+    "fair_ev_nav": 1.1629893862488272,
+    "fair_price": 110.14657932111226,
+    "hold_mnav": 1.2531143674600767,
+    "hold_price": 122.78375640837356,
+    "liquidity_score": 0.9572620901112797,
     "maturity_pressure": 0.47156161641443617,
-    "reduce_mnav": 1.5155055219255504,
-    "reduce_price": 166.9014086327512,
-    "risk_score": 0.427335382711888,
-    "strong_buy_mnav": 0.9803478917313084,
-    "strong_buy_price": 89.27945892852487,
-    "structural_floor": 0.3648186007605088,
-    "tail_coverage_score": 0.870916749798734,
-    "uncertainty_band": 0.17838587673141398
+    "reduce_mnav": 1.4333643298825758,
+    "reduce_price": 148.05811058289623,
+    "risk_score": 0.44132784877765824,
+    "strong_buy_mnav": 0.8926144426150786,
+    "strong_buy_price": 72.23504805932828,
+    "structural_floor": 0.37745331887778943,
+    "tail_coverage_score": 0.854542201997618,
+    "uncertainty_band": 0.18024996242249905
   }
 }
