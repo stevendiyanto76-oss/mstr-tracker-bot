@@ -26,15 +26,15 @@
   "last_update_id": 865839504,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-07-13T17:24:00+00:00",
-      "fetched_at_utc": "2026-07-13T17:24:26+00:00",
-      "price_usd": "62142.95",
+      "as_of": "2026-07-13T19:51:00+00:00",
+      "fetched_at_utc": "2026-07-13T19:51:24+00:00",
+      "price_usd": "62150.3",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
-      "as_of": "2026-07-13T17:24:00+00:00",
-      "fetched_at_utc": "2026-07-13T17:24:26+00:00",
-      "price_usd": "91.72",
+      "as_of": "2026-07-13T19:51:00+00:00",
+      "fetched_at_utc": "2026-07-13T19:51:24+00:00",
+      "price_usd": "92.02",
       "source": "fetch_strategy_snapshot"
     }
   },
