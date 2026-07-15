@@ -53,7 +53,7 @@
   },
   "fingerprint_hash": "07dd34a95f6351329ee2c0a649e0fdaa562f1c6d5beb7e8c438137be48ca6cce",
   "last_action": "ACCUMULATE",
-  "updated_at_utc": "2026-07-14T22:29:06+00:00",
+  "updated_at_utc": "2026-07-15T11:01:12+00:00",
   "zones": {
     "accretion_score": 0.5373983086520212,
     "accumulate_mnav": 1.0850413156460048,
@@ -62,7 +62,7 @@
     "fair_price": 118.67303444564894,
     "hold_mnav": 1.2595905346719012,
     "hold_price": 131.30879548400023,
-    "liquidity_score": 1,
+    "liquidity_score": 1.0,
     "maturity_pressure": 0.47623243222975553,
     "reduce_mnav": 1.4341397536977971,
     "reduce_price": 156.5803175607028,
