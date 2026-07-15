@@ -27,13 +27,13 @@
   "market_cache": {
     "BTC": {
       "as_of": "2026-07-14T21:17:00+00:00",
-      "fetched_at_utc": "2026-07-15T09:22:28+00:00",
+      "fetched_at_utc": "2026-07-15T11:50:22+00:00",
       "price_usd": "64589.83",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
       "as_of": "2026-07-14T20:00:00+00:00",
-      "fetched_at_utc": "2026-07-15T09:22:28+00:00",
+      "fetched_at_utc": "2026-07-15T11:50:22+00:00",
       "price_usd": "97.58",
       "source": "fetch_strategy_snapshot"
     }
