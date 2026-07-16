@@ -5,7 +5,7 @@
   "include_legacy_position": false,
   "name": "MSTR Live Thesis Challenge",
   "schema_version": 1,
-  "start_at_utc": null,
-  "starting_event_id": null,
-  "status": "prelaunch"
+  "start_at_utc": "2026-06-26T22:13:45+00:00",
+  "starting_event_id": "CH-000001",
+  "status": "active"
 }
