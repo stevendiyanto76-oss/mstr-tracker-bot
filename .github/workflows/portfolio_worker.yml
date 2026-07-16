@@ -29,6 +29,7 @@ on:
       - "data/challenge_config.json"
       - "data/challenge_events.jsonl"
       - "data/challenge_snapshots.jsonl"
+      - "data/mstr_disclosure_history.jsonl"
       - ".github/workflows/portfolio_worker.yml"
 
 permissions:
@@ -118,6 +119,7 @@ jobs:
           cp data/challenge_config.json /tmp/portfolio-data/data/challenge_config.json
           cp data/challenge_events.jsonl /tmp/portfolio-data/data/challenge_events.jsonl
           cp data/challenge_snapshots.jsonl /tmp/portfolio-data/data/challenge_snapshots.jsonl
+          cp data/mstr_disclosure_history.jsonl /tmp/portfolio-data/data/mstr_disclosure_history.jsonl
           mkdir -p /tmp/portfolio-data/data/public
           cp data/public/challenge_*.json /tmp/portfolio-data/data/public/
 
@@ -137,6 +139,7 @@ jobs:
               cp /tmp/portfolio-data/data/challenge_config.json data/challenge_config.json
               cp /tmp/portfolio-data/data/challenge_events.jsonl data/challenge_events.jsonl
               cp /tmp/portfolio-data/data/challenge_snapshots.jsonl data/challenge_snapshots.jsonl
+              cp /tmp/portfolio-data/data/mstr_disclosure_history.jsonl data/mstr_disclosure_history.jsonl
               mkdir -p data/public
               cp /tmp/portfolio-data/data/public/challenge_*.json data/public/
 
@@ -147,6 +150,7 @@ jobs:
                 data/challenge_config.json \
                 data/challenge_events.jsonl \
                 data/challenge_snapshots.jsonl \
+                data/mstr_disclosure_history.jsonl \
                 data/public/challenge_*.json
 
               if git diff --cached --quiet; then
@@ -183,6 +187,7 @@ jobs:
           cp data/challenge_config.json /tmp/portfolio-data/data/challenge_config.json
           cp data/challenge_events.jsonl /tmp/portfolio-data/data/challenge_events.jsonl
           cp data/challenge_snapshots.jsonl /tmp/portfolio-data/data/challenge_snapshots.jsonl
+          cp data/mstr_disclosure_history.jsonl /tmp/portfolio-data/data/mstr_disclosure_history.jsonl
           mkdir -p /tmp/portfolio-data/data/public
           cp data/public/challenge_*.json /tmp/portfolio-data/data/public/
 
@@ -202,6 +207,7 @@ jobs:
               cp /tmp/portfolio-data/data/challenge_config.json data/challenge_config.json
               cp /tmp/portfolio-data/data/challenge_events.jsonl data/challenge_events.jsonl
               cp /tmp/portfolio-data/data/challenge_snapshots.jsonl data/challenge_snapshots.jsonl
+              cp /tmp/portfolio-data/data/mstr_disclosure_history.jsonl data/mstr_disclosure_history.jsonl
               mkdir -p data/public
               cp /tmp/portfolio-data/data/public/challenge_*.json data/public/
 
@@ -212,6 +218,7 @@ jobs:
                 data/challenge_config.json \
                 data/challenge_events.jsonl \
                 data/challenge_snapshots.jsonl \
+                data/mstr_disclosure_history.jsonl \
                 data/public/challenge_*.json
 
               if git diff --cached --quiet; then

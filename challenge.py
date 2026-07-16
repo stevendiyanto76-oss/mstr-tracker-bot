@@ -25,6 +25,7 @@ DATA_DIR = Path("data")
 CONFIG_FILE = DATA_DIR / "challenge_config.json"
 EVENT_FILE = DATA_DIR / "challenge_events.jsonl"
 SNAPSHOT_FILE = DATA_DIR / "challenge_snapshots.jsonl"
+DISCLOSURE_HISTORY_FILE = DATA_DIR / "mstr_disclosure_history.jsonl"
 PUBLIC_DIR = DATA_DIR / "public"
 
 PUBLIC_FILES = {
@@ -63,6 +64,16 @@ HUNDRED = Decimal("100")
 USD_QUANTUM = Decimal("0.00000001")
 IDR_QUANTUM = Decimal("0.01")
 MSTR_QUANTUM = Decimal("0.000001")
+
+DISCLOSURE_FINGERPRINT_FIELDS = (
+    "btc_holdings",
+    "basic_shares_m",
+    "diluted_shares_m",
+    "usd_reserve_b",
+    "usd_div_coverage_months",
+    "debt_b",
+    "preferred_b",
+)
 
 FORBIDDEN_PUBLIC_KEYS = {
     "chat_id",
@@ -303,6 +314,10 @@ def snapshot_path(base_dir: Path) -> Path:
     return data_path(base_dir, SNAPSHOT_FILE)
 
 
+def disclosure_history_path(base_dir: Path) -> Path:
+    return data_path(base_dir, DISCLOSURE_HISTORY_FILE)
+
+
 def public_path(base_dir: Path, name: str) -> Path:
     if name not in PUBLIC_FILES:
         raise ChallengeIntegrityError(f"Unknown public export: {name}")
@@ -366,6 +381,9 @@ def ensure_challenge_files(base_dir: Path = Path(".")) -> None:
         atomic_write_text(events, "")
     if not snapshots.exists():
         atomic_write_text(snapshots, "")
+    disclosure_history = disclosure_history_path(base_dir)
+    if not disclosure_history.exists():
+        atomic_write_text(disclosure_history, "")
     data_path(base_dir, PUBLIC_DIR).mkdir(parents=True, exist_ok=True)
 
 
@@ -1578,15 +1596,16 @@ def public_events(
         if event["event_type"] != "UNDO" and event["event_id"] not in undone:
             effective_prefix.append(dict(event))
         state_after = replay_events(effective_prefix)
-        result.append(
-            _public_event(
-                event,
-                undone,
-                source_commit_sha,
-                _public_balance(state_before),
-                _public_balance(state_after),
+        if event["event_type"] in {"BUY", "SELL"} and event["event_id"] not in undone:
+            result.append(
+                _public_event(
+                    event,
+                    undone,
+                    source_commit_sha,
+                    _public_balance(state_before),
+                    _public_balance(state_after),
+                )
             )
-        )
     return result
 
 
@@ -1956,6 +1975,74 @@ def _load_engine_state(base_dir: Path) -> dict[str, Any]:
     return payload if isinstance(payload, dict) else {}
 
 
+def _disclosure_observation(engine: Mapping[str, Any]) -> dict[str, Any] | None:
+    fingerprint = engine.get("fingerprint")
+    if not isinstance(fingerprint, dict) or not engine.get("updated_at_utc"):
+        return None
+    public_fingerprint = {
+        field: _public_numeric_strings(fingerprint.get(field))
+        for field in DISCLOSURE_FINGERPRINT_FIELDS
+    }
+    comparison_key = hashlib.sha256(canonical_json(public_fingerprint).encode("utf-8")).hexdigest()
+    zones = engine.get("zones") if isinstance(engine.get("zones"), dict) else {}
+    return {
+        "as_of": str(engine["updated_at_utc"]),
+        "comparison_key": comparison_key,
+        "fingerprint": public_fingerprint,
+        "zones": {
+            "accretion_score": _public_numeric_strings(zones.get("accretion_score")),
+            "fair_ev_nav": _public_numeric_strings(zones.get("fair_ev_nav")),
+            "liquidity_score": _public_numeric_strings(zones.get("liquidity_score")),
+            "risk_score": _public_numeric_strings(zones.get("risk_score")),
+        },
+    }
+
+
+def load_disclosure_history(base_dir: Path) -> list[dict[str, Any]]:
+    path = disclosure_history_path(base_dir)
+    if not path.exists():
+        return []
+    observations: list[dict[str, Any]] = []
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            item = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise ChallengeIntegrityError(
+                f"mstr_disclosure_history.jsonl line {line_number} is invalid JSON"
+            ) from exc
+        if not isinstance(item, dict) or not isinstance(item.get("fingerprint"), dict):
+            raise ChallengeIntegrityError(
+                f"mstr_disclosure_history.jsonl line {line_number} is invalid"
+            )
+        parse_datetime(item.get("as_of"), f"disclosure history line {line_number} as_of")
+        if not isinstance(item.get("comparison_key"), str) or not item["comparison_key"]:
+            raise ChallengeIntegrityError(
+                f"mstr_disclosure_history.jsonl line {line_number} has no comparison key"
+            )
+        observations.append(item)
+    observations.sort(key=lambda item: parse_datetime(item["as_of"], "disclosure as_of"))
+    return observations
+
+
+def record_engine_disclosure(base_dir: Path, engine: Mapping[str, Any]) -> bool:
+    observation = _disclosure_observation(engine)
+    if observation is None:
+        return False
+    history = load_disclosure_history(base_dir)
+    if history and history[-1]["comparison_key"] == observation["comparison_key"]:
+        return False
+    append_jsonl(disclosure_history_path(base_dir), observation)
+    return True
+
+
+def _percentage_change(current: Decimal | None, previous: Decimal | None) -> Decimal | None:
+    if current is None or previous is None or previous == ZERO:
+        return None
+    return (current / previous - ONE) * HUNDRED
+
+
 def _decimal_or_none(value: Any) -> Decimal | None:
     if value is None or isinstance(value, bool):
         return None
@@ -2011,6 +2098,34 @@ def build_thesis_export(
     liquidity_score = _decimal_or_none(zones.get("liquidity_score"))
     accretion_score = _decimal_or_none(zones.get("accretion_score"))
 
+    history = load_disclosure_history(base_dir)
+    current_observation = _disclosure_observation(engine)
+    if current_observation is not None and (
+        not history or history[-1]["comparison_key"] != current_observation["comparison_key"]
+    ):
+        history.append(current_observation)
+    previous_observation = history[-2] if len(history) >= 2 else None
+    previous_fingerprint = previous_observation.get("fingerprint", {}) if previous_observation else {}
+    previous_btc_holdings = _decimal_or_none(previous_fingerprint.get("btc_holdings"))
+    previous_basic_shares = _decimal_or_none(previous_fingerprint.get("basic_shares_m"))
+    previous_diluted_shares = _decimal_or_none(previous_fingerprint.get("diluted_shares_m"))
+    previous_btc_per_basic = (
+        previous_btc_holdings / (previous_basic_shares * Decimal("1000000"))
+        if previous_btc_holdings and previous_basic_shares
+        else None
+    )
+    previous_btc_per_adso = (
+        previous_btc_holdings / (previous_diluted_shares * Decimal("1000000"))
+        if previous_btc_holdings and previous_diluted_shares
+        else None
+    )
+    btc_per_basic_change = _percentage_change(btc_per_basic, previous_btc_per_basic)
+    btc_per_adso_change = _percentage_change(btc_per_adso, previous_btc_per_adso)
+    disclosure_trend = None
+    if btc_per_adso_change is not None:
+        disclosure_trend = "stable" if btc_per_adso_change == ZERO else "improving" if btc_per_adso_change > ZERO else "deteriorating"
+    disclosure_count = len(history)
+
     price = market.mstr_price
     no_red = None
     if risk_score is not None and liquidity_score is not None:
@@ -2018,22 +2133,22 @@ def build_thesis_export(
     starter_checks = [
         _gate_item("MSTR price", decimal_plain(price) if price is not None else None, "<= 85 USD", price <= Decimal("85") if price is not None else None, market.mstr_source or "market cache", "Price alone is insufficient."),
         _gate_item("Reserve coverage", decimal_plain(reserve_months) if reserve_months is not None else None, ">= 15 months", reserve_months >= Decimal("15") if reserve_months is not None else None, "decision engine fingerprint", "Policy reserve divided by modeled annual cash burden."),
-        _gate_item("BTC per ADSO", decimal_plain(btc_per_adso) if btc_per_adso is not None else None, "stabilizing", None, "corporate disclosure history", "At least a comparable prior disclosure is required."),
+        _gate_item("BTC per ADSO", decimal_plain(btc_per_adso) if btc_per_adso is not None else None, "stabilizing", btc_per_adso_change >= ZERO if btc_per_adso_change is not None else None, "corporate disclosure history", f"Compared with {previous_observation['as_of']}" if previous_observation else "At least a comparable prior disclosure is required."),
         _gate_item("Risk dashboard", None if no_red is None else "not red" if no_red else "red", "no red indicator", no_red, "decision engine scores", "Risk and liquidity inputs must both be available."),
     ]
     invalidation_checks = [
         _gate_item("Reserve below 12 months", decimal_plain(reserve_months) if reserve_months is not None else None, "< 12 months", reserve_months < Decimal("12") if reserve_months is not None else None, "decision engine fingerprint", "Immediate review threshold from the original thesis."),
-        _gate_item("Obligation-funded BTC sales", None, "repeated sales", None, "corporate disclosures", "Requires classified disclosure history."),
-        _gate_item("Residual value damage", None, "structural deterioration", None, "multi-disclosure trend", "Requires a multi-disclosure residual-value series."),
+        _gate_item("Obligation-funded BTC sales", "not tracked", "repeated sales", None, "corporate disclosures", "Requires classified disclosure history."),
+        _gate_item("Residual value damage", "not assessed", "structural deterioration", None, "multi-disclosure trend", "Requires a multi-disclosure residual-value series."),
         _gate_item("BTC per ADSO deterioration", decimal_plain(btc_per_adso) if btc_per_adso is not None else None, "repeated deterioration", None, "multi-disclosure trend", "Requires at least three comparable observations."),
-        _gate_item("Destructive refinancing", None, "permanent burden increase without compensation", None, "financing disclosures", "Requires terms and cash-burden comparison."),
+        _gate_item("Destructive refinancing", "not assessed", "permanent burden increase without compensation", None, "financing disclosures", "Requires terms and cash-burden comparison."),
     ]
     any_invalidation = any(item["passed"] is True for item in invalidation_checks)
     strategic_checks = [
-        _gate_item("Supportive valuation", None, "supportive residual valuation", None, "dynamic valuation bridge", "Current enterprise mNAV and residual value are required."),
-        _gate_item("BTC per ADSO disclosures", decimal_plain(btc_per_adso) if btc_per_adso is not None else None, "3 non-deteriorating updates", None, "corporate disclosure history", "One current observation cannot pass this gate."),
+        _gate_item("Supportive valuation", f"{zones.get('fair_ev_nav')}x mNAV" if zones.get("fair_ev_nav") is not None else "not assessed", "supportive residual valuation", None, "dynamic valuation bridge", "Enterprise mNAV is available; a complete residual-value bridge is still required."),
+        _gate_item("BTC per ADSO disclosures", decimal_plain(btc_per_adso) if btc_per_adso is not None else None, "3 non-deteriorating updates", None, "corporate disclosure history", f"{disclosure_count} comparable observations are available."),
         _gate_item("Reserve coverage", decimal_plain(reserve_months) if reserve_months is not None else None, "> 18 months", reserve_months > Decimal("18") if reserve_months is not None else None, "decision engine fingerprint", "Strategic gate requires more than 18 months."),
-        _gate_item("Preferred yields", None, "normalizing", None, "preferred market data", "Current preferred yields and a trend series are required."),
+        _gate_item("Preferred yields", "not tracked", "normalizing", None, "preferred market data", "Current preferred yields and a trend series are required."),
         _gate_item("Invalidation", "triggered" if any_invalidation else "not proven", "no invalidation trigger", False if any_invalidation else None, "invalidation monitor", "Unknown invalidation inputs cannot be treated as a pass."),
     ]
     starter_passed = sum(item["passed"] is True for item in starter_checks)
@@ -2043,7 +2158,7 @@ def build_thesis_export(
     confidence_score = Decimal(available) / Decimal(len(required_values)) * Decimal("10")
     confidence_reasons = [
         f"{available} of {len(required_values)} core current inputs are available",
-        "multi-disclosure BTC-per-ADSO history is not yet exported",
+        f"{disclosure_count} comparable corporate disclosure observations are available",
         "preferred-yield trend is not yet available",
     ]
     if any_invalidation:
@@ -2092,6 +2207,13 @@ def build_thesis_export(
             "btc_per_adso": decimal_plain(btc_per_adso) if btc_per_adso is not None else None,
             "three_update_test": "insufficient_data",
             "accretion_score": decimal_plain(accretion_score) if accretion_score is not None else None,
+            "prior_btc_per_basic_share": decimal_plain(previous_btc_per_basic) if previous_btc_per_basic is not None else None,
+            "prior_btc_per_adso": decimal_plain(previous_btc_per_adso) if previous_btc_per_adso is not None else None,
+            "btc_per_basic_share_change_pct": decimal_plain(btc_per_basic_change) if btc_per_basic_change is not None else None,
+            "btc_per_adso_change_pct": decimal_plain(btc_per_adso_change) if btc_per_adso_change is not None else None,
+            "disclosure_observations": disclosure_count,
+            "comparison_as_of": previous_observation.get("as_of") if previous_observation else None,
+            "residual_adso_trend": disclosure_trend or "insufficient_data",
         },
         "liquidity": {
             "usd_reserve_b": str(fingerprint.get("usd_reserve_b")) if fingerprint.get("usd_reserve_b") is not None else None,
@@ -2107,8 +2229,9 @@ def build_thesis_export(
             "debt_b": str(fingerprint.get("debt_b")) if fingerprint.get("debt_b") is not None else None,
             "preferred_notional_b": str(fingerprint.get("preferred_b")) if fingerprint.get("preferred_b") is not None else None,
             "preferred_yields": None,
-            "condition": "UNKNOWN",
-            "issuance_economics": "UNKNOWN",
+            "condition": "data_insufficient",
+            "issuance_economics": "not_assessed",
+            "funding_stress": "not_assessed",
         },
         "scores": {
             "risk": decimal_plain(risk_score) if risk_score is not None else None,
@@ -2273,6 +2396,8 @@ def export_public(
     config = load_config(base_dir)
     events = read_events(base_dir)
     state = replay_events(events)
+    engine = _load_engine_state(base_dir)
+    record_engine_disclosure(base_dir, engine)
     market = market or load_market_inputs(base_dir, at=current)
     if create_market_snapshot and config["status"] != "prelaunch":
         create_snapshot(base_dir, market=market, captured_at=current)
@@ -2326,7 +2451,7 @@ def export_public(
         "snapshot_schema_version": SNAPSHOT_SCHEMA_VERSION,
         "active_event_count": len([item for item in events if item["event_id"] not in undone and item["event_type"] != "UNDO"]),
         "undone_event_count": len(undone),
-        "latest_transaction_id": events[-1]["event_id"] if events else None,
+        "latest_transaction_id": exported_events[-1]["event_id"] if exported_events else None,
         "source_status": "configured" if source_commit_sha else "source_commit_unavailable",
         "market_data_health": market.freshness,
         "jisdor_health": "available" if market.usd_idr is not None else "unavailable",

@@ -590,11 +590,19 @@ class ChallengeTests(unittest.TestCase):
 
     def test_public_export_excludes_private_telegram_metadata(self) -> None:
         self.initialize("100")
+        challenge.record_trade(
+            self.base,
+            event_type="BUY",
+            quantity=Decimal("0.5"),
+            price_usd=Decimal("100"),
+            timestamp_utc=at(2),
+            source=source(2),
+        )
         exported = challenge.export_public(
             self.base,
-            generated_at=at(2),
+            generated_at=at(3),
             source_commit_sha="abc123",
-            market=market(captured_at=at(2)),
+            market=market(captured_at=at(3)),
         )
         serialized = json.dumps(exported["payloads"], sort_keys=True).lower()
         self.assertNotIn("private_source", serialized)
@@ -610,15 +618,48 @@ class ChallengeTests(unittest.TestCase):
             opening_quantity="2",
             opening_cost="50",
         )
-        payload = challenge.export_public(
+        payloads = challenge.export_public(
             self.base,
             generated_at=at(2),
             market=market(captured_at=at(2)),
+        )["payloads"]
+        self.assertEqual(payloads["transactions"]["events"], [])
+        self.assertEqual(payloads["overview"]["portfolio"]["mstr_quantity"], "2")
+        self.assertEqual(payloads["overview"]["portfolio"]["mstr_average_cost"], "50")
+        self.assertEqual(payloads["overview"]["portfolio"]["net_contributions_usd"], "200")
+
+    def test_public_transactions_include_only_active_buy_and_sell_events(self) -> None:
+        self.initialize("1000")
+        undone_buy, _, _ = challenge.record_trade(
+            self.base,
+            event_type="BUY",
+            quantity=Decimal("1"),
+            price_usd=Decimal("100"),
+            timestamp_utc=at(2),
+            source=source(2),
+        )
+        challenge.record_undo(
+            self.base,
+            target_event_id=undone_buy["event_id"],
+            timestamp_utc=at(3),
+            source=source(3),
+        )
+        active_buy, _, _ = challenge.record_trade(
+            self.base,
+            event_type="BUY",
+            quantity=Decimal("2"),
+            price_usd=Decimal("100"),
+            timestamp_utc=at(4),
+            source=source(4),
+        )
+        payload = challenge.export_public(
+            self.base,
+            generated_at=at(5),
+            market=market(captured_at=at(5)),
         )["payloads"]["transactions"]
-        event = payload["events"][0]
-        self.assertEqual(event["opening_mstr_quantity"], "2")
-        self.assertEqual(event["opening_mstr_average_cost"], "50")
-        self.assertEqual(event["balance_after"]["net_contributions_usd"], "200")
+        self.assertEqual(payload["count"], 1)
+        self.assertEqual([event["event_id"] for event in payload["events"]], [active_buy["event_id"]])
+        self.assertEqual({event["type"] for event in payload["events"]}, {"BUY"})
 
     def test_public_hash_and_export_writes_are_deterministic(self) -> None:
         self.initialize("100")
@@ -669,6 +710,54 @@ class ChallengeTests(unittest.TestCase):
         self.assertFalse(payload["gates"]["strategic"]["eligible"])
         self.assertEqual(payload["liquidity"]["debt_schedule"]["2028"], "1.25")
         challenge.validate_public_payload(payload)
+
+    def test_thesis_export_compares_material_disclosure_observations(self) -> None:
+        previous_engine = {
+            "updated_at_utc": challenge.iso_seconds(at()),
+            "fingerprint": {
+                "btc_holdings": 100,
+                "basic_shares_m": 1,
+                "diluted_shares_m": 1,
+                "usd_reserve_b": 1,
+                "usd_div_coverage_months": 12,
+                "debt_b": 2,
+                "preferred_b": 3,
+            },
+            "zones": {"fair_ev_nav": 1.1},
+        }
+        current_engine = {
+            "updated_at_utc": challenge.iso_seconds(at(2)),
+            "last_action": "HOLD",
+            "fingerprint": {
+                "btc_holdings": 100,
+                "basic_shares_m": 1.1,
+                "diluted_shares_m": 1.1,
+                "usd_reserve_b": 1.5,
+                "usd_div_coverage_months": 18,
+                "debt_b": 2,
+                "preferred_b": 3,
+            },
+            "zones": {
+                "risk_score": 0.2,
+                "liquidity_score": 0.8,
+                "accretion_score": 0.5,
+                "fair_ev_nav": 1.2,
+            },
+        }
+        challenge.record_engine_disclosure(self.base, previous_engine)
+        (self.base / "mstr_decision_engine_v2_state.json").write_text(
+            json.dumps(current_engine), encoding="utf-8"
+        )
+        payload = challenge.build_thesis_export(
+            self.base,
+            market(mstr="80"),
+            generated_at=challenge.iso_seconds(at(2)),
+            source_commit_sha="abc",
+        )
+        self.assertEqual(payload["accretion"]["disclosure_observations"], 2)
+        self.assertEqual(payload["accretion"]["residual_adso_trend"], "deteriorating")
+        self.assertLess(Decimal(payload["accretion"]["btc_per_adso_change_pct"]), Decimal("0"))
+        self.assertFalse(payload["gates"]["starter"]["checks"][2]["passed"])
 
     def test_prelaunch_health_is_setup_required_without_fake_metrics(self) -> None:
         payloads = challenge.export_public(
