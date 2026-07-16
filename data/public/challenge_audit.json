@@ -1,0 +1,21 @@
+{
+  "active_event_count": 0,
+  "challenge_id": "mstr-live-thesis-v1",
+  "config_schema_version": 1,
+  "event_schema_version": 2,
+  "generated_at": "2026-07-16T10:16:52+00:00",
+  "jisdor_health": "available",
+  "latest_transaction_id": null,
+  "ledger_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "market_data_health": "cached",
+  "schema_version": 1,
+  "snapshot_schema_version": 1,
+  "source_commit_sha": null,
+  "source_status": "source_commit_unavailable",
+  "undone_event_count": 0,
+  "verification_scope": "The digest proves the exported recording history, not a broker position.",
+  "workflow": {
+    "latest_success": null,
+    "status": "not_exported"
+  }
+}

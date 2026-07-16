@@ -19,9 +19,16 @@ on:
           - daily
 
   push:
+    branches:
+      - main
     paths:
       - "portfolio.py"
+      - "challenge.py"
       - "tests/test_portfolio.py"
+      - "tests/test_challenge.py"
+      - "data/challenge_config.json"
+      - "data/challenge_events.jsonl"
+      - "data/challenge_snapshots.jsonl"
       - ".github/workflows/portfolio_worker.yml"
 
 permissions:
@@ -53,14 +60,21 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --upgrade requests
 
-      - name: Compile portfolio.py
-        run: python -m py_compile portfolio.py
+      - name: Compile Python modules
+        run: python -m py_compile portfolio.py challenge.py
 
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
 
       - name: Validate portfolio data
         run: python portfolio.py validate
+
+      - name: Set stable public source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          revision="$(git log -1 --format=%H -- portfolio.py challenge.py mstr.py mstr_decision_engine_v2_state.json)"
+          echo "PUBLIC_SOURCE_COMMIT_SHA=$revision" >> "$GITHUB_ENV"
 
       - name: Prepare portfolio worker
         run: |
@@ -73,6 +87,27 @@ jobs:
             python portfolio.py prepare
           fi
 
+      - name: Validate sanitized public challenge exports
+        run: |
+          python portfolio.py export-public
+          python portfolio.py validate-public
+          python - <<'PY'
+          from pathlib import Path
+
+          forbidden = (
+              "private_source",
+              "telegram_update_id",
+              "telegram_message_id",
+              "chat_id",
+              "bot_token",
+          )
+          for path in sorted(Path("data/public").glob("challenge_*.json")):
+              content = path.read_text(encoding="utf-8").lower()
+              matches = [item for item in forbidden if item in content]
+              if matches:
+                  raise SystemExit(f"private fields in {path}: {', '.join(matches)}")
+          PY
+
       - name: Persist portfolio state before flush
         run: |
           set -euo pipefail
@@ -80,6 +115,11 @@ jobs:
           cp data/transactions.jsonl /tmp/portfolio-data/data/transactions.jsonl
           cp data/portfolio_state.json /tmp/portfolio-data/data/portfolio_state.json
           cp data/portfolio_snapshots.jsonl /tmp/portfolio-data/data/portfolio_snapshots.jsonl
+          cp data/challenge_config.json /tmp/portfolio-data/data/challenge_config.json
+          cp data/challenge_events.jsonl /tmp/portfolio-data/data/challenge_events.jsonl
+          cp data/challenge_snapshots.jsonl /tmp/portfolio-data/data/challenge_snapshots.jsonl
+          mkdir -p /tmp/portfolio-data/data/public
+          cp data/public/challenge_*.json /tmp/portfolio-data/data/public/
 
           persist_portfolio_data() {
             local message="$1"
@@ -94,8 +134,20 @@ jobs:
               cp /tmp/portfolio-data/data/transactions.jsonl data/transactions.jsonl
               cp /tmp/portfolio-data/data/portfolio_state.json data/portfolio_state.json
               cp /tmp/portfolio-data/data/portfolio_snapshots.jsonl data/portfolio_snapshots.jsonl
+              cp /tmp/portfolio-data/data/challenge_config.json data/challenge_config.json
+              cp /tmp/portfolio-data/data/challenge_events.jsonl data/challenge_events.jsonl
+              cp /tmp/portfolio-data/data/challenge_snapshots.jsonl data/challenge_snapshots.jsonl
+              mkdir -p data/public
+              cp /tmp/portfolio-data/data/public/challenge_*.json data/public/
 
-              git add                 data/transactions.jsonl                 data/portfolio_state.json                 data/portfolio_snapshots.jsonl
+              git add \
+                data/transactions.jsonl \
+                data/portfolio_state.json \
+                data/portfolio_snapshots.jsonl \
+                data/challenge_config.json \
+                data/challenge_events.jsonl \
+                data/challenge_snapshots.jsonl \
+                data/public/challenge_*.json
 
               if git diff --cached --quiet; then
                 return 0
@@ -128,6 +180,11 @@ jobs:
           cp data/transactions.jsonl /tmp/portfolio-data/data/transactions.jsonl
           cp data/portfolio_state.json /tmp/portfolio-data/data/portfolio_state.json
           cp data/portfolio_snapshots.jsonl /tmp/portfolio-data/data/portfolio_snapshots.jsonl
+          cp data/challenge_config.json /tmp/portfolio-data/data/challenge_config.json
+          cp data/challenge_events.jsonl /tmp/portfolio-data/data/challenge_events.jsonl
+          cp data/challenge_snapshots.jsonl /tmp/portfolio-data/data/challenge_snapshots.jsonl
+          mkdir -p /tmp/portfolio-data/data/public
+          cp data/public/challenge_*.json /tmp/portfolio-data/data/public/
 
           persist_portfolio_data() {
             local message="$1"
@@ -142,8 +199,20 @@ jobs:
               cp /tmp/portfolio-data/data/transactions.jsonl data/transactions.jsonl
               cp /tmp/portfolio-data/data/portfolio_state.json data/portfolio_state.json
               cp /tmp/portfolio-data/data/portfolio_snapshots.jsonl data/portfolio_snapshots.jsonl
+              cp /tmp/portfolio-data/data/challenge_config.json data/challenge_config.json
+              cp /tmp/portfolio-data/data/challenge_events.jsonl data/challenge_events.jsonl
+              cp /tmp/portfolio-data/data/challenge_snapshots.jsonl data/challenge_snapshots.jsonl
+              mkdir -p data/public
+              cp /tmp/portfolio-data/data/public/challenge_*.json data/public/
 
-              git add                 data/transactions.jsonl                 data/portfolio_state.json                 data/portfolio_snapshots.jsonl
+              git add \
+                data/transactions.jsonl \
+                data/portfolio_state.json \
+                data/portfolio_snapshots.jsonl \
+                data/challenge_config.json \
+                data/challenge_events.jsonl \
+                data/challenge_snapshots.jsonl \
+                data/public/challenge_*.json
 
               if git diff --cached --quiet; then
                 return 0

@@ -19,6 +19,8 @@ from zoneinfo import ZoneInfo
 
 import requests
 
+import challenge as mstr_challenge
+
 
 getcontext().prec = 40
 
@@ -140,6 +142,15 @@ COMMANDS = {
     "undo",
     "clear_all",
     "help",
+    "challenge_status",
+    "challenge_init",
+    "challenge_reset",
+    "cash",
+    "deposit",
+    "withdraw",
+    "fx_convert",
+    "fee",
+    "tax",
 }
 COMMAND_MENU = [
     ("buy", "Panduan catat pembelian"),
@@ -153,8 +164,27 @@ COMMAND_MENU = [
     ("history", "Lihat riwayat transaksi"),
     ("undo", "Batalkan transaksi aktif"),
     ("clear_all", "Kosongkan posisi aktif"),
+    ("challenge_status", "Status MSTR live challenge"),
+    ("challenge_init", "Mulai challenge dari nol"),
+    ("cash", "Lihat cash challenge"),
+    ("deposit", "Catat setoran challenge"),
+    ("withdraw", "Catat penarikan challenge"),
+    ("fx_convert", "Catat konversi FX aktual"),
+    ("fee", "Catat biaya challenge"),
+    ("tax", "Catat pajak challenge"),
     ("help", "Bantuan perintah"),
 ]
+CHALLENGE_COMMANDS = {
+    "challenge_status",
+    "challenge_init",
+    "challenge_reset",
+    "cash",
+    "deposit",
+    "withdraw",
+    "fx_convert",
+    "fee",
+    "tax",
+}
 NUMERIC_RE = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
 STORED_DECIMAL_RE = re.compile(r"^-?[0-9]+(?:\.[0-9]+)?$")
 EVENT_ID_RE = re.compile(r"^(TX|RESET|UNDO)-([0-9]{6})$")
@@ -841,6 +871,17 @@ def help_text() -> str:
             "/undo ID - batalkan transaksi aktif",
             "/clear_all - panduan reset posisi",
             "/clear_all CONFIRM - reset posisi aktif",
+            "",
+            "MSTR LIVE THESIS CHALLENGE",
+            "/challenge_status - status dan kesiapan challenge",
+            "/challenge_init USD 1000 - mulai dari nol tanpa posisi lama",
+            "/cash - saldo USD dan IDR challenge",
+            "/deposit USD 100 - catat setoran",
+            "/withdraw USD 50 - catat penarikan",
+            "/fx_convert IDR 15000000 USD 830 - catat hasil FX aktual",
+            "/fee USD 1.25 - catat biaya",
+            "/tax USD 1.25 - catat pajak",
+            "/challenge_reset CONFIRM - kembali ke prelaunch",
         ]
     )
 
@@ -1091,6 +1132,52 @@ def unsupported_command_response(command: str) -> str:
     return "\n".join(lines)
 
 
+def challenge_thesis_zone(base_dir: Path, market: mstr_challenge.MarketInputs) -> str | None:
+    if market.mstr_price is None:
+        return None
+    payload, _ = load_mstr_engine_state(base_dir)
+    if payload is None or not isinstance(payload.get("zones"), dict):
+        return None
+    return classify_mstr_zone(market.mstr_price, payload["zones"])
+
+
+def should_use_challenge_surface(base_dir: Path, command: str, args: Sequence[str]) -> bool:
+    config = mstr_challenge.load_config(base_dir)
+    if command in CHALLENGE_COMMANDS:
+        return True
+    if config["status"] == "prelaunch":
+        return False
+    if command in {"buy_mstr", "sell_mstr", "portofolio", "history", "last"}:
+        return True
+    return command == "undo" and len(args) == 1 and bool(mstr_challenge.EVENT_ID_RE.fullmatch(args[0].upper()))
+
+
+def handle_challenge_surface(
+    base_dir: Path,
+    command: str,
+    args: Sequence[str],
+    *,
+    update_id: int,
+    chat_id: str,
+    message_id: int | None,
+    message_timestamp_utc: datetime,
+) -> tuple[str, bool]:
+    effective_command = "history" if command == "last" else command
+    effective_args = ["5"] if command == "last" else list(args)
+    market = mstr_challenge.load_market_inputs(base_dir, at=message_timestamp_utc)
+    return mstr_challenge.handle_challenge_command(
+        base_dir,
+        effective_command,
+        effective_args,
+        timestamp_utc=message_timestamp_utc,
+        telegram_update_id=update_id,
+        telegram_message_id=message_id,
+        chat_id=chat_id,
+        market=market,
+        thesis_zone=challenge_thesis_zone(base_dir, market),
+    )
+
+
 def handle_authorized_text_command(
     base_dir: Path,
     state: dict[str, Any],
@@ -1106,6 +1193,16 @@ def handle_authorized_text_command(
     if command is None:
         return None, False
     try:
+        if should_use_challenge_surface(base_dir, command, args):
+            return handle_challenge_surface(
+                base_dir,
+                command,
+                args,
+                update_id=update_id,
+                chat_id=chat_id,
+                message_id=message_id,
+                message_timestamp_utc=message_timestamp_utc,
+            )
         if command == "buy":
             if args:
                 return "Perintah /buy tidak menerima parameter.\n\n" + buy_guide(), False
@@ -1197,7 +1294,7 @@ def handle_authorized_text_command(
                 return "Perintah /help tidak menerima parameter.\n\n" + help_text(), False
             return help_text(), False
         return unsupported_command_response(command), False
-    except PortfolioValidationError as exc:
+    except (PortfolioValidationError, mstr_challenge.ChallengeError) as exc:
         return f"{exc}\nKetik /help untuk bantuan.", False
 
 
@@ -2224,6 +2321,46 @@ def reset_alert_state(state: dict[str, Any]) -> None:
     state["alert_state"] = default_state()["alert_state"]
 
 
+def to_challenge_market_inputs(
+    market: MarketData,
+    jisdor: JisdorData,
+    *,
+    current_time: datetime,
+) -> mstr_challenge.MarketInputs:
+    freshness = "fresh" if market.fresh and jisdor.fresh else "cached"
+    if not market.prices:
+        freshness = "unavailable"
+    elif market.stale_assets or not jisdor.fresh:
+        freshness = "stale"
+    warnings = list(market.warnings)
+    if jisdor.warning:
+        warnings.append(jisdor.warning)
+    return mstr_challenge.MarketInputs(
+        mstr_price=market.prices.get("MSTR"),
+        btc_price=market.prices.get("BTC"),
+        usd_idr=jisdor.rate,
+        mstr_as_of=market.as_of.get("MSTR"),
+        btc_as_of=market.as_of.get("BTC"),
+        fx_as_of=jisdor.official_date,
+        mstr_source=market.source,
+        btc_source=market.source,
+        fx_source="Bank Indonesia JISDOR" if jisdor.rate is not None else None,
+        fetched_at=iso_seconds(current_time),
+        freshness=freshness,
+        market_status="unknown",
+        warnings=tuple(warnings),
+    )
+
+
+def cached_jisdor_data(state: Mapping[str, Any]) -> JisdorData:
+    cache = state.get("jisdor_cache", {})
+    if not isinstance(cache, dict) or not cache.get("rate"):
+        return JisdorData(None, None, False, "USD/IDR JISDOR cache is unavailable")
+    rate = parse_stored_decimal(cache["rate"], "jisdor_cache.rate", allow_negative=False)
+    official_date = cache.get("official_date") if isinstance(cache.get("official_date"), str) else None
+    return JisdorData(rate, official_date, False, "USD/IDR uses the persisted JISDOR cache")
+
+
 def prepare(
     *,
     base_dir: Path = Path("."),
@@ -2232,6 +2369,7 @@ def prepare(
     current_time: datetime | None = None,
 ) -> int:
     ensure_data_files(base_dir)
+    mstr_challenge.ensure_challenge_files(base_dir)
     validate_all(base_dir)
     state = load_state(base_dir)
     token, chat_id = telegram_credentials()
@@ -2245,6 +2383,13 @@ def prepare(
     events = read_ledger(base_dir)
     positions = replay_events(events).positions
     market = fetch_strategy_market_data(state, update_cache=True, current_time=current)
+    challenge_config = mstr_challenge.load_config(base_dir)
+    should_refresh_jisdor = challenge_config["status"] != "prelaunch" or daily_report
+    jisdor = (
+        fetch_jisdor(state, update_cache=True, current_time=current)
+        if should_refresh_jisdor
+        else cached_jisdor_data(state)
+    )
     if mutation_happened:
         if market.fresh:
             establish_alert_baseline(state, positions, market)
@@ -2265,7 +2410,6 @@ def prepare(
         wib_date = to_wib(current).date().isoformat()
         should_send = force_report or state.get("last_daily_report_date_wib") != wib_date
         if not position_is_empty(positions):
-            jisdor = fetch_jisdor(state, update_cache=True, current_time=current)
             snapshot_created = create_or_update_daily_snapshot(base_dir, state, market, jisdor, current_time=current)
             if not snapshot_created:
                 print("Daily portfolio snapshot skipped: held-asset market price unavailable.", file=sys.stderr)
@@ -2273,6 +2417,13 @@ def prepare(
                 report = render_portfolio_report(base_dir, now=current, market_data=market, jisdor=jisdor)
                 enqueue_outbox(state, item_id=outbox_item_id("daily", wib_date), chat_id=chat_id, text=report, category="daily_report", created_at_utc=current)
                 state["last_daily_report_date_wib"] = wib_date
+    challenge_market = to_challenge_market_inputs(market, jisdor, current_time=current)
+    mstr_challenge.export_public(
+        base_dir,
+        generated_at=current,
+        market=challenge_market,
+        create_market_snapshot=challenge_config["status"] != "prelaunch",
+    )
     save_state(base_dir, state)
     return 0
 
@@ -2317,6 +2468,7 @@ def validate_all(base_dir: Path = Path(".")) -> None:
     validate_state_shape(state)
     snapshots = read_snapshots(base_dir)
     validate_snapshot_uniqueness(snapshots)
+    mstr_challenge.validate_all(base_dir)
 
 
 def register_commands_cli() -> int:
@@ -2324,6 +2476,33 @@ def register_commands_cli() -> int:
     if not token:
         raise TelegramError("TELEGRAM_BOT_TOKEN is required for register-commands")
     register_bot_commands(token)
+    return 0
+
+
+def challenge_init_cli(base_dir: Path, args: argparse.Namespace) -> int:
+    amount = mstr_challenge.parse_owner_decimal(args.amount, "starting cash", allow_zero=True)
+    legacy_position = replay_events(read_ledger(base_dir)).positions["MSTR"]
+    include_legacy = bool(args.include_legacy_position)
+    if include_legacy and legacy_position.quantity <= ZERO:
+        raise mstr_challenge.ChallengeValidationError("No active legacy MSTR position is available to include")
+    event, _ = mstr_challenge.initialize_challenge(
+        base_dir,
+        currency=args.currency,
+        amount=amount,
+        timestamp_utc=now_utc(),
+        source=mstr_challenge.private_source(source="cli"),
+        market=mstr_challenge.load_market_inputs(base_dir),
+        include_legacy_position=include_legacy,
+        opening_mstr_quantity=legacy_position.quantity if include_legacy else None,
+        opening_mstr_average_cost=legacy_position.average_cost if include_legacy else None,
+    )
+    print(f"challenge initialized: {event['event_id']}")
+    return 0
+
+
+def export_public_cli(base_dir: Path) -> int:
+    result = mstr_challenge.export_public(base_dir)
+    print(f"public challenge export valid; changed={len(result['changed'])}")
     return 0
 
 
@@ -2337,6 +2516,19 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     sub.add_parser("validate")
     sub.add_parser("render")
     sub.add_parser("register-commands")
+    challenge_init_parser = sub.add_parser("challenge-init")
+    challenge_init_parser.add_argument("currency", choices=["USD", "IDR"])
+    challenge_init_parser.add_argument("amount")
+    initialization_mode = challenge_init_parser.add_mutually_exclusive_group(required=True)
+    initialization_mode.add_argument("--start-empty", action="store_true")
+    initialization_mode.add_argument("--include-legacy-position", action="store_true")
+    challenge_status_parser = sub.add_parser("challenge-set-status")
+    challenge_status_parser.add_argument("status", choices=["active", "paused", "completed"])
+    challenge_reset_parser = sub.add_parser("challenge-reset")
+    challenge_reset_parser.add_argument("--confirm", action="store_true", required=True)
+    sub.add_parser("challenge-status")
+    sub.add_parser("export-public")
+    sub.add_parser("validate-public")
     return parser.parse_args(argv)
 
 
@@ -2364,8 +2556,31 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         if args.command == "register-commands":
             return register_commands_cli()
+        if args.command == "challenge-init":
+            return challenge_init_cli(base_dir, args)
+        if args.command == "challenge-set-status":
+            updated = mstr_challenge.set_challenge_status(base_dir, args.status)
+            print(f"challenge status: {updated['status']}")
+            return 0
+        if args.command == "challenge-reset":
+            event, _ = mstr_challenge.reset_challenge(
+                base_dir,
+                timestamp_utc=now_utc(),
+                source=mstr_challenge.private_source(source="cli"),
+            )
+            print(f"challenge reset: {event['event_id']}")
+            return 0
+        if args.command == "challenge-status":
+            print(mstr_challenge.render_challenge_status(base_dir))
+            return 0
+        if args.command == "export-public":
+            return export_public_cli(base_dir)
+        if args.command == "validate-public":
+            mstr_challenge.validate_all(base_dir, require_public=True)
+            print("public challenge data valid")
+            return 0
         raise PortfolioError(f"Unknown command {args.command}")
-    except PortfolioError as exc:
+    except (PortfolioError, mstr_challenge.ChallengeError) as exc:
         print(f"portfolio error: {exc}", file=sys.stderr)
         return 1
 

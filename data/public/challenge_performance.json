@@ -1,0 +1,250 @@
+{
+  "challenge_id": "mstr-live-thesis-v1",
+  "data_sufficient": false,
+  "generated_at": "2026-07-16T09:46:19+00:00",
+  "insufficiency_reasons": [
+    "Modified Dietz requires at least two valued observations"
+  ],
+  "methodology": {
+    "benchmark_fee_pct": "0",
+    "direct_btc": "Each external cash flow is applied to BTC at the closest source-labelled price",
+    "invested_capital": "Cumulative external contributions less withdrawals",
+    "mstr_buy_hold": "Each external cash flow is applied to MSTR at the closest source-labelled price",
+    "portfolio_return": "Modified Dietz with external cash flows; interval series when sufficient",
+    "volatility": "Sample standard deviation of available observation returns; not annualized"
+  },
+  "metrics": {
+    "alpha_vs_btc_pct": null,
+    "alpha_vs_mstr_buy_hold_pct": null,
+    "challenge": {
+      "best_period_pct": null,
+      "max_drawdown_pct": null,
+      "return_pct": null,
+      "volatility_pct": null,
+      "worst_period_pct": null
+    },
+    "direct_btc": {
+      "best_period_pct": null,
+      "max_drawdown_pct": null,
+      "return_pct": null,
+      "volatility_pct": null,
+      "worst_period_pct": null
+    },
+    "mstr_buy_hold": {
+      "best_period_pct": null,
+      "max_drawdown_pct": null,
+      "return_pct": null,
+      "volatility_pct": null,
+      "worst_period_pct": null
+    }
+  },
+  "ranges": {
+    "1D": {
+      "data_sufficient": false,
+      "end_at": null,
+      "insufficiency_reasons": [
+        "Modified Dietz requires at least two valued observations"
+      ],
+      "metrics": {
+        "alpha_vs_btc_pct": null,
+        "alpha_vs_mstr_buy_hold_pct": null,
+        "challenge": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        },
+        "direct_btc": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        },
+        "mstr_buy_hold": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        }
+      },
+      "observation_count": 0,
+      "start_at": null
+    },
+    "1M": {
+      "data_sufficient": false,
+      "end_at": null,
+      "insufficiency_reasons": [
+        "Modified Dietz requires at least two valued observations"
+      ],
+      "metrics": {
+        "alpha_vs_btc_pct": null,
+        "alpha_vs_mstr_buy_hold_pct": null,
+        "challenge": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        },
+        "direct_btc": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        },
+        "mstr_buy_hold": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        }
+      },
+      "observation_count": 0,
+      "start_at": null
+    },
+    "1W": {
+      "data_sufficient": false,
+      "end_at": null,
+      "insufficiency_reasons": [
+        "Modified Dietz requires at least two valued observations"
+      ],
+      "metrics": {
+        "alpha_vs_btc_pct": null,
+        "alpha_vs_mstr_buy_hold_pct": null,
+        "challenge": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        },
+        "direct_btc": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        },
+        "mstr_buy_hold": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        }
+      },
+      "observation_count": 0,
+      "start_at": null
+    },
+    "3M": {
+      "data_sufficient": false,
+      "end_at": null,
+      "insufficiency_reasons": [
+        "Modified Dietz requires at least two valued observations"
+      ],
+      "metrics": {
+        "alpha_vs_btc_pct": null,
+        "alpha_vs_mstr_buy_hold_pct": null,
+        "challenge": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        },
+        "direct_btc": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        },
+        "mstr_buy_hold": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        }
+      },
+      "observation_count": 0,
+      "start_at": null
+    },
+    "ALL": {
+      "data_sufficient": false,
+      "end_at": null,
+      "insufficiency_reasons": [
+        "Modified Dietz requires at least two valued observations"
+      ],
+      "metrics": {
+        "alpha_vs_btc_pct": null,
+        "alpha_vs_mstr_buy_hold_pct": null,
+        "challenge": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        },
+        "direct_btc": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        },
+        "mstr_buy_hold": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        }
+      },
+      "observation_count": 0,
+      "start_at": null
+    },
+    "YTD": {
+      "data_sufficient": false,
+      "end_at": null,
+      "insufficiency_reasons": [
+        "Modified Dietz requires at least two valued observations"
+      ],
+      "metrics": {
+        "alpha_vs_btc_pct": null,
+        "alpha_vs_mstr_buy_hold_pct": null,
+        "challenge": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        },
+        "direct_btc": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        },
+        "mstr_buy_hold": {
+          "best_period_pct": null,
+          "max_drawdown_pct": null,
+          "return_pct": null,
+          "volatility_pct": null,
+          "worst_period_pct": null
+        }
+      },
+      "observation_count": 0,
+      "start_at": null
+    }
+  },
+  "schema_version": 1,
+  "series": [],
+  "status": "prelaunch"
+}

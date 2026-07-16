@@ -1,0 +1,12 @@
+{
+  "challenge_status": "prelaunch",
+  "generated_at": "2026-07-16T10:16:52+00:00",
+  "ledger_valid": true,
+  "market_freshness": "cached",
+  "ok": true,
+  "public_export_valid": true,
+  "schema_version": 1,
+  "setup_required": true,
+  "status": "setup_required",
+  "warnings": []
+}

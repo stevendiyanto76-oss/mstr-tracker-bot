@@ -1,0 +1,54 @@
+{
+  "audit": {
+    "generated_at": "2026-07-16T10:16:52+00:00",
+    "ledger_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "source_commit_sha": null
+  },
+  "challenge": {
+    "id": "mstr-live-thesis-v1",
+    "include_legacy_position": false,
+    "last_updated_at": "2026-07-16T10:16:52+00:00",
+    "name": "MSTR Live Thesis Challenge",
+    "start_at": null,
+    "status": "prelaunch"
+  },
+  "disclaimer": "Public ledger history is not broker verification and is not investment advice.",
+  "generated_at": "2026-07-16T10:16:52+00:00",
+  "market": {
+    "btc_as_of": "2026-07-16T09:30:00+00:00",
+    "btc_price": "63959.47",
+    "fetched_at": "2026-07-16T09:30:09+00:00",
+    "freshness": "cached",
+    "fx_as_of": "2026-07-15",
+    "market_status": "unknown",
+    "mstr_price": "97.47",
+    "price_as_of": "2026-07-15T20:00:00+00:00",
+    "sources": {
+      "BTC": "fetch_strategy_snapshot",
+      "MSTR": "fetch_strategy_snapshot",
+      "USD_IDR": "Bank Indonesia JISDOR"
+    },
+    "usd_idr": "18064",
+    "warnings": []
+  },
+  "portfolio": {
+    "absolute_pl_usd": null,
+    "cash_allocation_pct": null,
+    "cash_idr": null,
+    "cash_idr_equivalent": null,
+    "cash_usd": null,
+    "mstr_allocation_pct": null,
+    "mstr_average_cost": null,
+    "mstr_cost_basis": null,
+    "mstr_market_value": null,
+    "mstr_quantity": null,
+    "net_contributions_usd": null,
+    "realized_pl_usd": null,
+    "setup_required": true,
+    "total_portfolio_idr": null,
+    "total_portfolio_usd": null,
+    "total_return_pct": null,
+    "unrealized_pl_usd": null
+  },
+  "schema_version": 1
+}

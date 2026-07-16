@@ -1,0 +1,11 @@
+{
+  "base_currency": "USD",
+  "challenge_id": "mstr-live-thesis-v1",
+  "display_currency": "IDR",
+  "include_legacy_position": false,
+  "name": "MSTR Live Thesis Challenge",
+  "schema_version": 1,
+  "start_at_utc": null,
+  "starting_event_id": null,
+  "status": "prelaunch"
+}
