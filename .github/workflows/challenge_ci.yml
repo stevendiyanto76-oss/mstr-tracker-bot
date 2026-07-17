@@ -1,0 +1,74 @@
+name: Verify MSTR Challenge
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "portfolio.py"
+      - "challenge.py"
+      - "tests/test_portfolio.py"
+      - "tests/test_challenge.py"
+      - "data/challenge_config.json"
+      - "data/challenge_events.jsonl"
+      - "data/challenge_snapshots.jsonl"
+      - "data/public/challenge_*.json"
+      - ".github/workflows/challenge_ci.yml"
+      - ".github/workflows/portfolio_worker.yml"
+
+concurrency:
+  group: mstr-challenge-verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PUBLIC_SOURCE_COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install runtime dependency
+        run: python -m pip install --disable-pip-version-check requests
+
+      - name: Compile modules
+        run: python -m py_compile portfolio.py challenge.py
+
+      - name: Run regression suite
+        run: python -m unittest discover -s tests -q
+
+      - name: Validate private and public data
+        run: |
+          python portfolio.py validate
+          python portfolio.py export-public
+          python portfolio.py validate-public
+
+      - name: Reject private fields in public exports
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          forbidden = (
+              "private_source",
+              "telegram_update_id",
+              "telegram_message_id",
+              "chat_id",
+              "bot_token",
+              "github_token",
+          )
+          for path in sorted(Path("data/public").glob("challenge_*.json")):
+              content = path.read_text(encoding="utf-8").lower()
+              matches = [item for item in forbidden if item in content]
+              if matches:
+                  raise SystemExit(f"private fields in {path}: {', '.join(matches)}")
+          print("public export privacy scan passed")
+          PY

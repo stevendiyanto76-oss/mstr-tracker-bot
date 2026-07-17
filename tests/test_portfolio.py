@@ -62,6 +62,26 @@ class PortfolioTests(unittest.TestCase):
         }
         portfolio.atomic_write_json(self.base / portfolio.MSTR_ENGINE_STATE_FILE, payload)
 
+    def test_public_documents_sync_directly_to_website(self) -> None:
+        documents = {}
+        for name in portfolio.mstr_challenge.PUBLIC_FILES:
+            payload = {"schema_version": 1, "generated_at": "2026-06-22T00:00:00+00:00", "name": name}
+            portfolio.mstr_challenge.atomic_write_json(portfolio.mstr_challenge.public_path(self.base, name), payload)
+            documents[name] = payload
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {"ok": True}
+        with (
+            patch.dict(os.environ, {
+                "MSTR_WEB_SYNC_URL": "https://example.test/api/mstr/sync",
+                "MSTR_WEB_SYNC_TOKEN": "x" * 40,
+            }),
+            patch.object(portfolio.mstr_challenge, "validate_all"),
+            patch("portfolio.requests.post", return_value=response) as post,
+        ):
+            self.assertEqual(portfolio.sync_public_to_web(self.base), 0)
+        self.assertEqual(post.call_args.kwargs["json"], {"documents": documents})
+
     def events(self) -> list[dict[str, object]]:
         return portfolio.read_ledger(self.base)
 
