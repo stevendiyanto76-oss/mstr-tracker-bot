@@ -194,7 +194,7 @@
       "required": 5
     }
   },
-  "generated_at": "2026-07-17T00:14:29+00:00",
+  "generated_at": "2026-07-17T00:20:27+00:00",
   "limitations": [
     "The original thesis snapshot is not presented as current corporate data.",
     "A public ledger proves recorded history, not a broker position.",
@@ -294,13 +294,13 @@
     "liquidity": "1",
     "risk": "0.41214108873820654"
   },
-  "source_commit_sha": "552c4fed59e817116717e1b0c4a5a0d392875f3d",
+  "source_commit_sha": "a1135cfb32363bd7a0d7f32d0cd3c076dc100e87",
   "valuation": {
     "accumulate_price": "104.16134432257319",
     "adso_m": "406.099",
     "basic_shares_m": "376.424",
     "btc_holdings": "843775",
-    "btc_price": "63734.28",
+    "btc_price": "63772",
     "enterprise_mnav_estimate": "1.1682366216926143",
     "fair_price": "116.70283421856848",
     "hold_price": "129.24432411456377",
