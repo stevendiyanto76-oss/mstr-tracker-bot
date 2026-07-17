@@ -38,14 +38,6 @@
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-07-17T13:05:21+00:00",
-      "id": "OUT-1cd4eff131522276",
-      "text": "MSTR CHALLENGE HISTORY\nCH-000010 | UNDO CH-000007 | ACTIVE\nCH-000009 | UNDO CH-000008 | ACTIVE\nCH-000008 | SELL MSTR 1 @ USD 92.4 | UNDONE\nCH-000007 | SELL MSTR 0.365 @ USD 92.6 | UNDONE\nCH-000006 | BUY MSTR 0.2 @ USD 81.94 | ACTIVE\nCH-000005 | BUY MSTR 0.9 @ USD 82 | ACTIVE\nCH-000004 | UNDO CH-000003 | ACTIVE\nCH-000003 | BUY MSTR 1 @ USD 82 | UNDONE\nCH-000002 | BUY MSTR 1 @ USD 82 | ACTIVE\nCH-000001 | CHALLENGE_INIT USD 172.188 | ACTIVE"
-    }
-  ],
+  "outbox": [],
   "schema_version": 1
 }
