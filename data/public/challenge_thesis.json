@@ -23,7 +23,7 @@
       ],
       "score": "10"
     },
-    "freshness": "cached",
+    "freshness": "fresh",
     "position_action": "ACCUMULATE",
     "thesis_state": "DATA_INSUFFICIENT"
   },
@@ -107,7 +107,7 @@
           "source": "fetch_strategy_snapshot",
           "status": "fail",
           "threshold": "<= 85 USD",
-          "value": "97.47"
+          "value": "94.03"
         },
         {
           "explanation": "Policy reserve divided by modeled annual cash burden.",
@@ -194,7 +194,7 @@
       "required": 5
     }
   },
-  "generated_at": "2026-07-16T12:28:53+00:00",
+  "generated_at": "2026-07-17T00:03:27+00:00",
   "limitations": [
     "The original thesis snapshot is not presented as current corporate data.",
     "A public ledger proves recorded history, not a broker position.",
@@ -294,17 +294,17 @@
     "liquidity": "1",
     "risk": "0.40677495209283693"
   },
-  "source_commit_sha": null,
+  "source_commit_sha": "eb68a1ba578a2cdc39a9f3d8a15fc9d626b25d68",
   "valuation": {
     "accumulate_price": "106.69360117095476",
     "adso_m": "406.099",
     "basic_shares_m": "376.424",
     "btc_holdings": "843775",
-    "btc_price": "63959.47",
+    "btc_price": "63792",
     "enterprise_mnav_estimate": "1.1724346078816157",
     "fair_price": "119.38747246071793",
     "hold_price": "132.08134375048107",
-    "mstr_price": "97.47",
+    "mstr_price": "94.03",
     "reduce_price": "157.46908633000737",
     "strong_buy_price": "81.30585859142845",
     "uncertainty_band": "0.17463461723861864"
