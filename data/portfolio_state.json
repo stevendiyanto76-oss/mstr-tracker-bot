@@ -17,7 +17,7 @@
   },
   "bot_commands_registered": true,
   "jisdor_cache": {
-    "fetched_at_utc": "2026-07-17T13:05:21+00:00",
+    "fetched_at_utc": "2026-07-17T13:52:22+00:00",
     "official_date": "2026-07-17",
     "rate": "17944",
     "source": "Bank Indonesia JISDOR"
@@ -26,15 +26,15 @@
   "last_update_id": 865839507,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-07-17T13:05:00+00:00",
-      "fetched_at_utc": "2026-07-17T13:05:21+00:00",
-      "price_usd": "62935.39",
+      "as_of": "2026-07-17T13:52:00+00:00",
+      "fetched_at_utc": "2026-07-17T13:52:22+00:00",
+      "price_usd": "62757.73",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
-      "as_of": "2026-07-16T20:00:00+00:00",
-      "fetched_at_utc": "2026-07-17T13:05:21+00:00",
-      "price_usd": "94.03",
+      "as_of": "2026-07-17T13:52:00+00:00",
+      "fetched_at_utc": "2026-07-17T13:52:22+00:00",
+      "price_usd": "92.35",
       "source": "fetch_strategy_snapshot"
     }
   },
