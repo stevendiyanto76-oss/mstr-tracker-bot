@@ -17,27 +17,42 @@
   },
   "bot_commands_registered": true,
   "jisdor_cache": {
-    "fetched_at_utc": "2026-07-17T13:52:22+00:00",
+    "fetched_at_utc": "2026-07-17T13:53:51+00:00",
     "official_date": "2026-07-17",
     "rate": "17944",
     "source": "Bank Indonesia JISDOR"
   },
   "last_daily_report_date_wib": "2026-07-16",
-  "last_update_id": 865839507,
+  "last_update_id": 865839509,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-07-17T13:52:00+00:00",
-      "fetched_at_utc": "2026-07-17T13:52:22+00:00",
-      "price_usd": "62757.73",
+      "as_of": "2026-07-17T13:53:00+00:00",
+      "fetched_at_utc": "2026-07-17T13:53:51+00:00",
+      "price_usd": "62774.74",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
-      "as_of": "2026-07-17T13:52:00+00:00",
-      "fetched_at_utc": "2026-07-17T13:52:22+00:00",
-      "price_usd": "92.35",
+      "as_of": "2026-07-17T13:53:00+00:00",
+      "fetched_at_utc": "2026-07-17T13:53:51+00:00",
+      "price_usd": "92.63",
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [],
+  "outbox": [
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-07-17T13:53:51+00:00",
+      "id": "OUT-9d47a564a543c6d1",
+      "text": "MSTR CHALLENGE CASH\nUSD: USD 278.40\nIDR: IDR 0"
+    },
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-07-17T13:53:51+00:00",
+      "id": "OUT-5341d948d98c5573",
+      "text": "MSTR CHALLENGE HISTORY\nCH-000011 | DEPOSIT USD 278.4 | ACTIVE\nCH-000010 | UNDO CH-000007 | ACTIVE\nCH-000009 | UNDO CH-000008 | ACTIVE\nCH-000008 | SELL MSTR 1 @ USD 92.4 | UNDONE\nCH-000007 | SELL MSTR 0.365 @ USD 92.6 | UNDONE\nCH-000006 | BUY MSTR 0.2 @ USD 81.94 | ACTIVE\nCH-000005 | BUY MSTR 0.9 @ USD 82 | ACTIVE\nCH-000004 | UNDO CH-000003 | ACTIVE\nCH-000003 | BUY MSTR 1 @ USD 82 | UNDONE\nCH-000002 | BUY MSTR 1 @ USD 82 | ACTIVE\nCH-000001 | CHALLENGE_INIT USD 172.188 | ACTIVE"
+    }
+  ],
   "schema_version": 1
 }
