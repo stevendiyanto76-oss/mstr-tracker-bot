@@ -31,6 +31,7 @@ STATE_FILE = DATA_DIR / "portfolio_state.json"
 SNAPSHOT_FILE = DATA_DIR / "portfolio_snapshots.jsonl"
 MSTR_ENGINE_STATE_FILE = Path("mstr_decision_engine_v2_state.json")
 WIB = ZoneInfo("Asia/Jakarta")
+NEW_YORK = ZoneInfo("America/New_York")
 UTC = timezone.utc
 TELEGRAM_API = "https://api.telegram.org/bot{token}/{method}"
 BI_JISDOR_URL = "https://www.bi.go.id/biwebservice/wskursbi.asmx/getSubKursJisdor1"
@@ -1467,6 +1468,26 @@ def source_datetime_to_iso(value: Any) -> str | None:
     return str(value)
 
 
+def us_equity_market_status(current_time: datetime, price_as_of: str | None = None) -> str:
+    local_time = ensure_aware_utc(current_time).astimezone(NEW_YORK)
+    if local_time.weekday() >= 5:
+        return "closed"
+    session_open = local_time.replace(hour=9, minute=30, second=0, microsecond=0)
+    session_close = local_time.replace(hour=16, minute=0, second=0, microsecond=0)
+    if not session_open <= local_time < session_close:
+        return "closed"
+    if price_as_of:
+        try:
+            source_time = datetime.fromisoformat(price_as_of.replace("Z", "+00:00"))
+            if source_time.tzinfo is None:
+                source_time = source_time.replace(tzinfo=UTC)
+            if source_time.astimezone(NEW_YORK).date() < local_time.date():
+                return "closed"
+        except ValueError:
+            pass
+    return "open"
+
+
 def decimal_from_market_value(value: Any, field_name: str) -> Decimal:
     try:
         decimal_value = Decimal(str(value))
@@ -2348,7 +2369,7 @@ def to_challenge_market_inputs(
         fx_source="Bank Indonesia JISDOR" if jisdor.rate is not None else None,
         fetched_at=iso_seconds(current_time),
         freshness=freshness,
-        market_status="unknown",
+        market_status=us_equity_market_status(current_time, market.as_of.get("MSTR")),
         warnings=tuple(warnings),
     )
 

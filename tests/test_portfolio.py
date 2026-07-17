@@ -62,6 +62,11 @@ class PortfolioTests(unittest.TestCase):
         }
         portfolio.atomic_write_json(self.base / portfolio.MSTR_ENGINE_STATE_FILE, payload)
 
+    def test_us_equity_market_status_uses_new_york_session(self) -> None:
+        self.assertEqual("open", portfolio.us_equity_market_status(dt(2026, 6, 22, 14, 0), "2026-06-22T14:00:00+00:00"))
+        self.assertEqual("closed", portfolio.us_equity_market_status(dt(2026, 6, 22, 21, 0), "2026-06-22T20:00:00+00:00"))
+        self.assertEqual("closed", portfolio.us_equity_market_status(dt(2026, 6, 22, 14, 0), "2026-06-19T20:00:00+00:00"))
+
     def test_public_documents_sync_directly_to_website(self) -> None:
         documents = {}
         for name in portfolio.mstr_challenge.PUBLIC_FILES:
