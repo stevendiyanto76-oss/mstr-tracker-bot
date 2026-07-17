@@ -194,7 +194,7 @@
       "required": 5
     }
   },
-  "generated_at": "2026-07-17T00:11:22+00:00",
+  "generated_at": "2026-07-17T00:11:50+00:00",
   "limitations": [
     "The original thesis snapshot is not presented as current corporate data.",
     "A public ledger proves recorded history, not a broker position.",
@@ -300,7 +300,7 @@
     "adso_m": "406.099",
     "basic_shares_m": "376.424",
     "btc_holdings": "843775",
-    "btc_price": "63753.76",
+    "btc_price": "63769",
     "enterprise_mnav_estimate": "1.1682366216926143",
     "fair_price": "116.70283421856848",
     "hold_price": "129.24432411456377",
