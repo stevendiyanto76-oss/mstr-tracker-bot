@@ -17,27 +17,35 @@
   },
   "bot_commands_registered": true,
   "jisdor_cache": {
-    "fetched_at_utc": "2026-07-17T13:02:06+00:00",
+    "fetched_at_utc": "2026-07-17T13:03:12+00:00",
     "official_date": "2026-07-17",
     "rate": "17944",
     "source": "Bank Indonesia JISDOR"
   },
   "last_daily_report_date_wib": "2026-07-16",
-  "last_update_id": 865839505,
+  "last_update_id": 865839506,
   "market_cache": {
     "BTC": {
-      "as_of": "2026-07-17T13:01:00+00:00",
-      "fetched_at_utc": "2026-07-17T13:02:06+00:00",
-      "price_usd": "63060.7",
+      "as_of": "2026-07-17T13:03:00+00:00",
+      "fetched_at_utc": "2026-07-17T13:03:12+00:00",
+      "price_usd": "62946.4",
       "source": "fetch_strategy_snapshot"
     },
     "MSTR": {
       "as_of": "2026-07-16T20:00:00+00:00",
-      "fetched_at_utc": "2026-07-17T13:02:06+00:00",
+      "fetched_at_utc": "2026-07-17T13:03:12+00:00",
       "price_usd": "94.03",
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [],
+  "outbox": [
+    {
+      "category": "reply",
+      "chat_id": "7061999032",
+      "created_at_utc": "2026-07-17T13:03:12+00:00",
+      "id": "OUT-c271279399318909",
+      "text": "MSTR CHALLENGE CASH\nUSD: USD 0.00\nIDR: IDR 0"
+    }
+  ],
   "schema_version": 1
 }
