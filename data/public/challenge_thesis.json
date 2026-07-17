@@ -6,11 +6,15 @@
     "btc_per_basic_share": "0.002241554736148598389050645017320893460566",
     "btc_per_basic_share_change_pct": "-1.27781437952946677151297473062291458569",
     "comparison_as_of": "2026-07-12T22:21:57+00:00",
-    "disclosure_observations": 2,
+    "disclosure_observations": 4,
     "prior_btc_per_adso": "0.002102635474240830911999681031861926667232",
     "prior_btc_per_basic_share": "0.002270568385475251201515551082574929900381",
     "residual_adso_trend": "deteriorating",
-    "three_update_test": "insufficient_data"
+    "three_update_test": "fail"
+  },
+  "bitcoin_regime": {
+    "change_pct": "6.3",
+    "state": "RECOVERY"
   },
   "current": {
     "as_of": "2026-07-16T22:28:16+00:00",
@@ -18,14 +22,14 @@
       "max": "10",
       "reasons": [
         "8 of 8 core current inputs are available",
-        "2 comparable corporate disclosure observations are available",
-        "preferred-yield trend is not yet available"
+        "4 comparable corporate disclosure observations are available",
+        "preferred cash yield is 11.4%"
       ],
       "score": "10"
     },
     "freshness": "fresh",
-    "position_action": "ACCUMULATE",
-    "thesis_state": "DATA_INSUFFICIENT"
+    "position_action": "REVIEW",
+    "thesis_state": "INVALIDATED"
   },
   "document": {
     "author": "Steven Diyanto",
@@ -40,12 +44,12 @@
     "version": "1.0"
   },
   "financing": {
-    "condition": "data_insufficient",
+    "condition": "STABLE",
     "debt_b": "6.754",
-    "funding_stress": "not_assessed",
-    "issuance_economics": "not_assessed",
+    "funding_stress": "LOW",
+    "issuance_economics": "ACCRETIVE",
     "preferred_notional_b": "15.464",
-    "preferred_yields": null
+    "preferred_yields": "11.4"
   },
   "gates": {
     "invalidation": {
@@ -55,48 +59,53 @@
           "name": "Reserve below 12 months",
           "passed": false,
           "source": "decision engine fingerprint",
-          "status": "fail",
+          "status": "pass",
           "threshold": "< 12 months",
+          "triggered": false,
           "value": "20.422182"
         },
         {
-          "explanation": "Requires classified disclosure history.",
+          "explanation": "Observed BTC balance reductions across comparable disclosures.",
           "name": "Obligation-funded BTC sales",
-          "passed": null,
-          "source": "corporate disclosures",
-          "status": "unknown",
+          "passed": false,
+          "source": "corporate disclosure history",
+          "status": "pass",
           "threshold": "repeated sales",
-          "value": "not tracked"
+          "triggered": false,
+          "value": "1 REDUCTION"
         },
         {
-          "explanation": "Requires a multi-disclosure residual-value series.",
+          "explanation": "Change in the residual enterprise mNAV series.",
           "name": "Residual value damage",
-          "passed": null,
+          "passed": false,
           "source": "multi-disclosure trend",
-          "status": "unknown",
+          "status": "pass",
           "threshold": "structural deterioration",
-          "value": "not assessed"
+          "triggered": false,
+          "value": "0.68%"
         },
         {
-          "explanation": "Requires at least three comparable observations.",
+          "explanation": "Latest comparable BTC per ADSO intervals.",
           "name": "BTC per ADSO deterioration",
-          "passed": null,
+          "passed": true,
           "source": "multi-disclosure trend",
-          "status": "unknown",
+          "status": "fail",
           "threshold": "repeated deterioration",
-          "value": "0.002077756901642210396972166885414640272446"
+          "triggered": true,
+          "value": "2 DECLINES"
         },
         {
-          "explanation": "Requires terms and cash-burden comparison.",
+          "explanation": "Compares funded obligations and reserve coverage with the prior disclosure.",
           "name": "Destructive refinancing",
-          "passed": null,
-          "source": "financing disclosures",
-          "status": "unknown",
+          "passed": false,
+          "source": "financing history",
+          "status": "pass",
           "threshold": "permanent burden increase without compensation",
-          "value": "not assessed"
+          "triggered": false,
+          "value": "CLEAR"
         }
       ],
-      "triggered": false
+      "triggered": true
     },
     "starter": {
       "checks": [
@@ -119,7 +128,7 @@
           "value": "20.422182"
         },
         {
-          "explanation": "Compared with 2026-07-12T22:21:57+00:00",
+          "explanation": "Compared with the previous comparable disclosure.",
           "name": "BTC per ADSO",
           "passed": false,
           "source": "corporate disclosure history",
@@ -144,20 +153,20 @@
     "strategic": {
       "checks": [
         {
-          "explanation": "Enterprise mNAV is available; a complete residual-value bridge is still required.",
+          "explanation": "Compares current MSTR price with the dynamic fair price and enterprise mNAV.",
           "name": "Supportive valuation",
-          "passed": null,
+          "passed": true,
           "source": "dynamic valuation bridge",
-          "status": "unknown",
+          "status": "pass",
           "threshold": "supportive residual valuation",
           "value": "1.1682366216926143x mNAV"
         },
         {
-          "explanation": "2 comparable observations are available.",
+          "explanation": "4 comparable observations are available.",
           "name": "BTC per ADSO disclosures",
-          "passed": null,
+          "passed": false,
           "source": "corporate disclosure history",
-          "status": "unknown",
+          "status": "fail",
           "threshold": "3 non-deteriorating updates",
           "value": "0.002077756901642210396972166885414640272446"
         },
@@ -171,40 +180,83 @@
           "value": "20.422182"
         },
         {
-          "explanation": "Current preferred yields and a trend series are required.",
+          "explanation": "Blended annual preferred cash burden divided by preferred notional.",
           "name": "Preferred yields",
-          "passed": null,
-          "source": "preferred market data",
-          "status": "unknown",
+          "passed": true,
+          "source": "preferred cash burden",
+          "status": "pass",
           "threshold": "normalizing",
-          "value": "not tracked"
+          "value": "11.4%"
         },
         {
-          "explanation": "Unknown invalidation inputs cannot be treated as a pass.",
+          "explanation": "Aggregates every modeled invalidation trigger.",
           "name": "Invalidation",
-          "passed": null,
+          "passed": false,
           "source": "invalidation monitor",
-          "status": "unknown",
+          "status": "fail",
           "threshold": "no invalidation trigger",
-          "value": "not proven"
+          "value": "TRIGGERED"
         }
       ],
       "eligible": false,
-      "passed": 1,
+      "passed": 3,
       "required": 5
     }
   },
-  "generated_at": "2026-07-17T00:25:18+00:00",
+  "generated_at": "2026-07-17T00:57:16+00:00",
   "limitations": [
     "The original thesis snapshot is not presented as current corporate data.",
     "A public ledger proves recorded history, not a broker position.",
-    "Unknown gate inputs block eligibility rather than being treated as passes."
+    "Corporate metrics use the latest available disclosure until a newer disclosure is recorded."
   ],
   "liquidity": {
-    "debt_schedule": null,
+    "debt_schedule": [
+      {
+        "amount_b": "1.01",
+        "effective_date": "2027-09-16",
+        "maturity_date": "2028-09-16",
+        "put_date": "2027-09-16"
+      },
+      {
+        "amount_b": "2",
+        "effective_date": "2028-03-02",
+        "maturity_date": "2030-03-02",
+        "put_date": "2028-03-02"
+      },
+      {
+        "amount_b": "1.5",
+        "effective_date": "2028-06-02",
+        "maturity_date": "2029-12-02",
+        "put_date": "2028-06-02"
+      },
+      {
+        "amount_b": "0.60375",
+        "effective_date": "2028-09-16",
+        "maturity_date": "2031-03-16",
+        "put_date": "2028-09-16"
+      },
+      {
+        "amount_b": "0.8",
+        "effective_date": "2028-09-16",
+        "maturity_date": "2030-03-16",
+        "put_date": "2028-09-16"
+      },
+      {
+        "amount_b": "0.8",
+        "effective_date": "2029-06-16",
+        "maturity_date": "2032-06-16",
+        "put_date": "2029-06-16"
+      }
+    ],
     "liquidity_score": "1",
     "reserve_coverage_months": "20.422182",
     "usd_reserve_b": "2.999"
+  },
+  "methodology": {
+    "bitcoin_regime": "available challenge BTC history from first observation to current price",
+    "funding_stress": "reserve coverage and liquidity score",
+    "preferred_yield": "annual preferred cash burden divided by preferred notional",
+    "supportive_valuation": "market price at or below dynamic fair price with enterprise mNAV at or below 1.5x"
   },
   "original_rules": {
     "hard_cap": {
@@ -294,7 +346,7 @@
     "liquidity": "1",
     "risk": "0.41214108873820654"
   },
-  "source_commit_sha": "e4a39fe66c83ba166ea2d752b2fb9c1ecd1162ce",
+  "source_commit_sha": null,
   "valuation": {
     "accumulate_price": "104.16134432257319",
     "adso_m": "406.099",

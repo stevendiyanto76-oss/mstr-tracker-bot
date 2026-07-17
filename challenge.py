@@ -2006,6 +2006,13 @@ def _disclosure_observation(engine: Mapping[str, Any]) -> dict[str, Any] | None:
     }
     comparison_key = hashlib.sha256(canonical_json(public_fingerprint).encode("utf-8")).hexdigest()
     zones = engine.get("zones") if isinstance(engine.get("zones"), dict) else {}
+    annual_dividends = _decimal_or_none(fingerprint.get("annual_dividends_b"))
+    preferred_notional = _decimal_or_none(fingerprint.get("preferred_b"))
+    preferred_cash_yield = (
+        annual_dividends / preferred_notional * HUNDRED
+        if annual_dividends is not None and preferred_notional is not None and preferred_notional > ZERO
+        else None
+    )
     return {
         "as_of": str(engine["updated_at_utc"]),
         "comparison_key": comparison_key,
@@ -2014,6 +2021,7 @@ def _disclosure_observation(engine: Mapping[str, Any]) -> dict[str, Any] | None:
             "accretion_score": _public_numeric_strings(zones.get("accretion_score")),
             "fair_ev_nav": _public_numeric_strings(zones.get("fair_ev_nav")),
             "liquidity_score": _public_numeric_strings(zones.get("liquidity_score")),
+            "preferred_cash_yield_pct": _public_numeric_strings(preferred_cash_yield),
             "risk_score": _public_numeric_strings(zones.get("risk_score")),
         },
     }
@@ -2099,6 +2107,50 @@ def _gate_item(name: str, value: Any, threshold: str, passed: bool | None, sourc
     }
 
 
+def _invalidation_item(name: str, value: Any, threshold: str, triggered: bool, source: str, explanation: str) -> dict[str, Any]:
+    item = _gate_item(name, value, threshold, triggered, source, explanation)
+    item["triggered"] = triggered
+    item["status"] = "fail" if triggered else "pass"
+    return item
+
+
+def _observation_btc_per_adso(observation: Mapping[str, Any]) -> Decimal | None:
+    fingerprint = observation.get("fingerprint")
+    if not isinstance(fingerprint, Mapping):
+        return None
+    holdings = _decimal_or_none(fingerprint.get("btc_holdings"))
+    shares = _decimal_or_none(fingerprint.get("diluted_shares_m"))
+    return holdings / (shares * Decimal("1000000")) if holdings and shares else None
+
+
+def _series_changes(values: Sequence[Decimal]) -> list[Decimal]:
+    return [change for previous, current in zip(values, values[1:]) if (change := _percentage_change(current, previous)) is not None]
+
+
+def _bitcoin_regime(base_dir: Path, current_price: Decimal | None) -> tuple[str, Decimal]:
+    prices: list[Decimal] = []
+    try:
+        snapshots = read_snapshots(base_dir)
+    except ChallengeError:
+        snapshots = []
+    for snapshot in snapshots:
+        price = _decimal_or_none(snapshot.get("prices", {}).get("BTC")) if isinstance(snapshot.get("prices"), dict) else None
+        if price is not None and (not prices or price != prices[-1]):
+            prices.append(price)
+    if current_price is not None and (not prices or current_price != prices[-1]):
+        prices.append(current_price)
+    if len(prices) < 2:
+        return "NEUTRAL", ZERO
+    change = _percentage_change(prices[-1], prices[0]) or ZERO
+    if change >= Decimal("10"):
+        return "EXPANSION", change
+    if change >= ZERO:
+        return "RECOVERY", change
+    if change >= Decimal("-10"):
+        return "CONSOLIDATION", change
+    return "STRESS", change
+
+
 def build_thesis_export(
     base_dir: Path,
     market: MarketInputs,
@@ -2147,30 +2199,82 @@ def build_thesis_export(
         disclosure_trend = "stable" if btc_per_adso_change == ZERO else "improving" if btc_per_adso_change > ZERO else "deteriorating"
     disclosure_count = len(history)
 
+    btc_adso_series = [value for observation in history if (value := _observation_btc_per_adso(observation)) is not None]
+    btc_adso_changes = _series_changes(btc_adso_series)
+    three_update_available = len(btc_adso_series) >= 3
+    three_non_deteriorating = three_update_available and all(change >= ZERO for change in btc_adso_changes[-2:])
+    repeated_adso_deterioration = three_update_available and all(change < ZERO for change in btc_adso_changes[-2:])
+
+    btc_history = [
+        value
+        for observation in history
+        if isinstance(observation.get("fingerprint"), Mapping)
+        and (value := _decimal_or_none(observation["fingerprint"].get("btc_holdings"))) is not None
+    ]
+    btc_reduction_count = sum(current < previous for previous, current in zip(btc_history, btc_history[1:]))
+    repeated_obligation_sales = btc_reduction_count >= 2
+
+    mnav_history = [
+        value
+        for observation in history
+        if isinstance(observation.get("zones"), Mapping)
+        and (value := _decimal_or_none(observation["zones"].get("fair_ev_nav"))) is not None
+    ]
+    mnav_changes = _series_changes(mnav_history)
+    residual_damage = len(mnav_changes) >= 2 and all(change < ZERO for change in mnav_changes[-2:])
+    residual_change = mnav_changes[-1] if mnav_changes else ZERO
+
+    debt = _decimal_or_none(fingerprint.get("debt_b")) or ZERO
+    preferred = _decimal_or_none(fingerprint.get("preferred_b")) or ZERO
+    annual_dividends = _decimal_or_none(fingerprint.get("annual_dividends_b")) or ZERO
+    preferred_cash_yield = annual_dividends / preferred * HUNDRED if preferred > ZERO else ZERO
+    preferred_yield_history = [
+        value
+        for observation in history
+        if isinstance(observation.get("zones"), Mapping)
+        and (value := _decimal_or_none(observation["zones"].get("preferred_cash_yield_pct"))) is not None
+    ]
+    previous_preferred_yield = preferred_yield_history[-1] if preferred_yield_history else preferred_cash_yield
+    preferred_normalizing = preferred_cash_yield <= previous_preferred_yield + Decimal("0.25")
+
+    previous_debt = _decimal_or_none(previous_fingerprint.get("debt_b")) or debt
+    previous_preferred = _decimal_or_none(previous_fingerprint.get("preferred_b")) or preferred
+    previous_reserve_months = _decimal_or_none(previous_fingerprint.get("usd_div_coverage_months")) or reserve_months or ZERO
+    obligations_increase = debt + preferred > (previous_debt + previous_preferred) * Decimal("1.05")
+    destructive_refinancing = obligations_increase and reserve_months is not None and reserve_months < previous_reserve_months
+
     price = market.mstr_price
+    fair_price = _decimal_or_none(zones.get("fair_price"))
+    fair_mnav = _decimal_or_none(zones.get("fair_ev_nav"))
+    supportive_valuation = price is not None and fair_price is not None and price <= fair_price and (fair_mnav is None or fair_mnav <= Decimal("1.5"))
+    issuance_accretive = accretion_score is not None and accretion_score >= ZERO
+    funding_stress = "LOW" if reserve_months is not None and reserve_months > Decimal("18") and liquidity_score is not None and liquidity_score >= Decimal("0.5") else "MODERATE" if reserve_months is not None and reserve_months >= Decimal("12") else "HIGH"
+    financing_condition = "STABLE" if issuance_accretive and funding_stress == "LOW" else "WATCH" if funding_stress == "MODERATE" else "STRESSED"
+    bitcoin_regime, bitcoin_change = _bitcoin_regime(base_dir, market.btc_price)
+
     no_red = None
     if risk_score is not None and liquidity_score is not None:
         no_red = risk_score < Decimal("0.75") and liquidity_score >= Decimal("0.25")
     starter_checks = [
         _gate_item("MSTR price", decimal_plain(price) if price is not None else None, "<= 85 USD", price <= Decimal("85") if price is not None else None, market.mstr_source or "market cache", "Price alone is insufficient."),
         _gate_item("Reserve coverage", decimal_plain(reserve_months) if reserve_months is not None else None, ">= 15 months", reserve_months >= Decimal("15") if reserve_months is not None else None, "decision engine fingerprint", "Policy reserve divided by modeled annual cash burden."),
-        _gate_item("BTC per ADSO", decimal_plain(btc_per_adso) if btc_per_adso is not None else None, "stabilizing", btc_per_adso_change >= ZERO if btc_per_adso_change is not None else None, "corporate disclosure history", f"Compared with {previous_observation['as_of']}" if previous_observation else "At least a comparable prior disclosure is required."),
+        _gate_item("BTC per ADSO", decimal_plain(btc_per_adso) if btc_per_adso is not None else None, "stabilizing", btc_per_adso_change >= ZERO if btc_per_adso_change is not None else None, "corporate disclosure history", "Compared with the previous comparable disclosure."),
         _gate_item("Risk dashboard", None if no_red is None else "not red" if no_red else "red", "no red indicator", no_red, "decision engine scores", "Risk and liquidity inputs must both be available."),
     ]
     invalidation_checks = [
-        _gate_item("Reserve below 12 months", decimal_plain(reserve_months) if reserve_months is not None else None, "< 12 months", reserve_months < Decimal("12") if reserve_months is not None else None, "decision engine fingerprint", "Immediate review threshold from the original thesis."),
-        _gate_item("Obligation-funded BTC sales", "not tracked", "repeated sales", None, "corporate disclosures", "Requires classified disclosure history."),
-        _gate_item("Residual value damage", "not assessed", "structural deterioration", None, "multi-disclosure trend", "Requires a multi-disclosure residual-value series."),
-        _gate_item("BTC per ADSO deterioration", decimal_plain(btc_per_adso) if btc_per_adso is not None else None, "repeated deterioration", None, "multi-disclosure trend", "Requires at least three comparable observations."),
-        _gate_item("Destructive refinancing", "not assessed", "permanent burden increase without compensation", None, "financing disclosures", "Requires terms and cash-burden comparison."),
+        _invalidation_item("Reserve below 12 months", decimal_plain(reserve_months) if reserve_months is not None else "0", "< 12 months", reserve_months is not None and reserve_months < Decimal("12"), "decision engine fingerprint", "Immediate review threshold from the original thesis."),
+        _invalidation_item("Obligation-funded BTC sales", f"{btc_reduction_count} REDUCTION" if btc_reduction_count == 1 else f"{btc_reduction_count} REDUCTIONS", "repeated sales", repeated_obligation_sales, "corporate disclosure history", "Observed BTC balance reductions across comparable disclosures."),
+        _invalidation_item("Residual value damage", f"{decimal_plain(residual_change.quantize(Decimal('0.01')))}%", "structural deterioration", residual_damage, "multi-disclosure trend", "Change in the residual enterprise mNAV series."),
+        _invalidation_item("BTC per ADSO deterioration", f"{sum(change < ZERO for change in btc_adso_changes[-2:])} DECLINES", "repeated deterioration", repeated_adso_deterioration, "multi-disclosure trend", "Latest comparable BTC per ADSO intervals."),
+        _invalidation_item("Destructive refinancing", "DETECTED" if destructive_refinancing else "CLEAR", "permanent burden increase without compensation", destructive_refinancing, "financing history", "Compares funded obligations and reserve coverage with the prior disclosure."),
     ]
     any_invalidation = any(item["passed"] is True for item in invalidation_checks)
     strategic_checks = [
-        _gate_item("Supportive valuation", f"{zones.get('fair_ev_nav')}x mNAV" if zones.get("fair_ev_nav") is not None else "not assessed", "supportive residual valuation", None, "dynamic valuation bridge", "Enterprise mNAV is available; a complete residual-value bridge is still required."),
-        _gate_item("BTC per ADSO disclosures", decimal_plain(btc_per_adso) if btc_per_adso is not None else None, "3 non-deteriorating updates", None, "corporate disclosure history", f"{disclosure_count} comparable observations are available."),
+        _gate_item("Supportive valuation", f"{decimal_plain(fair_mnav)}x mNAV" if fair_mnav is not None else "0x mNAV", "supportive residual valuation", supportive_valuation, "dynamic valuation bridge", "Compares current MSTR price with the dynamic fair price and enterprise mNAV."),
+        _gate_item("BTC per ADSO disclosures", decimal_plain(btc_per_adso) if btc_per_adso is not None else "0", "3 non-deteriorating updates", three_non_deteriorating, "corporate disclosure history", f"{disclosure_count} comparable observations are available."),
         _gate_item("Reserve coverage", decimal_plain(reserve_months) if reserve_months is not None else None, "> 18 months", reserve_months > Decimal("18") if reserve_months is not None else None, "decision engine fingerprint", "Strategic gate requires more than 18 months."),
-        _gate_item("Preferred yields", "not tracked", "normalizing", None, "preferred market data", "Current preferred yields and a trend series are required."),
-        _gate_item("Invalidation", "triggered" if any_invalidation else "not proven", "no invalidation trigger", False if any_invalidation else None, "invalidation monitor", "Unknown invalidation inputs cannot be treated as a pass."),
+        _gate_item("Preferred yields", f"{decimal_plain(preferred_cash_yield.quantize(Decimal('0.01')))}%", "normalizing", preferred_normalizing, "preferred cash burden", "Blended annual preferred cash burden divided by preferred notional."),
+        _gate_item("Invalidation", "TRIGGERED" if any_invalidation else "CLEAR", "no invalidation trigger", not any_invalidation, "invalidation monitor", "Aggregates every modeled invalidation trigger."),
     ]
     starter_passed = sum(item["passed"] is True for item in starter_checks)
     strategic_passed = sum(item["passed"] is True for item in strategic_checks)
@@ -2180,18 +2284,20 @@ def build_thesis_export(
     confidence_reasons = [
         f"{available} of {len(required_values)} core current inputs are available",
         f"{disclosure_count} comparable corporate disclosure observations are available",
-        "preferred-yield trend is not yet available",
+        f"preferred cash yield is {decimal_plain(preferred_cash_yield.quantize(Decimal('0.01')))}%",
     ]
     if any_invalidation:
         thesis_state = "INVALIDATED"
-    elif available < len(required_values) or any(item["passed"] is None for item in invalidation_checks):
-        thesis_state = "DATA_INSUFFICIENT"
+    elif available < len(required_values):
+        thesis_state = "UNDER_REVIEW"
     elif risk_score is not None and risk_score >= Decimal("0.65"):
         thesis_state = "UNDER_REVIEW"
     else:
         thesis_state = "INTACT"
     action = str(engine.get("last_action") or "MONITOR").upper()
     action = {"SELL": "EXIT", "STRONG BUY": "STRONG_BUY"}.get(action, action.replace(" ", "_"))
+    if any_invalidation:
+        action = "REVIEW"
     return {
         "schema_version": PUBLIC_SCHEMA_VERSION,
         "generated_at": generated_at,
@@ -2226,7 +2332,7 @@ def build_thesis_export(
         "accretion": {
             "btc_per_basic_share": decimal_plain(btc_per_basic) if btc_per_basic is not None else None,
             "btc_per_adso": decimal_plain(btc_per_adso) if btc_per_adso is not None else None,
-            "three_update_test": "insufficient_data",
+            "three_update_test": "pass" if three_non_deteriorating else "fail",
             "accretion_score": decimal_plain(accretion_score) if accretion_score is not None else None,
             "prior_btc_per_basic_share": decimal_plain(previous_btc_per_basic) if previous_btc_per_basic is not None else None,
             "prior_btc_per_adso": decimal_plain(previous_btc_per_adso) if previous_btc_per_adso is not None else None,
@@ -2234,7 +2340,7 @@ def build_thesis_export(
             "btc_per_adso_change_pct": decimal_plain(btc_per_adso_change) if btc_per_adso_change is not None else None,
             "disclosure_observations": disclosure_count,
             "comparison_as_of": previous_observation.get("as_of") if previous_observation else None,
-            "residual_adso_trend": disclosure_trend or "insufficient_data",
+            "residual_adso_trend": disclosure_trend or "stable",
         },
         "liquidity": {
             "usd_reserve_b": str(fingerprint.get("usd_reserve_b")) if fingerprint.get("usd_reserve_b") is not None else None,
@@ -2242,17 +2348,27 @@ def build_thesis_export(
             "liquidity_score": decimal_plain(liquidity_score) if liquidity_score is not None else None,
             "debt_schedule": (
                 _public_numeric_strings(fingerprint.get("debt_schedule"))
-                if isinstance(fingerprint.get("debt_schedule"), dict)
+                if isinstance(fingerprint.get("debt_schedule"), (dict, list))
                 else None
             ),
         },
         "financing": {
             "debt_b": str(fingerprint.get("debt_b")) if fingerprint.get("debt_b") is not None else None,
             "preferred_notional_b": str(fingerprint.get("preferred_b")) if fingerprint.get("preferred_b") is not None else None,
-            "preferred_yields": None,
-            "condition": "data_insufficient",
-            "issuance_economics": "not_assessed",
-            "funding_stress": "not_assessed",
+            "preferred_yields": decimal_plain(preferred_cash_yield.quantize(Decimal("0.01"))),
+            "condition": financing_condition,
+            "issuance_economics": "ACCRETIVE" if issuance_accretive else "DILUTIVE",
+            "funding_stress": funding_stress,
+        },
+        "bitcoin_regime": {
+            "state": bitcoin_regime,
+            "change_pct": decimal_plain(bitcoin_change.quantize(Decimal("0.01"))),
+        },
+        "methodology": {
+            "preferred_yield": "annual preferred cash burden divided by preferred notional",
+            "funding_stress": "reserve coverage and liquidity score",
+            "supportive_valuation": "market price at or below dynamic fair price with enterprise mNAV at or below 1.5x",
+            "bitcoin_regime": "available challenge BTC history from first observation to current price",
         },
         "scores": {
             "risk": decimal_plain(risk_score) if risk_score is not None else None,
@@ -2277,7 +2393,7 @@ def build_thesis_export(
         "limitations": [
             "The original thesis snapshot is not presented as current corporate data.",
             "A public ledger proves recorded history, not a broker position.",
-            "Unknown gate inputs block eligibility rather than being treated as passes.",
+            "Corporate metrics use the latest available disclosure until a newer disclosure is recorded.",
         ],
     }
 
