@@ -13,7 +13,7 @@
     "three_update_test": "fail"
   },
   "bitcoin_regime": {
-    "change_pct": "4.7",
+    "change_pct": "5.28",
     "state": "RECOVERY"
   },
   "current": {
@@ -116,7 +116,7 @@
           "source": "fetch_strategy_snapshot",
           "status": "fail",
           "threshold": "<= 85 USD",
-          "value": "92.63"
+          "value": "93.135"
         },
         {
           "explanation": "Policy reserve divided by modeled annual cash burden.",
@@ -203,7 +203,7 @@
       "required": 5
     }
   },
-  "generated_at": "2026-07-17T13:53:51+00:00",
+  "generated_at": "2026-07-17T14:04:49+00:00",
   "limitations": [
     "The original thesis snapshot is not presented as current corporate data.",
     "A public ledger proves recorded history, not a broker position.",
@@ -352,11 +352,11 @@
     "adso_m": "406.099",
     "basic_shares_m": "376.424",
     "btc_holdings": "843775",
-    "btc_price": "62774.74",
+    "btc_price": "63121.58",
     "enterprise_mnav_estimate": "1.1643518367473895",
     "fair_price": "113.71090301989703",
     "hold_price": "126.16348386058633",
-    "mstr_price": "92.63",
+    "mstr_price": "93.135",
     "reduce_price": "151.06864554196503",
     "strong_buy_price": "76.35316049782902",
     "uncertainty_band": "0.17599549244078644"
