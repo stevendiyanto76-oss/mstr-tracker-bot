@@ -55,6 +55,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      # A queued schedule/manual run may have been created from an older main SHA.
+      # Refresh only after this workflow has acquired its concurrency slot.
+      - name: Refresh checkout to latest main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git reset --hard origin/main
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -111,9 +120,6 @@ jobs:
                   raise SystemExit(f"private fields in {path}: {', '.join(matches)}")
           PY
 
-      - name: Publish challenge data directly to website
-        run: python portfolio.py sync-public
-
       - name: Persist portfolio state before flush
         run: |
           set -euo pipefail
@@ -136,6 +142,10 @@ jobs:
             for attempt in 1 2 3 4 5; do
               git fetch origin main
               git reset --hard origin/main
+
+              python tools/check_append_only_prefix.py \
+                data/challenge_events.jsonl \
+                /tmp/portfolio-data/data/challenge_events.jsonl
 
               mkdir -p data
               cp /tmp/portfolio-data/data/transactions.jsonl data/transactions.jsonl
@@ -176,6 +186,10 @@ jobs:
 
           persist_portfolio_data "chore: persist portfolio state [skip ci]"
 
+      # Publish only after the exact ledger/public documents have been committed.
+      - name: Publish challenge data directly to website
+        run: python portfolio.py sync-public
+
       - name: Flush Telegram outbox
         id: flush
         continue-on-error: true
@@ -185,64 +199,32 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
-          mkdir -p /tmp/portfolio-data/data
-          cp data/transactions.jsonl /tmp/portfolio-data/data/transactions.jsonl
-          cp data/portfolio_state.json /tmp/portfolio-data/data/portfolio_state.json
-          cp data/portfolio_snapshots.jsonl /tmp/portfolio-data/data/portfolio_snapshots.jsonl
-          cp data/challenge_config.json /tmp/portfolio-data/data/challenge_config.json
-          cp data/challenge_events.jsonl /tmp/portfolio-data/data/challenge_events.jsonl
-          cp data/challenge_snapshots.jsonl /tmp/portfolio-data/data/challenge_snapshots.jsonl
-          cp data/mstr_disclosure_history.jsonl /tmp/portfolio-data/data/mstr_disclosure_history.jsonl
-          mkdir -p /tmp/portfolio-data/data/public
-          cp data/public/challenge_*.json /tmp/portfolio-data/data/public/
+          cp data/portfolio_state.json /tmp/portfolio-state-after-flush.json
 
-          persist_portfolio_data() {
-            local message="$1"
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-            for attempt in 1 2 3 4 5; do
-              git fetch origin main
-              git reset --hard origin/main
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
 
-              mkdir -p data
-              cp /tmp/portfolio-data/data/transactions.jsonl data/transactions.jsonl
-              cp /tmp/portfolio-data/data/portfolio_state.json data/portfolio_state.json
-              cp /tmp/portfolio-data/data/portfolio_snapshots.jsonl data/portfolio_snapshots.jsonl
-              cp /tmp/portfolio-data/data/challenge_config.json data/challenge_config.json
-              cp /tmp/portfolio-data/data/challenge_events.jsonl data/challenge_events.jsonl
-              cp /tmp/portfolio-data/data/challenge_snapshots.jsonl data/challenge_snapshots.jsonl
-              cp /tmp/portfolio-data/data/mstr_disclosure_history.jsonl data/mstr_disclosure_history.jsonl
-              mkdir -p data/public
-              cp /tmp/portfolio-data/data/public/challenge_*.json data/public/
+            cp /tmp/portfolio-state-after-flush.json data/portfolio_state.json
+            git add data/portfolio_state.json
 
-              git add \
-                data/transactions.jsonl \
-                data/portfolio_state.json \
-                data/portfolio_snapshots.jsonl \
-                data/challenge_config.json \
-                data/challenge_events.jsonl \
-                data/challenge_snapshots.jsonl \
-                data/mstr_disclosure_history.jsonl \
-                data/public/challenge_*.json
+            if git diff --cached --quiet; then
+              exit 0
+            fi
 
-              if git diff --cached --quiet; then
-                return 0
-              fi
+            git commit -m "chore: flush portfolio outbox [skip ci]"
 
-              git commit -m "$message"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
 
-              if git push origin HEAD:main; then
-                return 0
-              fi
+            sleep $((attempt * 3))
+          done
 
-              sleep $((attempt * 3))
-            done
-
-            return 1
-          }
-
-          persist_portfolio_data "chore: flush portfolio outbox [skip ci]"
+          exit 1
 
       - name: Fail if flush failed
         if: steps.flush.outcome == 'failure'
