@@ -27,6 +27,7 @@ EVENT_FILE = DATA_DIR / "challenge_events.jsonl"
 SNAPSHOT_FILE = DATA_DIR / "challenge_snapshots.jsonl"
 DISCLOSURE_HISTORY_FILE = DATA_DIR / "mstr_disclosure_history.jsonl"
 PUBLIC_DIR = DATA_DIR / "public"
+NEW_YORK = ZoneInfo("America/New_York")
 
 PUBLIC_FILES = {
     "overview": PUBLIC_DIR / "challenge_overview.json",
@@ -229,6 +230,26 @@ def ensure_aware_utc(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=UTC)
     return value.astimezone(UTC)
+
+
+def us_equity_market_status(current_time: datetime, price_as_of: str | None = None) -> str:
+    local_time = ensure_aware_utc(current_time).astimezone(NEW_YORK)
+    if local_time.weekday() >= 5:
+        return "closed"
+    session_open = local_time.replace(hour=9, minute=30, second=0, microsecond=0)
+    session_close = local_time.replace(hour=16, minute=0, second=0, microsecond=0)
+    if not session_open <= local_time < session_close:
+        return "closed"
+    if price_as_of:
+        try:
+            source_time = datetime.fromisoformat(price_as_of.replace("Z", "+00:00"))
+            if source_time.tzinfo is None:
+                source_time = source_time.replace(tzinfo=UTC)
+            if source_time.astimezone(NEW_YORK).date() < local_time.date():
+                return "closed"
+        except ValueError:
+            pass
+    return "open"
 
 
 def iso_seconds(value: datetime) -> str:
@@ -1218,7 +1239,7 @@ def load_market_inputs(base_dir: Path = Path("."), *, at: datetime | None = None
         fx_source=jisdor_cache.get("source") if isinstance(jisdor_cache.get("source"), str) else None,
         fetched_at=fetched_at,
         freshness=freshness,
-        market_status="unknown",
+        market_status=us_equity_market_status(current, mstr.get("as_of") if isinstance(mstr.get("as_of"), str) else None),
         warnings=tuple(warnings),
     )
 
