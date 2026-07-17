@@ -37,6 +37,7 @@ BI_JISDOR_URL = "https://www.bi.go.id/biwebservice/wskursbi.asmx/getSubKursJisdo
 REPORT_MAX_CHARS = 3900
 HTTP_TIMEOUT = 20
 TELEGRAM_TIMEOUT = 20
+WEB_SYNC_TIMEOUT = 30
 ZERO = Decimal("0")
 ONE = Decimal("1")
 HUNDRED = Decimal("100")
@@ -2506,6 +2507,39 @@ def export_public_cli(base_dir: Path) -> int:
     return 0
 
 
+def sync_public_to_web(base_dir: Path) -> int:
+    sync_url = os.environ.get("MSTR_WEB_SYNC_URL", "").strip()
+    sync_token = os.environ.get("MSTR_WEB_SYNC_TOKEN", "").strip()
+    if not sync_url or not sync_token:
+        raise PortfolioError("MSTR_WEB_SYNC_URL and MSTR_WEB_SYNC_TOKEN are required")
+    if not sync_url.startswith("https://"):
+        raise PortfolioError("MSTR_WEB_SYNC_URL must use HTTPS")
+    mstr_challenge.validate_all(base_dir, require_public=True)
+    documents = {
+        name: json.loads(mstr_challenge.public_path(base_dir, name).read_text(encoding="utf-8"))
+        for name in mstr_challenge.PUBLIC_FILES
+    }
+    try:
+        response = requests.post(
+            sync_url,
+            headers={
+                "Authorization": f"Bearer {sync_token}",
+                "Content-Type": "application/json",
+                "User-Agent": "mstr-portfolio-publisher/1.0",
+            },
+            json={"documents": documents},
+            timeout=WEB_SYNC_TIMEOUT,
+        )
+        response.raise_for_status()
+        result = response.json()
+    except (requests.RequestException, ValueError) as exc:
+        raise PortfolioError(f"Website synchronization failed: {exc}") from exc
+    if result.get("ok") is not True:
+        raise PortfolioError("Website synchronization was rejected")
+    print(f"website synchronized: {len(documents)} documents")
+    return 0
+
+
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Nevets personal portfolio worker")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2529,6 +2563,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     sub.add_parser("challenge-status")
     sub.add_parser("export-public")
     sub.add_parser("validate-public")
+    sub.add_parser("sync-public")
     return parser.parse_args(argv)
 
 
@@ -2579,6 +2614,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             mstr_challenge.validate_all(base_dir, require_public=True)
             print("public challenge data valid")
             return 0
+        if args.command == "sync-public":
+            return sync_public_to_web(base_dir)
         raise PortfolioError(f"Unknown command {args.command}")
     except (PortfolioError, mstr_challenge.ChallengeError) as exc:
         print(f"portfolio error: {exc}", file=sys.stderr)
