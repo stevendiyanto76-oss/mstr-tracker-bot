@@ -26,6 +26,8 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      PUBLIC_SOURCE_COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Check out source
         uses: actions/checkout@v6
@@ -49,7 +51,6 @@ jobs:
           python portfolio.py validate
           python portfolio.py export-public
           python portfolio.py validate-public
-          git diff --exit-code -- data/public
 
       - name: Reject private fields in public exports
         run: |
