@@ -1,6 +1,6 @@
 {
   "accretion": {
-    "accretion_score": "0.5350720475823478",
+    "accretion_score": "0.5327628990393911",
     "btc_per_adso": "0.002077756901642210396972166885414640272446",
     "btc_per_adso_change_pct": "-1.18320902046052809782836204964799223836",
     "btc_per_basic_share": "0.002241554736148598389050645017320893460566",
@@ -13,7 +13,7 @@
     "three_update_test": "insufficient_data"
   },
   "current": {
-    "as_of": "2026-07-15T22:28:30+00:00",
+    "as_of": "2026-07-16T22:28:16+00:00",
     "data_confidence": {
       "max": "10",
       "reasons": [
@@ -150,7 +150,7 @@
           "source": "dynamic valuation bridge",
           "status": "unknown",
           "threshold": "supportive residual valuation",
-          "value": "1.1724346078816157x mNAV"
+          "value": "1.1682366216926143x mNAV"
         },
         {
           "explanation": "2 comparable observations are available.",
@@ -194,7 +194,7 @@
       "required": 5
     }
   },
-  "generated_at": "2026-07-17T00:03:27+00:00",
+  "generated_at": "2026-07-17T00:11:22+00:00",
   "limitations": [
     "The original thesis snapshot is not presented as current corporate data.",
     "A public ledger proves recorded history, not a broker position.",
@@ -290,23 +290,23 @@
   },
   "schema_version": 1,
   "scores": {
-    "accretion": "0.5350720475823478",
+    "accretion": "0.5327628990393911",
     "liquidity": "1",
-    "risk": "0.40677495209283693"
+    "risk": "0.41214108873820654"
   },
-  "source_commit_sha": "eb68a1ba578a2cdc39a9f3d8a15fc9d626b25d68",
+  "source_commit_sha": "552c4fed59e817116717e1b0c4a5a0d392875f3d",
   "valuation": {
-    "accumulate_price": "106.69360117095476",
+    "accumulate_price": "104.16134432257319",
     "adso_m": "406.099",
     "basic_shares_m": "376.424",
     "btc_holdings": "843775",
-    "btc_price": "63792",
-    "enterprise_mnav_estimate": "1.1724346078816157",
-    "fair_price": "119.38747246071793",
-    "hold_price": "132.08134375048107",
+    "btc_price": "63753.76",
+    "enterprise_mnav_estimate": "1.1682366216926143",
+    "fair_price": "116.70283421856848",
+    "hold_price": "129.24432411456377",
     "mstr_price": "94.03",
-    "reduce_price": "157.46908633000737",
-    "strong_buy_price": "81.30585859142845",
-    "uncertainty_band": "0.17463461723861864"
+    "reduce_price": "154.3273039065543",
+    "strong_buy_price": "79.07836453058263",
+    "uncertainty_band": "0.17467168414273165"
   }
 }
