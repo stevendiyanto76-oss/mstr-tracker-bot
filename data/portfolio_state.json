@@ -38,14 +38,6 @@
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-07-17T13:03:12+00:00",
-      "id": "OUT-c271279399318909",
-      "text": "MSTR CHALLENGE CASH\nUSD: USD 0.00\nIDR: IDR 0"
-    }
-  ],
+  "outbox": [],
   "schema_version": 1
 }
