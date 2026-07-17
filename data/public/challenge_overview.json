@@ -1,25 +1,25 @@
 {
   "audit": {
-    "generated_at": "2026-07-17T06:28:43+00:00",
+    "generated_at": "2026-07-17T09:22:10+00:00",
     "ledger_hash": "5df73094d38d3c7dea37ed41d074b88e6a8151998735d4294ad74d8dcbbb47e7",
     "source_commit_sha": "e71d8785172ae14cc1ba627a2846153b16fc0671"
   },
   "challenge": {
     "id": "mstr-live-thesis-v1",
     "include_legacy_position": false,
-    "last_updated_at": "2026-07-17T06:28:43+00:00",
+    "last_updated_at": "2026-07-17T09:22:10+00:00",
     "name": "MSTR Live Thesis Challenge",
     "start_at": "2026-06-26T22:13:45+00:00",
     "status": "active"
   },
   "disclaimer": "Public ledger history is not broker verification and is not investment advice.",
-  "generated_at": "2026-07-17T06:28:43+00:00",
+  "generated_at": "2026-07-17T09:22:10+00:00",
   "market": {
-    "btc_as_of": "2026-07-17T06:28:00+00:00",
-    "btc_price": "62846.87",
-    "fetched_at": "2026-07-17T06:28:43+00:00",
+    "btc_as_of": "2026-07-17T09:22:00+00:00",
+    "btc_price": "62829.38",
+    "fetched_at": "2026-07-17T09:22:10+00:00",
     "freshness": "fresh",
-    "fx_as_of": "2026-07-16",
+    "fx_as_of": "2026-07-17",
     "market_status": "closed",
     "mstr_price": "94.03",
     "price_as_of": "2026-07-16T20:00:00+00:00",
@@ -28,7 +28,7 @@
       "MSTR": "fetch_strategy_snapshot",
       "USD_IDR": "Bank Indonesia JISDOR"
     },
-    "usd_idr": "18041",
+    "usd_idr": "17944",
     "warnings": []
   },
   "portfolio": {
@@ -45,7 +45,7 @@
     "net_contributions_usd": "172.188",
     "realized_pl_usd": "0",
     "setup_required": false,
-    "total_portfolio_idr": "3562429.983",
+    "total_portfolio_idr": "3543276.072",
     "total_portfolio_usd": "197.463",
     "total_return_pct": "14.67872325597602620391664924384974562687",
     "unrealized_pl_usd": "25.275"
