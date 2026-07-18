@@ -34,7 +34,7 @@
       "price_usd": "82",
       "quantity": "1",
       "related_event_id": null,
-      "source_commit_sha": "2208b5baf9ab8d111252df46a7a29dc3d1743fe8",
+      "source_commit_sha": "60eb8817366362b2415db9147edd0bd3bf14ca98",
       "status": "active",
       "target_event_id": null,
       "thesis_zone": "HISTORICAL_CHALLENGE",
@@ -77,7 +77,7 @@
       "price_usd": "82",
       "quantity": "0.9",
       "related_event_id": null,
-      "source_commit_sha": "2208b5baf9ab8d111252df46a7a29dc3d1743fe8",
+      "source_commit_sha": "60eb8817366362b2415db9147edd0bd3bf14ca98",
       "status": "active",
       "target_event_id": null,
       "thesis_zone": "HISTORICAL_CHALLENGE",
@@ -120,7 +120,7 @@
       "price_usd": "81.94",
       "quantity": "0.2",
       "related_event_id": null,
-      "source_commit_sha": "2208b5baf9ab8d111252df46a7a29dc3d1743fe8",
+      "source_commit_sha": "60eb8817366362b2415db9147edd0bd3bf14ca98",
       "status": "active",
       "target_event_id": null,
       "thesis_zone": "HISTORICAL_CHALLENGE",
@@ -132,6 +132,6 @@
       "value_usd": "16.388"
     }
   ],
-  "generated_at": "2026-07-18T08:23:49+00:00",
+  "generated_at": "2026-07-18T14:06:47+00:00",
   "schema_version": 1
 }

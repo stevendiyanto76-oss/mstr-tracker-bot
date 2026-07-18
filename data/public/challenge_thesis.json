@@ -13,11 +13,11 @@
     "three_update_test": "fail"
   },
   "bitcoin_regime": {
-    "change_pct": "6.78",
+    "change_pct": "6.89",
     "state": "RECOVERY"
   },
   "current": {
-    "as_of": "2026-07-17T22:13:45+00:00",
+    "as_of": "2026-07-18T10:39:08+00:00",
     "data_confidence": {
       "max": "10",
       "reasons": [
@@ -159,7 +159,7 @@
           "source": "dynamic valuation bridge",
           "status": "pass",
           "threshold": "supportive residual valuation",
-          "value": "1.1672018029272193x mNAV"
+          "value": "1.1668490842636616x mNAV"
         },
         {
           "explanation": "5 comparable observations are available.",
@@ -203,7 +203,7 @@
       "required": 5
     }
   },
-  "generated_at": "2026-07-18T08:59:57+00:00",
+  "generated_at": "2026-07-18T14:06:47+00:00",
   "limitations": [
     "The original thesis snapshot is not presented as current corporate data.",
     "A public ledger proves recorded history, not a broker position.",
@@ -344,21 +344,21 @@
   "scores": {
     "accretion": "0.5304707231060434",
     "liquidity": "1",
-    "risk": "0.41235926611307416"
+    "risk": "0.4129344876085547"
   },
-  "source_commit_sha": "2208b5baf9ab8d111252df46a7a29dc3d1743fe8",
+  "source_commit_sha": "60eb8817366362b2415db9147edd0bd3bf14ca98",
   "valuation": {
-    "accumulate_price": "103.95741902167825",
+    "accumulate_price": "103.6927422101099",
     "adso_m": "406.099",
     "basic_shares_m": "376.424",
     "btc_holdings": "843775",
-    "btc_price": "64021",
-    "enterprise_mnav_estimate": "1.1672018029272193",
-    "fair_price": "116.4982577462353",
-    "hold_price": "129.03909647079234",
+    "btc_price": "64085.77",
+    "enterprise_mnav_estimate": "1.1668490842636616",
+    "fair_price": "116.22433478651239",
+    "hold_price": "128.7559273629149",
     "mstr_price": "94.85",
-    "reduce_price": "154.12077391990638",
-    "strong_buy_price": "78.87574157256421",
-    "uncertainty_band": "0.1747237353907188"
+    "reduce_price": "153.81911251571984",
+    "strong_buy_price": "78.6295570573049",
+    "uncertainty_band": "0.17482797085189275"
   }
 }
