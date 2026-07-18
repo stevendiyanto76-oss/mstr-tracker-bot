@@ -1,6 +1,6 @@
 {
   "accretion": {
-    "accretion_score": "0.5304707231060434",
+    "accretion_score": "0.5281953801810302",
     "btc_per_adso": "0.002077756901642210396972166885414640272446",
     "btc_per_adso_change_pct": "0",
     "btc_per_basic_share": "0.002241554736148598389050645017320893460566",
@@ -13,11 +13,11 @@
     "three_update_test": "fail"
   },
   "bitcoin_regime": {
-    "change_pct": "7.97",
+    "change_pct": "8.01",
     "state": "RECOVERY"
   },
   "current": {
-    "as_of": "2026-07-18T10:39:08+00:00",
+    "as_of": "2026-07-18T22:13:43+00:00",
     "data_confidence": {
       "max": "10",
       "reasons": [
@@ -159,7 +159,7 @@
           "source": "dynamic valuation bridge",
           "status": "pass",
           "threshold": "supportive residual valuation",
-          "value": "1.1668490842636616x mNAV"
+          "value": "1.169301284261911x mNAV"
         },
         {
           "explanation": "5 comparable observations are available.",
@@ -203,7 +203,7 @@
       "required": 5
     }
   },
-  "generated_at": "2026-07-18T22:05:51+00:00",
+  "generated_at": "2026-07-18T23:08:24+00:00",
   "limitations": [
     "The original thesis snapshot is not presented as current corporate data.",
     "A public ledger proves recorded history, not a broker position.",
@@ -342,23 +342,23 @@
   },
   "schema_version": 1,
   "scores": {
-    "accretion": "0.5304707231060434",
+    "accretion": "0.5281953801810302",
     "liquidity": "1",
-    "risk": "0.4129344876085547"
+    "risk": "0.4074792330984064"
   },
-  "source_commit_sha": "60eb8817366362b2415db9147edd0bd3bf14ca98",
+  "source_commit_sha": "3cf40a35019b48bc742cd1ab733ef09e72cc89bf",
   "valuation": {
-    "accumulate_price": "103.6927422101099",
+    "accumulate_price": "106.0626731319224",
     "adso_m": "406.099",
     "basic_shares_m": "376.424",
     "btc_holdings": "843775",
-    "btc_price": "64733.82",
-    "enterprise_mnav_estimate": "1.1668490842636616",
-    "fair_price": "116.22433478651239",
-    "hold_price": "128.7559273629149",
+    "btc_price": "64757",
+    "enterprise_mnav_estimate": "1.169301284261911",
+    "fair_price": "118.7448012540056",
+    "hold_price": "131.42692937608876",
     "mstr_price": "94.85",
-    "reduce_price": "153.81911251571984",
-    "strong_buy_price": "78.6295570573049",
-    "uncertainty_band": "0.17482797085189275"
+    "reduce_price": "156.7911856202552",
+    "strong_buy_price": "80.69841688775598",
+    "uncertainty_band": "0.174668103640309"
   }
 }
