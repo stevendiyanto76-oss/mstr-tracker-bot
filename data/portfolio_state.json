@@ -39,28 +39,6 @@
       "source": "fetch_strategy_snapshot"
     }
   },
-  "outbox": [
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-07-18T14:06:47+00:00",
-      "id": "OUT-31542d72d0f5bd73",
-      "text": "/cash does not accept parameters\nKetik /help untuk bantuan."
-    },
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-07-18T14:06:47+00:00",
-      "id": "OUT-29d543648825d677",
-      "text": "MSTR CHALLENGE CASH\nUSD: USD 278.40\nIDR: IDR 0"
-    },
-    {
-      "category": "reply",
-      "chat_id": "7061999032",
-      "created_at_utc": "2026-07-18T14:06:47+00:00",
-      "id": "OUT-388bb0caa88bd004",
-      "text": "DEPOSIT recorded: CH-000012"
-    }
-  ],
+  "outbox": [],
   "schema_version": 1
 }
