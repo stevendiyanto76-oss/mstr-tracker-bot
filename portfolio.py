@@ -206,6 +206,7 @@ def default_state() -> dict[str, Any]:
         "alert_baseline_pending": False,
         "last_daily_report_date_wib": None,
         "bot_commands_registered": False,
+        "bot_commands_fingerprint": "",
         "outbox": [],
     }
 
@@ -456,6 +457,11 @@ def validate_state_shape(state: Mapping[str, Any]) -> None:
         raise DataIntegrityError("last_update_id must be a non-negative integer")
     if not isinstance(state.get("bot_commands_registered"), bool):
         raise DataIntegrityError("bot_commands_registered must be a boolean")
+    command_fingerprint = state.get("bot_commands_fingerprint")
+    if not isinstance(command_fingerprint, str):
+        raise DataIntegrityError("bot_commands_fingerprint must be a string")
+    if command_fingerprint and not re.fullmatch(r"[0-9a-f]{64}", command_fingerprint):
+        raise DataIntegrityError("bot_commands_fingerprint must be empty or a SHA-256 digest")
     if not isinstance(state.get("alert_baseline_pending"), bool):
         raise DataIntegrityError("alert_baseline_pending must be a boolean")
     last_daily = state.get("last_daily_report_date_wib")
@@ -1363,6 +1369,21 @@ def telegram_post(token: str, method: str, *, json_payload: Mapping[str, Any]) -
 def register_bot_commands(token: str) -> None:
     commands = [{"command": command, "description": description} for command, description in COMMAND_MENU]
     telegram_post(token, "setMyCommands", json_payload={"commands": commands})
+
+
+def bot_commands_fingerprint(commands: Sequence[tuple[str, str]] = COMMAND_MENU) -> str:
+    canonical = json.dumps(list(commands), ensure_ascii=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def ensure_bot_commands_registered(state: dict[str, Any], token: str) -> bool:
+    fingerprint = bot_commands_fingerprint()
+    if state.get("bot_commands_fingerprint") == fingerprint:
+        return False
+    register_bot_commands(token)
+    state["bot_commands_registered"] = True
+    state["bot_commands_fingerprint"] = fingerprint
+    return True
 
 
 def fetch_updates(token: str, offset: int) -> list[dict[str, Any]]:
@@ -2375,9 +2396,8 @@ def prepare(
     state = load_state(base_dir)
     token, chat_id = telegram_credentials()
     current = ensure_aware_utc(current_time or now_utc())
-    if token and chat_id and not state.get("bot_commands_registered"):
-        register_bot_commands(token)
-        state["bot_commands_registered"] = True
+    if token and chat_id:
+        ensure_bot_commands_registered(state, token)
     mutation_happened = False
     if token and chat_id:
         mutation_happened = process_telegram_updates(base_dir, state, token, chat_id, current)
