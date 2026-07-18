@@ -13,7 +13,7 @@
     "three_update_test": "fail"
   },
   "bitcoin_regime": {
-    "change_pct": "7.48",
+    "change_pct": "7.5",
     "state": "RECOVERY"
   },
   "current": {
@@ -203,7 +203,7 @@
       "required": 5
     }
   },
-  "generated_at": "2026-07-18T18:07:37+00:00",
+  "generated_at": "2026-07-18T19:28:57+00:00",
   "limitations": [
     "The original thesis snapshot is not presented as current corporate data.",
     "A public ledger proves recorded history, not a broker position.",
@@ -352,7 +352,7 @@
     "adso_m": "406.099",
     "basic_shares_m": "376.424",
     "btc_holdings": "843775",
-    "btc_price": "64439.75",
+    "btc_price": "64448.21",
     "enterprise_mnav_estimate": "1.1668490842636616",
     "fair_price": "116.22433478651239",
     "hold_price": "128.7559273629149",
