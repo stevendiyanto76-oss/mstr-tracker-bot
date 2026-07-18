@@ -1,23 +1,23 @@
 {
   "audit": {
-    "generated_at": "2026-07-17T23:13:58+00:00",
+    "generated_at": "2026-07-18T00:11:05+00:00",
     "ledger_hash": "5df73094d38d3c7dea37ed41d074b88e6a8151998735d4294ad74d8dcbbb47e7",
     "source_commit_sha": "6617a3e566ba9253e9879ffeb538698f10de198f"
   },
   "challenge": {
     "id": "mstr-live-thesis-v1",
     "include_legacy_position": false,
-    "last_updated_at": "2026-07-17T23:13:58+00:00",
+    "last_updated_at": "2026-07-18T00:11:05+00:00",
     "name": "MSTR Live Thesis Challenge",
     "start_at": "2026-06-26T22:13:45+00:00",
     "status": "active"
   },
   "disclaimer": "Public ledger history is not broker verification and is not investment advice.",
-  "generated_at": "2026-07-17T23:13:58+00:00",
+  "generated_at": "2026-07-18T00:11:05+00:00",
   "market": {
-    "btc_as_of": "2026-07-17T23:13:00+00:00",
-    "btc_price": "63935",
-    "fetched_at": "2026-07-17T23:13:58+00:00",
+    "btc_as_of": "2026-07-18T00:11:00+00:00",
+    "btc_price": "63861.86",
+    "fetched_at": "2026-07-18T00:11:05+00:00",
     "freshness": "fresh",
     "fx_as_of": "2026-07-17",
     "market_status": "closed",
