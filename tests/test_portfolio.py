@@ -969,6 +969,25 @@ class PortfolioTests(unittest.TestCase):
         commands = [command for command, _ in portfolio.COMMAND_MENU]
         self.assertIn("history", commands)
 
+    def test_82_legacy_menu_state_migrates_to_empty_fingerprint(self) -> None:
+        path = self.base / portfolio.STATE_FILE
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        raw.pop("bot_commands_fingerprint", None)
+        path.write_text(json.dumps(raw), encoding="utf-8")
+        self.assertEqual(portfolio.load_state(self.base)["bot_commands_fingerprint"], "")
+
+    def test_83_menu_registration_is_fingerprint_driven(self) -> None:
+        state = portfolio.load_state(self.base)
+        with patch("portfolio.register_bot_commands") as register:
+            self.assertTrue(portfolio.ensure_bot_commands_registered(state, "token"))
+            self.assertFalse(portfolio.ensure_bot_commands_registered(state, "token"))
+        register.assert_called_once_with("token")
+        self.assertEqual(state["bot_commands_fingerprint"], portfolio.bot_commands_fingerprint())
+
+    def test_84_menu_fingerprint_changes_with_contract(self) -> None:
+        changed = [*portfolio.COMMAND_MENU, ("future_command", "Future command")]
+        self.assertNotEqual(portfolio.bot_commands_fingerprint(), portfolio.bot_commands_fingerprint(changed))
+
 
 if __name__ == "__main__":
     unittest.main()
