@@ -1,0 +1,68 @@
+name: Emergency V2 Command
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "Financial V2 command, including arguments"
+        required: true
+        type: string
+      idempotency_key:
+        description: "Unique key for this one command"
+        required: true
+        type: string
+      occurred_at:
+        description: "Optional RFC3339 occurrence time"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    name: Submit through Worker V2
+    runs-on: ubuntu-latest
+    environment: mstr-production
+    env:
+      COMMAND: ${{ inputs.command }}
+      IDEMPOTENCY_KEY: ${{ inputs.idempotency_key }}
+      OCCURRED_AT: ${{ inputs.occurred_at }}
+      MSTR_V2_ADMIN_URL: https://mstr-challenge-v2-production.stevendiyanto76.workers.dev/admin/v2/command
+      OWNER_ADMIN_TOKEN: ${{ secrets.OWNER_ADMIN_TOKEN }}
+
+    steps:
+      - name: Validate command envelope
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$COMMAND" in
+            "/deposit "*|"/withdraw "*|"/fx_convert "*|"/fee "*|"/tax "*|"/buy_mstr "*|"/sell_mstr "*) ;;
+            *) echo "Unsupported or incomplete V2 financial command." >&2; exit 1 ;;
+          esac
+          [[ "$IDEMPOTENCY_KEY" =~ ^[A-Za-z0-9._:-]{8,128}$ ]] || {
+            echo "idempotency_key must be 8-128 URL-safe characters." >&2
+            exit 1
+          }
+          if [[ -n "$OCCURRED_AT" ]]; then
+            date --iso-8601=seconds --date="$OCCURRED_AT" >/dev/null
+          fi
+          [[ -n "$OWNER_ADMIN_TOKEN" ]] || {
+            echo "OWNER_ADMIN_TOKEN GitHub secret is not configured." >&2
+            exit 1
+          }
+
+      - name: Submit to canonical Worker V2 ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          payload="$(jq -cn \
+            --arg command "$COMMAND" \
+            --arg idempotency_key "$IDEMPOTENCY_KEY" \
+            --arg occurred_at "$OCCURRED_AT" \
+            '{command: $command, idempotency_key: $idempotency_key} + (if $occurred_at == "" then {} else {occurred_at: $occurred_at} end)')"
+          curl --fail-with-body --silent --show-error \
+            --request POST "$MSTR_V2_ADMIN_URL" \
+            --header "Authorization: Bearer $OWNER_ADMIN_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data "$payload"
