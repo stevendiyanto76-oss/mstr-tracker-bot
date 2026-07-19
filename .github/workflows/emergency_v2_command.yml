@@ -1,0 +1,78 @@
+name: Emergency V2 Command
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "Supported V2 financial command with arguments"
+        required: true
+        type: string
+      idempotency_key:
+        description: "Unique idempotency key"
+        required: true
+        type: string
+      occurred_at:
+        description: "Optional RFC3339 timestamp"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    environment: mstr-production
+    env:
+      COMMAND: ${{ inputs.command }}
+      IDEMPOTENCY_KEY: ${{ inputs.idempotency_key }}
+      OCCURRED_AT: ${{ inputs.occurred_at }}
+      OWNER_ADMIN_TOKEN: ${{ secrets.OWNER_ADMIN_TOKEN }}
+      ADMIN_ENDPOINT: https://mstr-challenge-v2-production.nevets-steven.workers.dev/admin/v2/command
+
+    steps:
+      - name: Validate request
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$COMMAND" =~ ^/(deposit|withdraw|fx_convert|fee|tax|buy_mstr|sell_mstr)[[:space:]]+[^[:space:]].*$ ]]; then
+            echo "command must be supported and include arguments" >&2
+            exit 1
+          fi
+
+          if [[ ! "$IDEMPOTENCY_KEY" =~ ^[A-Za-z0-9._:-]{8,128}$ ]]; then
+            echo "idempotency_key must match ^[A-Za-z0-9._:-]{8,128}$" >&2
+            exit 1
+          fi
+
+          if [[ -n "$OCCURRED_AT" ]]; then
+            if [[ ! "$OCCURRED_AT" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,9})?(Z|[+-][0-9]{2}:[0-9]{2})$ ]] || ! date --date="$OCCURRED_AT" --iso-8601=seconds >/dev/null 2>&1; then
+              echo "occurred_at must be a valid RFC3339 timestamp" >&2
+              exit 1
+            fi
+          fi
+
+          if [[ -z "$OWNER_ADMIN_TOKEN" ]]; then
+            echo "OWNER_ADMIN_TOKEN is not configured" >&2
+            exit 1
+          fi
+
+      - name: Submit command to Worker V2
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          payload="$(jq -cn \
+            --arg command "$COMMAND" \
+            --arg idempotency_key "$IDEMPOTENCY_KEY" \
+            --arg occurred_at "$OCCURRED_AT" \
+            '{command: $command, idempotency_key: $idempotency_key} + (if $occurred_at == "" then {} else {occurred_at: $occurred_at} end)')"
+
+          response="$(curl --fail-with-body --silent --show-error \
+            --request POST "$ADMIN_ENDPOINT" \
+            --header "Authorization: Bearer $OWNER_ADMIN_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data "$payload")"
+
+          printf '%s\n' "$response"
