@@ -1,235 +1,128 @@
-name: Challenge Public Refresh V2
+name: V2 GitHub Audit Mirror
 
 on:
   schedule:
-    - cron: "15 * * * *"
-      timezone: "Asia/Jakarta"
-    - cron: "45 * * * *"
-      timezone: "Asia/Jakarta"
-    - cron: "30 5 * * *"
+    - cron: "20,50 * * * *"
       timezone: "Asia/Jakarta"
 
   workflow_dispatch:
-    inputs:
-      mode:
-        description: "Worker mode"
-        type: choice
-        required: true
-        default: poll
-        options:
-          - poll
-          - daily
 
   push:
     branches:
       - main
     paths:
-      - "portfolio.py"
-      - "challenge.py"
-      - "tests/test_portfolio.py"
-      - "tests/test_challenge.py"
-      - "data/challenge_config.json"
-      - "data/challenge_events.jsonl"
-      - "data/challenge_snapshots.jsonl"
-      - "data/mstr_disclosure_history.jsonl"
       - ".github/workflows/portfolio_refresh_v2.yml"
-      - ".github/workflows/challenge_freshness_notes.md"
 
 permissions:
   contents: write
 
 concurrency:
-  group: portfolio-worker
+  group: v2-github-audit-mirror
   cancel-in-progress: false
 
 jobs:
-  portfolio:
+  mirror:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
-
-    env:
-      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      MSTR_WEB_SYNC_URL: ${{ secrets.MSTR_WEB_SYNC_URL }}
-      MSTR_WEB_SYNC_TOKEN: ${{ secrets.MSTR_WEB_SYNC_TOKEN }}
-
+    timeout-minutes: 12
     steps:
-      - name: Checkout
+      - name: Check out audit repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Refresh checkout to latest main
+      - name: Fetch authoritative V2 snapshot
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin main
-          git reset --hard origin/main
+          curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors \
+            --connect-timeout 10 --max-time 45 \
+            "https://mstr-challenge-v2-production.nevets-steven.workers.dev/api/v2/snapshot" \
+            > /tmp/mstr-v2-snapshot.json
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: python -m pip install --upgrade requests
-
-      - name: Compile Python modules
-        run: python -m py_compile portfolio.py challenge.py
-
-      - name: Run unit tests
-        run: python -m unittest discover -s tests -v
-
-      - name: Validate portfolio data
-        run: python portfolio.py validate
-
-      - name: Set stable public source revision
+      - name: Validate and materialize sanitized audit mirror
         shell: bash
         run: |
           set -euo pipefail
-          revision="$(git log -1 --format=%H -- portfolio.py challenge.py mstr.py mstr_decision_engine_v2_state.json)"
-          echo "PUBLIC_SOURCE_COMMIT_SHA=$revision" >> "$GITHUB_ENV"
-
-      - name: Prepare public Challenge snapshot without Telegram polling
-        env:
-          TELEGRAM_BOT_TOKEN: ""
-          TELEGRAM_CHAT_ID: ""
-        run: |
-          set -euo pipefail
-          if [[ "${{ github.event_name }}" == "schedule" && "${{ github.event.schedule }}" == "30 5 * * *" ]]; then
-            python portfolio.py prepare --daily-report
-          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.mode }}" == "daily" ]]; then
-            python portfolio.py prepare --daily-report --force-report
-          else
-            python portfolio.py prepare
-          fi
-
-      - name: Validate sanitized public challenge exports
-        run: |
-          python portfolio.py export-public
-          python portfolio.py validate-public
-          python - <<'PY'
-          from pathlib import Path
-
-          forbidden = (
-              "private_source",
-              "telegram_update_id",
-              "telegram_message_id",
-              "chat_id",
-              "bot_token",
-          )
-          for path in sorted(Path("data/public").glob("challenge_*.json")):
-              content = path.read_text(encoding="utf-8").lower()
-              matches = [item for item in forbidden if item in content]
-              if matches:
-                  raise SystemExit(f"private fields in {path}: {', '.join(matches)}")
-          PY
-
-      - name: Assert public Challenge export freshness
-        run: |
           python - <<'PY'
           import json
           from datetime import datetime, timezone
           from pathlib import Path
 
-          path = Path("data/public/challenge_overview.json")
-          payload = json.loads(path.read_text(encoding="utf-8"))
-          raw = str(payload.get("generated_at") or "").replace("Z", "+00:00")
-          if not raw:
-              raise SystemExit("challenge_overview.json has no generated_at")
+          snapshot_path = Path('/tmp/mstr-v2-snapshot.json')
+          snapshot = json.loads(snapshot_path.read_text(encoding='utf-8'))
+          if snapshot.get('schema_version') != 2:
+              raise SystemExit('unsupported V2 snapshot schema')
+          event_count = int(snapshot.get('event_count') or 0)
+          latest_event_id = str(snapshot.get('latest_event_id') or '')
+          if event_count < 12:
+              raise SystemExit(f'V2 event count regressed: {event_count}')
+          if not latest_event_id.startswith('CH-') or int(latest_event_id[3:]) < 12:
+              raise SystemExit(f'V2 latest event regressed: {latest_event_id}')
 
-          generated_at = datetime.fromisoformat(raw)
-          if generated_at.tzinfo is None:
-              generated_at = generated_at.replace(tzinfo=timezone.utc)
+          serialized = json.dumps(snapshot).lower()
+          forbidden = (
+              'private_source',
+              'telegram_update_id',
+              'telegram_message_id',
+              'chat_id',
+              'bot_token',
+              'encrypted_payload',
+          )
+          leaked = [field for field in forbidden if field in serialized]
+          if leaked:
+              raise SystemExit('private fields in public snapshot: ' + ', '.join(leaked))
 
-          age_seconds = (datetime.now(timezone.utc) - generated_at.astimezone(timezone.utc)).total_seconds()
-          if age_seconds < -300:
-              raise SystemExit(f"challenge overview timestamp is in the future: {raw}")
-          if age_seconds > 2 * 60 * 60:
-              raise SystemExit(f"challenge overview is stale by {age_seconds / 3600:.2f} hours: {raw}")
+          documents = snapshot.get('documents')
+          if not isinstance(documents, dict):
+              raise SystemExit('V2 snapshot has no public documents')
+          names = {
+              'overview': 'challenge_overview.json',
+              'transactions': 'challenge_transactions.json',
+              'performance': 'challenge_performance.json',
+              'thesis': 'challenge_thesis.json',
+              'audit': 'challenge_audit.json',
+              'health': 'challenge_health.json',
+          }
+          output = Path('data/public')
+          output.mkdir(parents=True, exist_ok=True)
+          for key, filename in names.items():
+              payload = documents.get(key) or documents.get(f'challenge_{key}')
+              if not isinstance(payload, dict):
+                  raise SystemExit(f'V2 snapshot is missing {key}')
+              if payload.get('schema_version') != 1:
+                  raise SystemExit(f'{key} schema is unsupported')
+              temporary = output / f'.{filename}.tmp'
+              temporary.write_text(json.dumps(payload, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+              temporary.replace(output / filename)
 
-          print(f"challenge overview freshness OK: {age_seconds:.0f}s old")
+          audit = documents.get('audit') or documents.get('challenge_audit') or {}
+          ledger_hash = str(audit.get('ledger_hash') or audit.get('public_ledger_hash') or '')
+          if len(ledger_hash) != 64:
+              raise SystemExit('V2 audit document has no valid ledger hash')
+          manifest = {
+              'schema_version': 1,
+              'role': 'backup_audit_mirror',
+              'authority': 'V2_D1',
+              'mirrored_at': datetime.now(timezone.utc).isoformat(),
+              'snapshot_generated_at': snapshot.get('generated_at'),
+              'event_count': event_count,
+              'latest_event_id': latest_event_id,
+              'ledger_hash': ledger_hash,
+              'source_endpoint': 'mstr-challenge-v2-production',
+          }
+          (output / 'v2_authority_manifest.json').write_text(
+              json.dumps(manifest, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          print(json.dumps(manifest, indent=2, sort_keys=True))
           PY
 
-      - name: Persist portfolio state before flush
+      - name: Persist audit mirror without triggering writers
+        shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/portfolio-data/data
-          cp data/transactions.jsonl /tmp/portfolio-data/data/transactions.jsonl
-          cp data/portfolio_state.json /tmp/portfolio-data/data/portfolio_state.json
-          cp data/portfolio_snapshots.jsonl /tmp/portfolio-data/data/portfolio_snapshots.jsonl
-          cp data/challenge_config.json /tmp/portfolio-data/data/challenge_config.json
-          cp data/challenge_events.jsonl /tmp/portfolio-data/data/challenge_events.jsonl
-          cp data/challenge_snapshots.jsonl /tmp/portfolio-data/data/challenge_snapshots.jsonl
-          cp data/mstr_disclosure_history.jsonl /tmp/portfolio-data/data/mstr_disclosure_history.jsonl
-          mkdir -p /tmp/portfolio-data/data/public
-          cp data/public/challenge_*.json /tmp/portfolio-data/data/public/
-
-          persist_portfolio_data() {
-            local message="$1"
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-            for attempt in 1 2 3 4 5; do
-              git fetch origin main
-              git reset --hard origin/main
-
-              python tools/check_append_only_prefix.py \
-                data/challenge_events.jsonl \
-                /tmp/portfolio-data/data/challenge_events.jsonl
-
-              mkdir -p data
-              cp /tmp/portfolio-data/data/transactions.jsonl data/transactions.jsonl
-              cp /tmp/portfolio-data/data/portfolio_state.json data/portfolio_state.json
-              cp /tmp/portfolio-data/data/portfolio_snapshots.jsonl data/portfolio_snapshots.jsonl
-              cp /tmp/portfolio-data/data/challenge_config.json data/challenge_config.json
-              cp /tmp/portfolio-data/data/challenge_events.jsonl data/challenge_events.jsonl
-              cp /tmp/portfolio-data/data/challenge_snapshots.jsonl data/challenge_snapshots.jsonl
-              cp /tmp/portfolio-data/data/mstr_disclosure_history.jsonl data/mstr_disclosure_history.jsonl
-              mkdir -p data/public
-              cp /tmp/portfolio-data/data/public/challenge_*.json data/public/
-
-              git add \
-                data/transactions.jsonl \
-                data/portfolio_state.json \
-                data/portfolio_snapshots.jsonl \
-                data/challenge_config.json \
-                data/challenge_events.jsonl \
-                data/challenge_snapshots.jsonl \
-                data/mstr_disclosure_history.jsonl \
-                data/public/challenge_*.json
-
-              if git diff --cached --quiet; then
-                return 0
-              fi
-
-              git commit -m "$message"
-
-              if git push origin HEAD:main; then
-                return 0
-              fi
-
-              sleep $((attempt * 3))
-            done
-
-            return 1
-          }
-
-          persist_portfolio_data "chore: persist portfolio state [skip ci]"
-
-      - name: Publish challenge data directly to website
-        run: python portfolio.py sync-public
-
-      - name: Flush existing Telegram outbox
-        id: flush
-        continue-on-error: true
-        run: python portfolio.py flush
-
-      - name: Persist portfolio state after flush
-        if: always()
-        run: |
-          set -euo pipefail
-          cp data/portfolio_state.json /tmp/portfolio-state-after-flush.json
+          mkdir -p /tmp/v2-public-mirror
+          cp data/public/challenge_*.json /tmp/v2-public-mirror/
+          cp data/public/v2_authority_manifest.json /tmp/v2-public-mirror/
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -237,25 +130,19 @@ jobs:
           for attempt in 1 2 3 4 5; do
             git fetch origin main
             git reset --hard origin/main
-
-            cp /tmp/portfolio-state-after-flush.json data/portfolio_state.json
-            git add data/portfolio_state.json
-
+            mkdir -p data/public
+            cp /tmp/v2-public-mirror/challenge_*.json data/public/
+            cp /tmp/v2-public-mirror/v2_authority_manifest.json data/public/
+            git add data/public/challenge_*.json data/public/v2_authority_manifest.json
             if git diff --cached --quiet; then
+              echo "V2 audit mirror is already current."
               exit 0
             fi
-
-            git commit -m "chore: flush portfolio outbox [skip ci]"
-
+            git commit -m "chore: mirror authoritative V2 public snapshot [skip ci]"
             if git push origin HEAD:main; then
               exit 0
             fi
-
             sleep $((attempt * 3))
           done
-
+          echo "Unable to persist V2 audit mirror after retries." >&2
           exit 1
-
-      - name: Fail if flush failed
-        if: steps.flush.outcome == 'failure'
-        run: exit 1
