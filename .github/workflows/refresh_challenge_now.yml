@@ -1,5 +1,6 @@
 name: Refresh Challenge Snapshot Now
 
+# One-time monitored recovery run for the stale July 2026 public snapshot.
 on:
   pull_request:
     paths:
@@ -41,13 +42,22 @@ jobs:
           python -m py_compile portfolio.py challenge.py
           python portfolio.py validate
 
-      - name: Refresh and validate public exports
+      - name: Set public source revision
         run: |
           revision="$(git log -1 --format=%H -- portfolio.py challenge.py mstr.py mstr_decision_engine_v2_state.json)"
           echo "PUBLIC_SOURCE_COMMIT_SHA=$revision" >> "$GITHUB_ENV"
-          python portfolio.py prepare
-          python portfolio.py export-public
-          python portfolio.py validate-public
+
+      - name: Prepare fresh market and portfolio state
+        env:
+          TELEGRAM_BOT_TOKEN: ""
+          TELEGRAM_CHAT_ID: ""
+        run: python portfolio.py prepare
+
+      - name: Export sanitized public Challenge data
+        run: python portfolio.py export-public
+
+      - name: Validate sanitized public Challenge data
+        run: python portfolio.py validate-public
 
       - name: Assert fresh overview
         run: |
