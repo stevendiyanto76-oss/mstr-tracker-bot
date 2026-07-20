@@ -33,6 +33,7 @@ on:
       - "data/challenge_snapshots.jsonl"
       - "data/mstr_disclosure_history.jsonl"
       - ".github/workflows/portfolio_refresh_v2.yml"
+      - ".github/workflows/challenge_freshness_notes.md"
 
 permissions:
   contents: write
