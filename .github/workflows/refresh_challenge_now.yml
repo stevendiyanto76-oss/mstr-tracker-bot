@@ -1,0 +1,110 @@
+name: Refresh Challenge Snapshot Now
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/refresh_challenge_now.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: portfolio-worker
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      MSTR_WEB_SYNC_URL: ${{ secrets.MSTR_WEB_SYNC_URL }}
+      MSTR_WEB_SYNC_TOKEN: ${{ secrets.MSTR_WEB_SYNC_TOKEN }}
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade requests
+
+      - name: Validate code and portfolio
+        run: |
+          python -m py_compile portfolio.py challenge.py
+          python portfolio.py validate
+
+      - name: Refresh and validate public exports
+        run: |
+          revision="$(git log -1 --format=%H -- portfolio.py challenge.py mstr.py mstr_decision_engine_v2_state.json)"
+          echo "PUBLIC_SOURCE_COMMIT_SHA=$revision" >> "$GITHUB_ENV"
+          python portfolio.py prepare
+          python portfolio.py export-public
+          python portfolio.py validate-public
+
+      - name: Assert fresh overview
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          payload = json.loads(Path("data/public/challenge_overview.json").read_text(encoding="utf-8"))
+          generated = datetime.fromisoformat(str(payload["generated_at"]).replace("Z", "+00:00"))
+          age = (datetime.now(timezone.utc) - generated.astimezone(timezone.utc)).total_seconds()
+          if age > 7200:
+              raise SystemExit(f"overview remains stale: {age / 3600:.2f} hours")
+          print(f"fresh overview: {generated.isoformat()} ({age:.0f}s old)")
+          PY
+
+      - name: Commit refreshed snapshot to PR branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="$GITHUB_HEAD_REF"
+          mkdir -p /tmp/challenge-refresh/data/public
+          cp data/transactions.jsonl /tmp/challenge-refresh/data/transactions.jsonl
+          cp data/portfolio_state.json /tmp/challenge-refresh/data/portfolio_state.json
+          cp data/portfolio_snapshots.jsonl /tmp/challenge-refresh/data/portfolio_snapshots.jsonl
+          cp data/challenge_config.json /tmp/challenge-refresh/data/challenge_config.json
+          cp data/challenge_events.jsonl /tmp/challenge-refresh/data/challenge_events.jsonl
+          cp data/challenge_snapshots.jsonl /tmp/challenge-refresh/data/challenge_snapshots.jsonl
+          cp data/mstr_disclosure_history.jsonl /tmp/challenge-refresh/data/mstr_disclosure_history.jsonl
+          cp data/public/challenge_*.json /tmp/challenge-refresh/data/public/
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin "$target"
+          git reset --hard "origin/$target"
+
+          python tools/check_append_only_prefix.py \
+            data/challenge_events.jsonl \
+            /tmp/challenge-refresh/data/challenge_events.jsonl
+
+          cp /tmp/challenge-refresh/data/transactions.jsonl data/transactions.jsonl
+          cp /tmp/challenge-refresh/data/portfolio_state.json data/portfolio_state.json
+          cp /tmp/challenge-refresh/data/portfolio_snapshots.jsonl data/portfolio_snapshots.jsonl
+          cp /tmp/challenge-refresh/data/challenge_config.json data/challenge_config.json
+          cp /tmp/challenge-refresh/data/challenge_events.jsonl data/challenge_events.jsonl
+          cp /tmp/challenge-refresh/data/challenge_snapshots.jsonl data/challenge_snapshots.jsonl
+          cp /tmp/challenge-refresh/data/mstr_disclosure_history.jsonl data/mstr_disclosure_history.jsonl
+          cp /tmp/challenge-refresh/data/public/challenge_*.json data/public/
+
+          git add data
+          if git diff --cached --quiet; then
+            echo "No refresh changes to commit"
+            exit 0
+          fi
+          git commit -m "chore: refresh Challenge public snapshot [skip ci]"
+          git push origin HEAD:"$target"
+
+      - name: Sync public website
+        continue-on-error: true
+        run: python portfolio.py sync-public
