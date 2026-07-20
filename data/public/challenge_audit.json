@@ -1,10 +1,10 @@
 {
-  "active_event_count": 6,
+  "active_event_count": 7,
   "challenge_id": "mstr-live-thesis-v1",
   "config_schema_version": 1,
   "event_schema_version": 2,
-  "generated_at": "2026-07-20T07:45:40.799Z",
-  "jisdor_health": "unavailable",
+  "generated_at": "2026-07-20T10:34:05.994Z",
+  "jisdor_health": "available",
   "latest_transaction_id": "CH-000006",
   "ledger_hash": "5df73094d38d3c7dea37ed41d074b88e6a8151998735d4294ad74d8dcbbb47e7",
   "market_data_health": "fresh",
