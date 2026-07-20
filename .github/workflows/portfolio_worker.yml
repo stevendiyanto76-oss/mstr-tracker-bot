@@ -4,6 +4,8 @@ on:
   schedule:
     - cron: "15 * * * *"
       timezone: "Asia/Jakarta"
+    - cron: "45 * * * *"
+      timezone: "Asia/Jakarta"
     - cron: "30 5 * * *"
       timezone: "Asia/Jakarta"
 
@@ -42,6 +44,7 @@ concurrency:
 jobs:
   portfolio:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -118,6 +121,32 @@ jobs:
               matches = [item for item in forbidden if item in content]
               if matches:
                   raise SystemExit(f"private fields in {path}: {', '.join(matches)}")
+          PY
+
+      - name: Assert public Challenge export freshness
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          path = Path("data/public/challenge_overview.json")
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          raw = str(payload.get("generated_at") or "").replace("Z", "+00:00")
+          if not raw:
+              raise SystemExit("challenge_overview.json has no generated_at")
+
+          generated_at = datetime.fromisoformat(raw)
+          if generated_at.tzinfo is None:
+              generated_at = generated_at.replace(tzinfo=timezone.utc)
+
+          age_seconds = (datetime.now(timezone.utc) - generated_at.astimezone(timezone.utc)).total_seconds()
+          if age_seconds < -300:
+              raise SystemExit(f"challenge overview timestamp is in the future: {raw}")
+          if age_seconds > 2 * 60 * 60:
+              raise SystemExit(f"challenge overview is stale by {age_seconds / 3600:.2f} hours: {raw}")
+
+          print(f"challenge overview freshness OK: {age_seconds:.0f}s old")
           PY
 
       - name: Persist portfolio state before flush
