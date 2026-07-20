@@ -89,7 +89,10 @@ jobs:
           revision="$(git log -1 --format=%H -- portfolio.py challenge.py mstr.py mstr_decision_engine_v2_state.json)"
           echo "PUBLIC_SOURCE_COMMIT_SHA=$revision" >> "$GITHUB_ENV"
 
-      - name: Prepare portfolio worker
+      - name: Prepare public Challenge snapshot without Telegram polling
+        env:
+          TELEGRAM_BOT_TOKEN: ""
+          TELEGRAM_CHAT_ID: ""
         run: |
           set -euo pipefail
           if [[ "${{ github.event_name }}" == "schedule" && "${{ github.event.schedule }}" == "30 5 * * *" ]]; then
@@ -216,7 +219,7 @@ jobs:
       - name: Publish challenge data directly to website
         run: python portfolio.py sync-public
 
-      - name: Flush Telegram outbox
+      - name: Flush existing Telegram outbox
         id: flush
         continue-on-error: true
         run: python portfolio.py flush
