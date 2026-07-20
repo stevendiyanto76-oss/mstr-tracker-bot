@@ -48,6 +48,9 @@ jobs:
           echo "PUBLIC_SOURCE_COMMIT_SHA=$revision" >> "$GITHUB_ENV"
 
       - name: Prepare fresh market and portfolio state
+        env:
+          TELEGRAM_BOT_TOKEN: ""
+          TELEGRAM_CHAT_ID: ""
         run: python portfolio.py prepare
 
       - name: Export sanitized public Challenge data
