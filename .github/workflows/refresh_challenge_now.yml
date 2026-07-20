@@ -1,5 +1,6 @@
 name: Refresh Challenge Snapshot Now
 
+# One-time monitored recovery run for the stale July 2026 public snapshot.
 on:
   pull_request:
     paths:
