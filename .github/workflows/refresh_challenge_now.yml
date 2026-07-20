@@ -45,6 +45,7 @@ jobs:
       - name: Refresh and validate public exports
         run: |
           revision="$(git log -1 --format=%H -- portfolio.py challenge.py mstr.py mstr_decision_engine_v2_state.json)"
+          export PUBLIC_SOURCE_COMMIT_SHA="$revision"
           echo "PUBLIC_SOURCE_COMMIT_SHA=$revision" >> "$GITHUB_ENV"
           python portfolio.py prepare
           python portfolio.py export-public
