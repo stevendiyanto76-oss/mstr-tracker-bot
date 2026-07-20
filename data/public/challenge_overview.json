@@ -1,41 +1,41 @@
 {
   "audit": {
-    "generated_at": "2026-07-20T07:32:11+00:00",
+    "generated_at": "2026-07-20T07:44:57.782Z",
     "ledger_hash": "5df73094d38d3c7dea37ed41d074b88e6a8151998735d4294ad74d8dcbbb47e7",
-    "source_commit_sha": "31b1440fa2e2a18a2d849a72ba6b2d7ffca8a94c"
+    "source_commit_sha": "2208b5baf9ab8d111252df46a7a29dc3d1743fe8"
   },
   "challenge": {
     "id": "mstr-live-thesis-v1",
     "include_legacy_position": false,
-    "last_updated_at": "2026-07-20T07:32:11+00:00",
+    "last_updated_at": "2026-07-20T07:44:57.782Z",
     "name": "MSTR Live Thesis Challenge",
     "start_at": "2026-06-26T22:13:45+00:00",
     "status": "active"
   },
   "disclaimer": "Public ledger history is not broker verification and is not investment advice.",
-  "generated_at": "2026-07-20T07:32:11+00:00",
+  "generated_at": "2026-07-20T07:44:57.782Z",
   "market": {
-    "btc_as_of": "2026-07-20T07:32:00+00:00",
-    "btc_price": "64076.99",
-    "fetched_at": "2026-07-20T07:32:11+00:00",
+    "btc_as_of": "2026-07-20T07:44:57.782Z",
+    "btc_price": "64146",
+    "fetched_at": "2026-07-20T07:44:57.782Z",
     "freshness": "fresh",
-    "fx_as_of": "2026-07-17",
-    "market_status": "closed",
+    "fx_as_of": null,
+    "market_status": "CLOSED",
     "mstr_price": "94.85",
-    "price_as_of": "2026-07-17T20:00:00+00:00",
+    "price_as_of": "2026-07-20T07:44:57.782Z",
     "sources": {
-      "BTC": "fetch_strategy_snapshot",
-      "MSTR": "fetch_strategy_snapshot",
-      "USD_IDR": "Bank Indonesia JISDOR"
+      "BTC": "Strategy",
+      "MSTR": "Strategy",
+      "USD_IDR": null
     },
-    "usd_idr": "17944",
+    "usd_idr": null,
     "warnings": []
   },
   "portfolio": {
     "absolute_pl_usd": "26.997",
     "cash_allocation_pct": "65.9002781938797346458377915685854911192",
     "cash_idr": "0",
-    "cash_idr_equivalent": "0",
+    "cash_idr_equivalent": null,
     "cash_usd": "384.94",
     "mstr_allocation_pct": "34.0997218061202653541622084314145088808",
     "mstr_average_cost": "81.99428571428571428571428571428571428571",
@@ -45,7 +45,7 @@
     "net_contributions_usd": "557.128",
     "realized_pl_usd": "0",
     "setup_required": false,
-    "total_portfolio_idr": "10481539",
+    "total_portfolio_idr": null,
     "total_portfolio_usd": "584.125",
     "total_return_pct": "4.845744604471503855487428382705590097787",
     "unrealized_pl_usd": "26.997"
