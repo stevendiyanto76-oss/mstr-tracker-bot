@@ -1008,7 +1008,7 @@
       "challenge_portfolio_usd": "756.253",
       "direct_btc_quantity": "0.01167063703337863815172367188594761347602",
       "direct_btc_usd": "756.6179024472671521505821996706811345025",
-      "freshness": "fresh",
+      "freshness": "stale",
       "invested_capital_usd": "732.868",
       "mstr_buy_hold_quantity": "8.028769765759561462371456369817091535728",
       "mstr_buy_hold_usd": "747.7193282851879589906537317210657347223",
