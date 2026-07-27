@@ -3,7 +3,7 @@
   "event_count": 13,
   "latest_event_id": "CH-000013",
   "ledger_hash": "5df73094d38d3c7dea37ed41d074b88e6a8151998735d4294ad74d8dcbbb47e7",
-  "mirrored_at": "2026-07-27T18:15:17.927662+00:00",
+  "mirrored_at": "2026-07-27T19:59:31.355296+00:00",
   "role": "backup_audit_mirror",
   "schema_version": 1,
   "snapshot_generated_at": "2026-07-27T18:15:14.559Z",
