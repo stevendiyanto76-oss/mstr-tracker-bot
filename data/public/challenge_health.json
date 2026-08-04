@@ -1,16 +1,12 @@
 {
   "challenge_status": "active",
-  "generated_at": "2026-08-03T22:43:22.042Z",
+  "generated_at": "2026-08-04T03:43:13.367Z",
   "ledger_valid": true,
-  "market_freshness": "stale",
-  "ok": false,
+  "market_freshness": "fresh",
+  "ok": true,
   "public_export_valid": true,
   "schema_version": 1,
   "setup_required": false,
-  "status": "degraded",
-  "warnings": [
-    "MSTR is using the last successful value",
-    "BTC is using the last successful value",
-    "USD/IDR is using the last successful Bank Indonesia JISDOR value"
-  ]
+  "status": "ok",
+  "warnings": []
 }
