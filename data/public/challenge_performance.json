@@ -1,7 +1,7 @@
 {
   "challenge_id": "mstr-live-thesis-v1",
   "data_sufficient": true,
-  "generated_at": "2026-08-07T19:24:34.678Z",
+  "generated_at": "2026-08-07T20:24:09.209Z",
   "insufficiency_reasons": [],
   "methodology": {
     "benchmark_fee_pct": "0",
@@ -12,34 +12,34 @@
     "volatility": "Sample standard deviation of available observation returns; not annualized"
   },
   "metrics": {
-    "alpha_vs_btc_pct": "7.818979660063684",
-    "alpha_vs_mstr_buy_hold_pct": "-2.7475023566682744",
+    "alpha_vs_btc_pct": "7.9749438103993375",
+    "alpha_vs_mstr_buy_hold_pct": "-3.313078431634752",
     "challenge": {
       "best_period_pct": "12.598712185639647",
       "max_drawdown_pct": "-8.603751116403691",
-      "return_pct": "14.858849613955648",
-      "volatility_pct": "2.2879066506461276",
+      "return_pct": "15.062638764239855",
+      "volatility_pct": "2.289073941385545",
       "worst_period_pct": "-6.204143288735428"
     },
     "direct_btc": {
       "best_period_pct": "152.23953453806024",
       "max_drawdown_pct": "-61.08832343609465",
-      "return_pct": "7.039869953891964",
-      "volatility_pct": "18.79566291584091",
+      "return_pct": "7.087694953840518",
+      "volatility_pct": "18.795655855815305",
       "worst_period_pct": "-61.08151617615761"
     },
     "mstr_buy_hold": {
       "best_period_pct": "141.53130622091768",
       "max_drawdown_pct": "-60.384163440728585",
-      "return_pct": "17.606351970623923",
-      "volatility_pct": "17.756802358636264",
+      "return_pct": "18.375717195874607",
+      "volatility_pct": "17.758703883282813",
       "worst_period_pct": "-60.384163440728585"
     }
   },
   "ranges": {
     "1D": {
       "data_sufficient": false,
-      "end_at": "2026-08-07T19:24:34.678Z",
+      "end_at": "2026-08-07T20:24:09.209Z",
       "insufficiency_reasons": [
         "At least two source-labelled observations are required."
       ],
@@ -69,43 +69,43 @@
         }
       },
       "observation_count": 1,
-      "start_at": "2026-08-06T19:24:34.678Z"
+      "start_at": "2026-08-06T20:24:09.209Z"
     },
     "1M": {
       "data_sufficient": true,
-      "end_at": "2026-08-07T19:24:34.678Z",
+      "end_at": "2026-08-07T20:24:09.209Z",
       "insufficiency_reasons": [],
       "metrics": {
-        "alpha_vs_btc_pct": "-3.8125345253995024",
-        "alpha_vs_mstr_buy_hold_pct": "-2.3227908687074805",
+        "alpha_vs_btc_pct": "-3.6853363481382018",
+        "alpha_vs_mstr_buy_hold_pct": "-2.800939664213742",
         "challenge": {
           "best_period_pct": "5.950054288816508",
           "max_drawdown_pct": "-5.4026294165981925",
-          "return_pct": "-2.8961389510611",
-          "volatility_pct": "1.0714101965822698",
+          "return_pct": "-2.7238517185231736",
+          "volatility_pct": "1.0749479416632575",
           "worst_period_pct": "-3.5846343467543043"
         },
         "direct_btc": {
           "best_period_pct": "152.23953453806024",
           "max_drawdown_pct": "-61.08832343609465",
-          "return_pct": "0.9163955743384022",
-          "volatility_pct": "20.310779708941602",
+          "return_pct": "0.9614846296150281",
+          "volatility_pct": "20.31076778541612",
           "worst_period_pct": "-61.08151617615761"
         },
         "mstr_buy_hold": {
           "best_period_pct": "141.53130622091768",
           "max_drawdown_pct": "-60.384163440728585",
-          "return_pct": "-0.5733480823536197",
-          "volatility_pct": "19.081222498129822",
+          "return_pct": "0.0770879456905682",
+          "volatility_pct": "19.083320495918016",
           "worst_period_pct": "-60.384163440728585"
         }
       },
       "observation_count": 67,
-      "start_at": "2026-07-07T19:24:34.678Z"
+      "start_at": "2026-07-07T20:24:09.209Z"
     },
     "1W": {
       "data_sufficient": false,
-      "end_at": "2026-08-07T19:24:34.678Z",
+      "end_at": "2026-08-07T20:24:09.209Z",
       "insufficiency_reasons": [
         "At least two source-labelled observations are required."
       ],
@@ -135,66 +135,66 @@
         }
       },
       "observation_count": 1,
-      "start_at": "2026-07-31T19:24:34.678Z"
+      "start_at": "2026-07-31T20:24:09.209Z"
     },
     "3M": {
       "data_sufficient": true,
-      "end_at": "2026-08-07T19:24:34.678Z",
+      "end_at": "2026-08-07T20:24:09.209Z",
       "insufficiency_reasons": [],
       "metrics": {
-        "alpha_vs_btc_pct": "7.818979660063684",
-        "alpha_vs_mstr_buy_hold_pct": "-2.7475023566682744",
+        "alpha_vs_btc_pct": "7.9749438103993375",
+        "alpha_vs_mstr_buy_hold_pct": "-3.313078431634752",
         "challenge": {
           "best_period_pct": "12.598712185639647",
           "max_drawdown_pct": "-8.603751116403691",
-          "return_pct": "14.858849613955648",
-          "volatility_pct": "2.2879066506461276",
+          "return_pct": "15.062638764239855",
+          "volatility_pct": "2.289073941385545",
           "worst_period_pct": "-6.204143288735428"
         },
         "direct_btc": {
           "best_period_pct": "152.23953453806024",
           "max_drawdown_pct": "-61.08832343609465",
-          "return_pct": "7.039869953891964",
-          "volatility_pct": "18.79566291584091",
+          "return_pct": "7.087694953840518",
+          "volatility_pct": "18.795655855815305",
           "worst_period_pct": "-61.08151617615761"
         },
         "mstr_buy_hold": {
           "best_period_pct": "141.53130622091768",
           "max_drawdown_pct": "-60.384163440728585",
-          "return_pct": "17.606351970623923",
-          "volatility_pct": "17.756802358636264",
+          "return_pct": "18.375717195874607",
+          "volatility_pct": "17.758703883282813",
           "worst_period_pct": "-60.384163440728585"
         }
       },
       "observation_count": 78,
-      "start_at": "2026-05-07T19:24:34.678Z"
+      "start_at": "2026-05-07T20:24:09.209Z"
     },
     "ALL": {
       "data_sufficient": true,
-      "end_at": "2026-08-07T19:24:34.678Z",
+      "end_at": "2026-08-07T20:24:09.209Z",
       "insufficiency_reasons": [],
       "metrics": {
-        "alpha_vs_btc_pct": "7.818979660063684",
-        "alpha_vs_mstr_buy_hold_pct": "-2.7475023566682744",
+        "alpha_vs_btc_pct": "7.9749438103993375",
+        "alpha_vs_mstr_buy_hold_pct": "-3.313078431634752",
         "challenge": {
           "best_period_pct": "12.598712185639647",
           "max_drawdown_pct": "-8.603751116403691",
-          "return_pct": "14.858849613955648",
-          "volatility_pct": "2.2879066506461276",
+          "return_pct": "15.062638764239855",
+          "volatility_pct": "2.289073941385545",
           "worst_period_pct": "-6.204143288735428"
         },
         "direct_btc": {
           "best_period_pct": "152.23953453806024",
           "max_drawdown_pct": "-61.08832343609465",
-          "return_pct": "7.039869953891964",
-          "volatility_pct": "18.79566291584091",
+          "return_pct": "7.087694953840518",
+          "volatility_pct": "18.795655855815305",
           "worst_period_pct": "-61.08151617615761"
         },
         "mstr_buy_hold": {
           "best_period_pct": "141.53130622091768",
           "max_drawdown_pct": "-60.384163440728585",
-          "return_pct": "17.606351970623923",
-          "volatility_pct": "17.756802358636264",
+          "return_pct": "18.375717195874607",
+          "volatility_pct": "17.758703883282813",
           "worst_period_pct": "-60.384163440728585"
         }
       },
@@ -203,30 +203,30 @@
     },
     "YTD": {
       "data_sufficient": true,
-      "end_at": "2026-08-07T19:24:34.678Z",
+      "end_at": "2026-08-07T20:24:09.209Z",
       "insufficiency_reasons": [],
       "metrics": {
-        "alpha_vs_btc_pct": "7.818979660063684",
-        "alpha_vs_mstr_buy_hold_pct": "-2.7475023566682744",
+        "alpha_vs_btc_pct": "7.9749438103993375",
+        "alpha_vs_mstr_buy_hold_pct": "-3.313078431634752",
         "challenge": {
           "best_period_pct": "12.598712185639647",
           "max_drawdown_pct": "-8.603751116403691",
-          "return_pct": "14.858849613955648",
-          "volatility_pct": "2.2879066506461276",
+          "return_pct": "15.062638764239855",
+          "volatility_pct": "2.289073941385545",
           "worst_period_pct": "-6.204143288735428"
         },
         "direct_btc": {
           "best_period_pct": "152.23953453806024",
           "max_drawdown_pct": "-61.08832343609465",
-          "return_pct": "7.039869953891964",
-          "volatility_pct": "18.79566291584091",
+          "return_pct": "7.087694953840518",
+          "volatility_pct": "18.795655855815305",
           "worst_period_pct": "-61.08151617615761"
         },
         "mstr_buy_hold": {
           "best_period_pct": "141.53130622091768",
           "max_drawdown_pct": "-60.384163440728585",
-          "return_pct": "17.606351970623923",
-          "volatility_pct": "17.756802358636264",
+          "return_pct": "18.375717195874607",
+          "volatility_pct": "17.758703883282813",
           "worst_period_pct": "-60.384163440728585"
         }
       },
@@ -1007,14 +1007,14 @@
       "timestamp": "2026-07-20T08:13:36.826Z"
     },
     {
-      "challenge_portfolio_usd": "769.336",
+      "challenge_portfolio_usd": "770.701",
       "direct_btc_quantity": "0.01167063703337863815172367188594761347602",
-      "direct_btc_usd": "757.5009028452125799131416126855719309381",
+      "direct_btc_usd": "757.8393513191805604195415991702644117289",
       "freshness": "fresh",
       "invested_capital_usd": "732.868",
       "mstr_buy_hold_quantity": "8.028769765759561462371456369817091535728",
-      "mstr_buy_hold_usd": "797.7385639258700269012279049050262149899",
-      "timestamp": "2026-08-07T19:24:34.678Z"
+      "mstr_buy_hold_usd": "802.9572642736137418517693515454073244882",
+      "timestamp": "2026-08-07T20:24:09.209Z"
     }
   ],
   "status": "active"
