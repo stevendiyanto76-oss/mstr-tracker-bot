@@ -18,9 +18,9 @@
     "btc_as_of": "2026-08-10T19:44:02.790Z",
     "btc_price": "63948.87",
     "fetched_at": "2026-08-10T19:44:02.790Z",
-    "freshness": "fallback",
+    "freshness": "stale",
     "fx_as_of": "2026-08-10",
-    "market_status": "OPEN",
+    "market_status": "CLOSED",
     "mstr_price": "98.01",
     "price_as_of": "2026-08-10T19:44:02.790Z",
     "sources": {
@@ -30,6 +30,8 @@
     },
     "usd_idr": "17795",
     "warnings": [
+      "MSTR is using the last successful value",
+      "BTC is using the last successful value",
       "USD/IDR is using the last successful Bank Indonesia JISDOR value"
     ]
   },
