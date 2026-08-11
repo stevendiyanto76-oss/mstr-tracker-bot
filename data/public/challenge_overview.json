@@ -18,7 +18,7 @@
     "btc_as_of": "2026-08-11T04:43:44.136Z",
     "btc_price": "64034.79",
     "fetched_at": "2026-08-11T04:43:44.136Z",
-    "freshness": "fresh",
+    "freshness": "stale",
     "fx_as_of": "2026-08-10",
     "market_status": "CLOSED",
     "mstr_price": "97.33",
@@ -29,7 +29,10 @@
       "USD_IDR": "Bank Indonesia JISDOR"
     },
     "usd_idr": "17795",
-    "warnings": []
+    "warnings": [
+      "MSTR is using the last successful value",
+      "BTC is using the last successful value"
+    ]
   },
   "portfolio": {
     "absolute_pl_usd": "32.205",
