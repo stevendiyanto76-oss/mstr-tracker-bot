@@ -1,15 +1,12 @@
 {
   "challenge_status": "active",
-  "generated_at": "2026-08-12T21:30:13.658Z",
+  "generated_at": "2026-08-12T23:24:08.602Z",
   "ledger_valid": true,
-  "market_freshness": "stale",
-  "ok": false,
+  "market_freshness": "fresh",
+  "ok": true,
   "public_export_valid": true,
   "schema_version": 1,
   "setup_required": false,
-  "status": "degraded",
-  "warnings": [
-    "MSTR is using the last successful value",
-    "BTC is using the last successful value"
-  ]
+  "status": "ok",
+  "warnings": []
 }
