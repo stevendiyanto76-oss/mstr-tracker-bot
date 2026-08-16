@@ -1,14 +1,12 @@
 {
   "challenge_status": "active",
-  "generated_at": "2026-08-16T01:59:47.244Z",
+  "generated_at": "2026-08-16T03:15:09.814Z",
   "ledger_valid": true,
-  "market_freshness": "fallback",
+  "market_freshness": "fresh",
   "ok": true,
   "public_export_valid": true,
   "schema_version": 1,
   "setup_required": false,
   "status": "ok",
-  "warnings": [
-    "USD/IDR is using the last successful Bank Indonesia JISDOR value"
-  ]
+  "warnings": []
 }
