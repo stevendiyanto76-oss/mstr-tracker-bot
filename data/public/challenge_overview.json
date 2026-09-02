@@ -1,35 +1,39 @@
 {
   "audit": {
-    "generated_at": "2026-09-02T01:27:39.300Z",
+    "generated_at": "2026-09-02T02:07:17.100Z",
     "ledger_hash": "5df73094d38d3c7dea37ed41d074b88e6a8151998735d4294ad74d8dcbbb47e7",
     "source_commit_sha": "2208b5baf9ab8d111252df46a7a29dc3d1743fe8"
   },
   "challenge": {
     "id": "mstr-live-thesis-v1",
     "include_legacy_position": false,
-    "last_updated_at": "2026-09-02T01:27:39.300Z",
+    "last_updated_at": "2026-09-02T02:07:17.100Z",
     "name": "MSTR Live Thesis Challenge",
     "start_at": "2026-06-26T22:13:45+00:00",
     "status": "active"
   },
   "disclaimer": "Public ledger history is not broker verification and is not investment advice.",
-  "generated_at": "2026-09-02T01:27:39.300Z",
+  "generated_at": "2026-09-02T02:07:17.100Z",
   "market": {
-    "btc_as_of": "2026-09-02T01:27:39.300Z",
-    "btc_price": "77190.09",
-    "fetched_at": "2026-09-02T01:27:39.300Z",
-    "freshness": "fresh",
+    "btc_as_of": "2026-09-02T02:07:17.100Z",
+    "btc_price": "77082.36",
+    "fetched_at": "2026-09-02T02:07:17.100Z",
+    "freshness": "stale",
     "fx_as_of": "2026-09-01",
     "market_status": "CLOSED",
     "mstr_price": "124.88",
-    "price_as_of": "2026-09-02T01:27:39.300Z",
+    "price_as_of": "2026-09-02T02:07:17.100Z",
     "sources": {
       "BTC": "Strategy",
       "MSTR": "Strategy",
       "USD_IDR": "Bank Indonesia JISDOR"
     },
     "usd_idr": "17727",
-    "warnings": []
+    "warnings": [
+      "MSTR is using the last successful value",
+      "BTC is using the last successful value",
+      "USD/IDR is using the last successful Bank Indonesia JISDOR value"
+    ]
   },
   "portfolio": {
     "absolute_pl_usd": "90.06",
