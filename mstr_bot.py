@@ -22,11 +22,10 @@ except ImportError:
     pass
 
 HEADERS = {
-    "accept": "*/*",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
     "accept-language": "en-US,en;q=0.9",
-    "origin": "https://www.strategy.com",
     "referer": "https://www.strategy.com/",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
 }
 MSTR_KPI_URL = "https://api.strategy.com/btc/mstrKpiData"
 BITCOIN_KPI_URL = "https://api.strategy.com/btc/bitcoinKpis"
@@ -247,6 +246,19 @@ def _normalize_shares_to_m(value: Any, field_name: str) -> float:
 
 
 def _http_get_text(url: str) -> str:
+    # 1. Primary: curl_cffi with Chrome TLS impersonation (bypasses Akamai/Cloudflare bot blocking)
+    try:
+        from curl_cffi import requests as cffi_requests  # type: ignore
+
+        response = cffi_requests.get(url, impersonate="chrome120", headers=HEADERS, timeout=25)
+        response.raise_for_status()
+        return response.text
+    except ImportError:
+        pass
+    except Exception:
+        pass
+
+    # 2. Secondary fallback: standard requests / urllib
     try:
         import requests  # type: ignore
 
@@ -346,8 +358,72 @@ def _wib_today() -> date:
     return datetime.now(timezone(timedelta(hours=7))).date()
 
 
-def fetch_strategy_snapshot(snapshot_date: date | None = None) -> StrategySnapshot:
-    dashboard, shares, latest_purchase = fetch_dashboard_data(), fetch_shares_data(), fetch_latest_average_btc_cost()
+def _load_cached_fingerprint(state_path: Path | None) -> Mapping[str, Any]:
+    if not state_path or not state_path.exists():
+        return {}
+    try:
+        payload = json.loads(state_path.read_text(encoding="utf-8"))
+        if isinstance(payload, Mapping) and isinstance(payload.get("fingerprint"), Mapping):
+            return payload["fingerprint"]
+    except Exception:
+        pass
+    return {}
+
+
+def fetch_strategy_snapshot(
+    snapshot_date: date | None = None,
+    state_path: Path | None = DEFAULT_STATE_FILE,
+) -> StrategySnapshot:
+    dashboard = fetch_dashboard_data()
+    cached_fingerprint = _load_cached_fingerprint(state_path)
+
+    try:
+        shares = fetch_shares_data()
+    except Exception as exc:
+        if cached_fingerprint.get("basic_shares_m") and cached_fingerprint.get("diluted_shares_m"):
+            print(f"::warning::Failed to fetch shares data from strategy.com ({exc}). Using cached state fundamentals.")
+            shares = {
+                "shares_as_of": None,
+                "basic_shares_m": float(cached_fingerprint["basic_shares_m"]),
+                "diluted_shares_m": float(cached_fingerprint["diluted_shares_m"]),
+            }
+        else:
+            raise StrategyDataError(f"Failed to fetch shares data and no cached state available: {exc}") from exc
+
+    try:
+        latest_purchase = fetch_latest_average_btc_cost()
+    except Exception as exc:
+        if cached_fingerprint.get("average_btc_cost"):
+            print(f"::warning::Failed to fetch purchase data from strategy.com ({exc}). Using cached state fundamentals.")
+            latest_purchase = LatestPurchaseMetrics(
+                as_of_date=snapshot_date or _wib_today(),
+                average_btc_cost=float(cached_fingerprint["average_btc_cost"]),
+                btc_holdings=None,
+                diluted_shares_m=None,
+                btc_yield_qtd_pct=None,
+                btc_yield_ytd_pct=float(cached_fingerprint.get("btc_yield_ytd_pct", 0.0)),
+            )
+        else:
+            raise StrategyDataError(f"Failed to fetch purchase data and no cached state available: {exc}") from exc
+
+    try:
+        debt_instruments = fetch_debt_instruments()
+    except Exception as exc:
+        raw_schedule = cached_fingerprint.get("debt_schedule", [])
+        if raw_schedule:
+            print(f"::warning::Failed to fetch debt instruments from strategy.com ({exc}). Using cached state fundamentals.")
+            debt_instruments = tuple(
+                DebtInstrument(
+                    amount_b=float(item["amount_b"]),
+                    effective_date=_parse_date(item["effective_date"], "effective_date") or _wib_today(),
+                    maturity_date=_parse_date(item.get("maturity_date"), "maturity_date") if item.get("maturity_date") else None,
+                    put_date=_parse_date(item.get("put_date"), "put_date") if item.get("put_date") else None,
+                )
+                for item in raw_schedule
+            )
+        else:
+            raise StrategyDataError(f"Failed to fetch debt instruments and no cached state available: {exc}") from exc
+
     mstr, btc = dashboard["mstr"], dashboard["btc"]
     market_cap_b = _require_money_b(mstr.get("marketCap"), "marketCap", "m", positive=True)
     enterprise_value_b = _require_money_b(mstr.get("entVal"), "entVal", "m", positive=True)
@@ -377,7 +453,7 @@ def fetch_strategy_snapshot(snapshot_date: date | None = None) -> StrategySnapsh
         usd_div_coverage_months=_require_number(btc.get("usdMonthsOfDividends"), "usdMonthsOfDividends", positive=False),
         btc_div_coverage_years=_require_number(btc.get("btcYearsOfDividends"), "btcYearsOfDividends", positive=False),
         annual_dividends_b=_require_money_b(btc.get("totalAnnualDividends"), "totalAnnualDividends", "usd", positive=False),
-        debt_instruments=fetch_debt_instruments(),
+        debt_instruments=debt_instruments,
         reported_metrics={key: value for key, value in reported_metrics.items() if value is not None},
         source_metadata=SourceMetadata(
             mstr_as_of=_parse_datetime(mstr.get("timeStampUtc") or mstr.get("timeStamp"), "mstr.timestamp"),
@@ -1020,7 +1096,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.audit_live:
             print(format_source_audit())
             return 0
-        run = evaluate_snapshot(golden_snapshot() if args.sample else fetch_strategy_snapshot(), state_path=args.state_file)
+        run = evaluate_snapshot(
+            golden_snapshot() if args.sample else fetch_strategy_snapshot(state_path=args.state_file),
+            state_path=args.state_file,
+        )
         report = format_telegram_report(run)
         print(report)
         if args.dry_run:
