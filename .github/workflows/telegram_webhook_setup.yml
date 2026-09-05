@@ -1,0 +1,54 @@
+﻿name: Telegram Webhook Setup
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Action: info, set, or delete"
+        required: true
+        default: "info"
+        type: choice
+        options:
+          - info
+          - set
+          - delete
+      secret_token:
+        description: "Webhook secret token (used when action is set)"
+        required: false
+        default: ""
+
+jobs:
+  manage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute Webhook Action
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          ACTION: ${{ inputs.action }}
+          SECRET_TOKEN: ${{ inputs.secret_token }}
+        run: |
+          set -euo pipefail
+          BASE_URL="https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}"
+          WEBHOOK_URL="https://mstr-challenge-v2-production.nevets-steven.workers.dev/telegram/webhook"
+
+          if [ "$ACTION" = "info" ]; then
+            echo "Fetching getWebhookInfo..."
+            curl --fail-with-body --silent --show-error "$BASE_URL/getWebhookInfo" | jq .
+          elif [ "$ACTION" = "set" ]; then
+            echo "Setting webhook to $WEBHOOK_URL..."
+            if [ -n "$SECRET_TOKEN" ]; then
+              curl --fail-with-body --silent --show-error \
+                --data-urlencode "url=$WEBHOOK_URL" \
+                --data-urlencode "secret_token=$SECRET_TOKEN" \
+                "$BASE_URL/setWebhook" | jq .
+            else
+              curl --fail-with-body --silent --show-error \
+                --data-urlencode "url=$WEBHOOK_URL" \
+                "$BASE_URL/setWebhook" | jq .
+            fi
+            echo "Current webhook status:"
+            curl --fail-with-body --silent --show-error "$BASE_URL/getWebhookInfo" | jq .
+          elif [ "$ACTION" = "delete" ]; then
+            echo "Deleting webhook..."
+            curl --fail-with-body --silent --show-error "$BASE_URL/deleteWebhook" | jq .
+          fi
