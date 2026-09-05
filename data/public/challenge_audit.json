@@ -1,9 +1,9 @@
 {
-  "active_event_count": 7,
+  "active_event_count": 8,
   "challenge_id": "mstr-live-thesis-v1",
   "config_schema_version": 1,
   "event_schema_version": 2,
-  "generated_at": "2026-09-05T05:50:54.134Z",
+  "generated_at": "2026-09-05T10:04:24.403Z",
   "jisdor_health": "available",
   "latest_transaction_id": "CH-000006",
   "ledger_hash": "5df73094d38d3c7dea37ed41d074b88e6a8151998735d4294ad74d8dcbbb47e7",
