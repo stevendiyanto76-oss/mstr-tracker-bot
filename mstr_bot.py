@@ -33,6 +33,8 @@ SHARES_URL = "https://www.strategy.com/shares"
 PURCHASES_URL = "https://www.strategy.com/purchases"
 DEBT_URL = "https://www.strategy.com/debt"
 DEFAULT_STATE_FILE = Path("mstr_decision_engine_v2_state.json")
+V2_SNAPSHOT_URL = "https://mstr-challenge-v2-production.nevets-steven.workers.dev/api/v2/snapshot"
+LOCAL_OVERVIEW_PATH = Path("data/public/challenge_overview.json")
 NORMAL_ACTIONS = ("STRONG BUY", "ACCUMULATE", "HOLD", "REDUCE", "SELL")
 
 
@@ -1025,6 +1027,270 @@ def send_telegram_message(message: str) -> bool:
         return False
 
 
+def fetch_v2_portfolio_snapshot() -> dict[str, Any] | None:
+    """Fetch live authoritative portfolio snapshot from Cloudflare V2, falling back to local audit mirror."""
+    try:
+        import requests  # type: ignore
+
+        response = requests.get(V2_SNAPSHOT_URL, timeout=10)
+        if response.ok:
+            payload = response.json()
+            if isinstance(payload, dict):
+                overview = payload.get("documents", {}).get("overview")
+                if isinstance(overview, dict) and "portfolio" in overview:
+                    return overview
+    except Exception as exc:
+        print(f"Notice: Remote V2 snapshot fetch failed ({exc}), trying local mirror...", file=sys.stderr)
+
+    if LOCAL_OVERVIEW_PATH.exists():
+        try:
+            return json.loads(LOCAL_OVERVIEW_PATH.read_text(encoding="utf-8"))
+        except Exception as exc:
+            print(f"Warning: Failed to read local mirror overview: {exc}", file=sys.stderr)
+
+    return None
+
+
+def format_portfolio_recommendation(
+    run: EngineRun, overview: Mapping[str, Any], now: datetime | None = None
+) -> str:
+    portfolio = overview.get("portfolio", {})
+    market = overview.get("market", {})
+
+    cash_usd = float(portfolio.get("cash_usd", 0) or 0)
+    cash_idr = float(portfolio.get("cash_idr", 0) or 0)
+    mstr_qty = float(portfolio.get("mstr_quantity", 0) or 0)
+    mstr_avg_cost = float(portfolio.get("mstr_average_cost", 0) or 0)
+    mstr_cost_basis = float(portfolio.get("mstr_cost_basis", 0) or 0)
+    net_contributions = float(portfolio.get("net_contributions_usd", 0) or 0)
+
+    # Use live MSTR price from current EngineRun snapshot
+    mstr_price = run.snapshot.mstr_price
+    mstr_market_val = mstr_qty * mstr_price
+    unrealized_pl = mstr_market_val - mstr_cost_basis
+    unrealized_pct = (unrealized_pl / mstr_cost_basis * 100) if mstr_cost_basis > 0 else 0.0
+
+    total_usd = cash_usd + mstr_market_val
+    usd_idr = float(market.get("usd_idr", 0) or 17600)
+    total_idr = total_usd * usd_idr
+
+    cash_alloc = (cash_usd / total_usd * 100) if total_usd > 0 else 0.0
+    mstr_alloc = (mstr_market_val / total_usd * 100) if total_usd > 0 else 0.0
+
+    total_return_pct = (
+        ((total_usd - net_contributions) / net_contributions * 100)
+        if net_contributions > 0
+        else 0.0
+    )
+
+    action = run.decision.action
+    zones = run.zones
+    fair_price = zones.fair_price
+    strong_buy_price = zones.strong_buy_price
+    accumulate_price = zones.accumulate_price
+    hold_price = zones.hold_price
+    reduce_price = zones.reduce_price
+
+    pl_sign = "+" if unrealized_pl >= 0 else ""
+    ret_sign = "+" if total_return_pct >= 0 else ""
+    timestamp = (now or datetime.now(timezone(timedelta(hours=7)))).astimezone(
+        timezone(timedelta(hours=7))
+    ).strftime("%d %b %Y | %H:%M WIB")
+
+    if action == "STRONG BUY":
+        val_analysis = (
+            f"Harga MSTR ({_fmt_usd(mstr_price)}) terdiskon sangat dalam (≤ {_fmt_usd(strong_buy_price)}), "
+            f"jauh di bawah Fair Price ({_fmt_usd(fair_price)})."
+        )
+        port_analysis = (
+            f"Saldo kas USD Anda: {_fmt_usd(cash_usd)} ({cash_alloc:.1f}% portofolio). "
+            f"Posisi MSTR saat ini: {mstr_qty:g} saham."
+        )
+        if cash_usd >= mstr_price:
+            max_shares = int(cash_usd // mstr_price)
+            suggested = max(1, min(max_shares, max(1, int(cash_usd * 0.4 // mstr_price))))
+            advice_lines = [
+                "1. Peluang Emas: Sangat disarankan akumulasi agresif mumpung harga di level diskon ekstrem.",
+                f"2. Alokasikan 25% – 50% dari kas USD ({_fmt_usd(cash_usd)}). Disarankan beli {suggested} saham.",
+                "3. Sisakan kas cadangan untuk mengantisipasi volatilitas lanjutan.",
+            ]
+            shortcuts = [
+                f"• Beli Diskon : /buy_mstr {suggested} {mstr_price:,.2f}",
+                "• Cek Portofolio: /portofolio",
+            ]
+        else:
+            advice_lines = [
+                f"1. Valuasi super murah, namun saldo kas USD ({_fmt_usd(cash_usd)}) kurang untuk 1 saham penuh.",
+                "2. Pertimbangkan setoran kas baru untuk memanfaatkan momentum diskon ini.",
+            ]
+            shortcuts = [
+                "• Setor Kas : /deposit USD 100",
+                "• Cek Saldo : /cash",
+            ]
+
+    elif action == "ACCUMULATE":
+        val_analysis = (
+            f"Harga MSTR ({_fmt_usd(mstr_price)}) berada di zona diskon akumulasi "
+            f"({_fmt_usd(strong_buy_price)} – {_fmt_usd(accumulate_price)}), di bawah Fair Price ({_fmt_usd(fair_price)})."
+        )
+        port_analysis = (
+            f"Saldo kas USD tersedia: {_fmt_usd(cash_usd)} ({cash_alloc:.1f}%). "
+            f"Posisi MSTR: {mstr_qty:g} saham."
+        )
+        if cash_usd >= mstr_price:
+            advice_lines = [
+                "1. Momentum DCA: Saat yang tepat untuk cicil beli bertahap (Dollar Cost Averaging).",
+                f"2. Disarankan beli 1 saham di harga ini ({_fmt_usd(mstr_price)}) tanpa menghabiskan seluruh kas cadangan.",
+                "3. Simpan sisa kas untuk kesempatan akumulasi berikutnya jika ada koreksi lebih dalam.",
+            ]
+            shortcuts = [
+                f"• Beli Bertahap: /buy_mstr 1 {mstr_price:,.2f}",
+                "• Cek Riwayat  : /history 10",
+            ]
+        else:
+            advice_lines = [
+                f"1. Harga menarik untuk akumulasi, namun kas USD ({_fmt_usd(cash_usd)}) minim.",
+                "2. Pertimbangkan deposit kas baru untuk menambah amunisi DCA.",
+            ]
+            shortcuts = [
+                "• Setor Kas : /deposit USD 50",
+                "• Cek Saldo : /cash",
+            ]
+
+    elif action == "HOLD":
+        val_analysis = (
+            f"Harga MSTR ({_fmt_usd(mstr_price)}) berada di zona wajar / fair value "
+            f"({_fmt_usd(accumulate_price)} – {_fmt_usd(hold_price)})."
+        )
+        port_analysis = (
+            f"Posisi MSTR {mstr_qty:g} saham mencatat P&L {pl_sign}{unrealized_pct:.2f}% ({pl_sign}{_fmt_usd(unrealized_pl)}). "
+            f"Cadangan kas USD: {_fmt_usd(cash_usd)} ({cash_alloc:.1f}%)."
+        )
+        advice_lines = [
+            "1. Wait & See: Pertahankan posisi yang ada, tidak perlu aksi tergesa-gesa.",
+            f"2. Jangan FOMO beli baru di atas zona akumulasi (> {_fmt_usd(accumulate_price)}).",
+            f"3. Belum saatnya take profit sebelum harga memasuki zona reduce (≥ {_fmt_usd(hold_price)}).",
+            f"4. Biarkan kas USD ({_fmt_usd(cash_usd)}) tetap siap sebagai amunisi.",
+        ]
+        shortcuts = [
+            "• Status Challenge: /challenge_status",
+            "• Cek Portofolio   : /portofolio",
+        ]
+
+    elif action == "REDUCE":
+        val_analysis = (
+            f"Harga MSTR ({_fmt_usd(mstr_price)}) berada di atas Fair Price ({_fmt_usd(fair_price)}) "
+            f"dan memasuki zona REDUCE ({_fmt_usd(hold_price)} – {_fmt_usd(reduce_price)})."
+        )
+        port_analysis = (
+            f"Posisi MSTR Anda {mstr_qty:g} saham sudah mencetak laba {pl_sign}{unrealized_pct:.2f}% ({pl_sign}{_fmt_usd(unrealized_pl)}). "
+            f"Porsi MSTR saat ini {mstr_alloc:.1f}%, kas USD {_fmt_usd(cash_usd)} ({cash_alloc:.1f}%)."
+        )
+        if mstr_qty >= 1.0:
+            advice_lines = [
+                "1. Opsi Profit Taking: Disarankan merealisasikan laba bertahap (jual 0.5 – 1.0 saham) untuk mengamankan cuan ke kas USD.",
+                f"2. Opsi Long-Term: Boleh tetap hold jika fokus horizon jangka panjang, karena porsi kas Anda ({cash_alloc:.1f}%) masih cukup tebal.",
+                f"3. Pembelian Baru: Dilarang menambah beli di level ini. Tunggu harga kembali ke zona Accumulate (≤ {_fmt_usd(accumulate_price)}).",
+            ]
+            shortcuts = [
+                f"• Jual 1 Saham  : /sell_mstr 1 {mstr_price:,.2f}",
+                f"• Jual 0.5 Saham: /sell_mstr 0.5 {mstr_price:,.2f}",
+                "• Cek Saldo Kas : /cash",
+            ]
+        elif mstr_qty > 0:
+            advice_lines = [
+                f"1. Posisi MSTR Anda ({mstr_qty:g} saham) sudah profit {pl_sign}{unrealized_pct:.2f}%.",
+                "2. Anda bisa kunci sebagian/seluruh laba atau tetap hold karena ukuran posisi relatif kecil.",
+                "3. Hindari membeli lagi di atas harga wajar.",
+            ]
+            shortcuts = [
+                f"• Jual Posisi   : /sell_mstr {mstr_qty:g} {mstr_price:,.2f}",
+                "• Cek Portofolio: /portofolio",
+            ]
+        else:
+            advice_lines = [
+                "1. Anda belum memiliki posisi saham MSTR.",
+                "2. Hindari masuk di harga saat ini karena risiko valuasi sedang tinggi.",
+                f"3. Tunggu momentum diskon di zona Accumulate (≤ {_fmt_usd(accumulate_price)}).",
+            ]
+            shortcuts = [
+                "• Cek Saldo Kas : /cash",
+                "• Status        : /challenge_status",
+            ]
+
+    else:  # SELL
+        val_analysis = (
+            f"Harga MSTR ({_fmt_usd(mstr_price)}) sudah overvalued ekstrem (> {_fmt_usd(reduce_price)}), "
+            f"jauh melampaui valuasi wajar aset dasarnya."
+        )
+        port_analysis = (
+            f"Posisi MSTR {mstr_qty:g} saham mencatat P&L {pl_sign}{unrealized_pct:.2f}%. "
+            f"Nilai pasar saham: {_fmt_usd(mstr_market_val)}."
+        )
+        if mstr_qty > 0:
+            sell_qty = max(1.0, round(mstr_qty * 0.7, 1))
+            advice_lines = [
+                "1. De-risking Prioritas: Sangat disarankan menjual sebagian besar atau seluruh posisi MSTR.",
+                "2. Amankan profit maksimal dan pindahkan aset ke kas USD yang aman.",
+                "3. Jangan tergiur FOMO; risiko koreksi tajam sangat tinggi.",
+            ]
+            shortcuts = [
+                f"• Jual Sebagian: /sell_mstr {sell_qty:g} {mstr_price:,.2f}",
+                f"• Jual Semua   : /sell_mstr {mstr_qty:g} {mstr_price:,.2f}",
+            ]
+        else:
+            advice_lines = [
+                "1. Sikap Defensif: Tetap di kas USD. Pasar sedang di puncak euforia.",
+                "2. Tunggu koreksi sehat sebelum mempertimbangkan posisi baru.",
+            ]
+            shortcuts = [
+                "• Cek Saldo Kas: /cash",
+            ]
+
+    if run.gates.strong_buy_blocked:
+        advice_lines.append("⚠️ Catatan Risiko: Strong Buy dibatasi oleh gate fundamental; pertahankan kehati-hatian.")
+    elif run.gates.distress:
+        advice_lines.append("🚨 Catatan Risiko: Distress gate aktif; risiko struktural tinggi terdeteksi.")
+
+    advice_block = "\n".join(f"  {line}" for line in advice_lines)
+    shortcut_block = "\n".join(f"  {line}" for line in shortcuts)
+
+    return f"""
+💼 PORTOFOLIO & REKOMENDASI MSTR CHALLENGE
+📅 {timestamp}
+Asset: MSTR | Challenge: mstr-live-thesis-v1
+━━━━━━━━━━━━━━━━━
+
+📊 POSISI PORTOFOLIO SAAT INI
+💵 Kas USD       : {_fmt_usd(cash_usd)}
+🇮🇩 Kas IDR       : Rp {cash_idr:,.0f}
+📈 Saham MSTR    : {mstr_qty:g} saham @ avg {_fmt_usd(mstr_avg_cost)}
+💰 Nilai Pasar   : {_fmt_usd(mstr_market_val)}
+📊 Floating P&L  : {pl_sign}{_fmt_usd(unrealized_pl)} ({pl_sign}{unrealized_pct:.2f}%)
+💼 Total Nilai   : {_fmt_usd(total_usd)} (~Rp {total_idr:,.0f})
+📊 Total Return  : {ret_sign}{total_return_pct:.2f}% (Modal Bersih: {_fmt_usd(net_contributions)})
+⚖️ Rasio Alokasi : Kas {cash_alloc:.1f}% | MSTR {mstr_alloc:.1f}%
+
+━━━━━━━━━━━━━━━━━
+🎯 REKOMENDASI TINDAKAN (ACTIONABLE ADVICE)
+Status Valuasi : 🏷 {action}
+Harga MSTR     : {_fmt_usd(mstr_price)} | Fair Price: {_fmt_usd(fair_price)}
+
+• Analisis Valuasi:
+  {val_analysis}
+
+• Kondisi Portofolio Anda:
+  {port_analysis}
+
+• Saran Aksi Hari Ini:
+{advice_block}
+
+━━━━━━━━━━━━━━━━━
+⚡ REKOMENDASI PERINTAH BOT
+{shortcut_block}
+""".strip()
+
+
 def golden_snapshot(mstr_price: float = 112.53) -> StrategySnapshot:
     basic_shares_m, debt_b, preferred_b, usd_reserve_b = 356.320, 6.754, 15.475, 1.101
     market_cap_b = 40.097
@@ -1079,6 +1345,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true", help="Render report without sending Telegram.")
     parser.add_argument("--sample", action="store_true", help="Use the deterministic golden sample snapshot.")
     parser.add_argument("--audit-live", action="store_true", help="Print live source values and reconciliation without changing state.")
+    parser.add_argument("--no-portfolio", action="store_true", help="Skip the personalized portfolio recommendation message.")
     parser.add_argument("--state-file", type=Path, default=DEFAULT_STATE_FILE)
     return parser.parse_args(argv)
 
@@ -1100,12 +1367,28 @@ def main(argv: Sequence[str] | None = None) -> int:
             golden_snapshot() if args.sample else fetch_strategy_snapshot(state_path=args.state_file),
             state_path=args.state_file,
         )
+        # Message 1: The standard detailed snapshot report (completely untouched)
         report = format_telegram_report(run)
         print(report)
+
+        # Message 2: Personalized Portfolio Update & Recommendation
+        portfolio_report = None
+        if not args.no_portfolio:
+            overview = fetch_v2_portfolio_snapshot()
+            if overview:
+                portfolio_report = format_portfolio_recommendation(run, overview)
+                print("\n" + "=" * 40 + "\n")
+                print(portfolio_report)
+
         if args.dry_run:
             return 0
         if not send_telegram_message(report):
             print("Telegram credentials unavailable; report rendered but not sent.", file=sys.stderr)
+        elif portfolio_report:
+            import time
+
+            time.sleep(1)
+            send_telegram_message(portfolio_report)
         return 0
     except Exception as exc:
         message = f"MSTR Decision Engine error: {exc}"

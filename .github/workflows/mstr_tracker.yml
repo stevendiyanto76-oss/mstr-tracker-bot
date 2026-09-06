@@ -8,10 +8,10 @@ on:
       - ".github/workflows/mstr_tracker.yml"
 
   schedule:
-    - cron: "30 4 * * *"
-      timezone: "Asia/Jakarta"
-    - cron: "15 16 * * *"
-      timezone: "Asia/Jakarta"
+    # 05:25 WIB = 22:25 UTC (Briefing Pagi Portofolio & Rekomendasi)
+    - cron: "25 22 * * *"
+    # 17:25 WIB = 10:25 UTC (Update Sore)
+    - cron: "25 10 * * *"
 
   workflow_dispatch:
 
