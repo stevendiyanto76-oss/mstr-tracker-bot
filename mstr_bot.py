@@ -1110,71 +1110,71 @@ def format_portfolio_recommendation(
             max_shares = int(cash_usd // mstr_price)
             suggested = max(1, min(max_shares, max(1, int(cash_usd * 0.4 // mstr_price))))
             advice_lines = [
-                "1. Peluang Emas: Sangat disarankan akumulasi agresif mumpung harga di level diskon ekstrem.",
-                f"2. Alokasikan 25% – 50% dari kas USD ({_fmt_usd(cash_usd)}). Disarankan beli {suggested} saham.",
-                "3. Sisakan kas cadangan untuk mengantisipasi volatilitas lanjutan.",
+                "1. Peluang Emas:\nSangat disarankan akumulasi agresif mumpung harga di level diskon ekstrem.",
+                f"2. Alokasi Kas:\nAlokasikan 25% – 50% kas USD ({_fmt_usd(cash_usd)}). Disarankan beli {suggested} saham.",
+                "3. Cadangan Amunisi:\nSisakan kas cadangan untuk mengantisipasi volatilitas lanjutan.",
             ]
             shortcuts = [
-                f"• Beli Diskon : /buy_mstr {suggested} {mstr_price:,.2f}",
-                "• Cek Portofolio: /portofolio",
+                f"👉 Beli Diskon:\n/buy_mstr {suggested} {mstr_price:,.2f}",
+                "👉 Cek Portofolio:\n/portofolio",
             ]
         else:
             advice_lines = [
-                f"1. Valuasi super murah, namun saldo kas USD ({_fmt_usd(cash_usd)}) kurang untuk 1 saham penuh.",
-                "2. Pertimbangkan setoran kas baru untuk memanfaatkan momentum diskon ini.",
+                f"1. Valuasi Murah:\nHarga sangat menarik, namun saldo kas USD ({_fmt_usd(cash_usd)}) belum cukup untuk 1 saham penuh.",
+                "2. Tambah Amunisi:\nPertimbangkan setoran kas baru untuk memanfaatkan momentum diskon ini.",
             ]
             shortcuts = [
-                "• Setor Kas : /deposit USD 100",
-                "• Cek Saldo : /cash",
+                "👉 Setor Kas:\n/deposit USD 100",
+                "👉 Cek Saldo:\n/cash",
             ]
 
     elif action == "ACCUMULATE":
         val_analysis = (
             f"Harga MSTR ({_fmt_usd(mstr_price)}) berada di zona diskon akumulasi "
-            f"({_fmt_usd(strong_buy_price)} – {_fmt_usd(accumulate_price)}), di bawah Fair Price ({_fmt_usd(fair_price)})."
+            f"(${_fmt_usd(strong_buy_price)} – {_fmt_usd(accumulate_price)}), di bawah Fair Price ({_fmt_usd(fair_price)})."
         )
         port_analysis = (
             f"Saldo kas USD tersedia: {_fmt_usd(cash_usd)} ({cash_alloc:.1f}%). "
-            f"Posisi MSTR: {mstr_qty:g} saham."
+            f"Posisi MSTR saat ini: {mstr_qty:g} saham."
         )
         if cash_usd >= mstr_price:
             advice_lines = [
-                "1. Momentum DCA: Saat yang tepat untuk cicil beli bertahap (Dollar Cost Averaging).",
-                f"2. Disarankan beli 1 saham di harga ini ({_fmt_usd(mstr_price)}) tanpa menghabiskan seluruh kas cadangan.",
-                "3. Simpan sisa kas untuk kesempatan akumulasi berikutnya jika ada koreksi lebih dalam.",
+                "1. Momentum DCA:\nSaat yang tepat untuk cicil beli bertahap (Dollar Cost Averaging).",
+                f"2. Beli Bertahap:\nDisarankan beli 1 saham di harga ini ({_fmt_usd(mstr_price)}) tanpa menghabiskan seluruh kas cadangan.",
+                "3. Simpan Sisa Kas:\nSimpan sisa kas untuk kesempatan akumulasi berikutnya jika ada koreksi lebih dalam.",
             ]
             shortcuts = [
-                f"• Beli Bertahap: /buy_mstr 1 {mstr_price:,.2f}",
-                "• Cek Riwayat  : /history 10",
+                f"👉 Beli Bertahap:\n/buy_mstr 1 {mstr_price:,.2f}",
+                "👉 Cek Riwayat:\n/history 10",
             ]
         else:
             advice_lines = [
-                f"1. Harga menarik untuk akumulasi, namun kas USD ({_fmt_usd(cash_usd)}) minim.",
-                "2. Pertimbangkan deposit kas baru untuk menambah amunisi DCA.",
+                f"1. Zona Akumulasi:\nHarga menarik untuk DCA, namun kas USD ({_fmt_usd(cash_usd)}) terbatas.",
+                "2. Tambah Amunisi:\nPertimbangkan deposit kas baru untuk menambah amunisi beli.",
             ]
             shortcuts = [
-                "• Setor Kas : /deposit USD 50",
-                "• Cek Saldo : /cash",
+                "👉 Setor Kas:\n/deposit USD 50",
+                "👉 Cek Saldo:\n/cash",
             ]
 
     elif action == "HOLD":
         val_analysis = (
             f"Harga MSTR ({_fmt_usd(mstr_price)}) berada di zona wajar / fair value "
-            f"({_fmt_usd(accumulate_price)} – {_fmt_usd(hold_price)})."
+            f"(${_fmt_usd(accumulate_price)} – {_fmt_usd(hold_price)})."
         )
         port_analysis = (
             f"Posisi MSTR {mstr_qty:g} saham mencatat P&L {pl_sign}{unrealized_pct:.2f}% ({pl_sign}{_fmt_usd(unrealized_pl)}). "
             f"Cadangan kas USD: {_fmt_usd(cash_usd)} ({cash_alloc:.1f}%)."
         )
         advice_lines = [
-            "1. Wait & See: Pertahankan posisi yang ada, tidak perlu aksi tergesa-gesa.",
-            f"2. Jangan FOMO beli baru di atas zona akumulasi (> {_fmt_usd(accumulate_price)}).",
-            f"3. Belum saatnya take profit sebelum harga memasuki zona reduce (≥ {_fmt_usd(hold_price)}).",
-            f"4. Biarkan kas USD ({_fmt_usd(cash_usd)}) tetap siap sebagai amunisi.",
+            "1. Wait & See:\nPertahankan posisi yang ada, tidak perlu aksi tergesa-gesa.",
+            f"2. Disiplin Valuasi:\nJangan FOMO beli baru di atas zona akumulasi (> {_fmt_usd(accumulate_price)}).",
+            f"3. Belum Saatnya TP:\nBelum perlu take profit sebelum harga memasuki zona reduce (≥ {_fmt_usd(hold_price)}).",
+            f"4. Jaga Kas:\nBiarkan kas USD ({_fmt_usd(cash_usd)}) tetap siap sebagai amunisi.",
         ]
         shortcuts = [
-            "• Status Challenge: /challenge_status",
-            "• Cek Portofolio   : /portofolio",
+            "👉 Status Challenge:\n/challenge_status",
+            "👉 Cek Portofolio:\n/portofolio",
         ]
 
     elif action == "REDUCE":
@@ -1188,34 +1188,34 @@ def format_portfolio_recommendation(
         )
         if mstr_qty >= 1.0:
             advice_lines = [
-                "1. Opsi Profit Taking: Disarankan merealisasikan laba bertahap (jual 0.5 – 1.0 saham) untuk mengamankan cuan ke kas USD.",
-                f"2. Opsi Long-Term: Boleh tetap hold jika fokus horizon jangka panjang, karena porsi kas Anda ({cash_alloc:.1f}%) masih cukup tebal.",
-                f"3. Pembelian Baru: Dilarang menambah beli di level ini. Tunggu harga kembali ke zona Accumulate (≤ {_fmt_usd(accumulate_price)}).",
+                "1. Opsi Profit Taking:\nDisarankan merealisasikan laba bertahap (jual 0.5 – 1.0 saham) untuk mengamankan cuan ke kas USD.",
+                f"2. Opsi Long-Term:\nBoleh tetap hold jika fokus horizon jangka panjang, karena porsi kas Anda ({cash_alloc:.1f}%) masih cukup tebal.",
+                f"3. Pembelian Baru:\nDilarang menambah beli di level ini. Tunggu harga kembali ke zona Accumulate (≤ {_fmt_usd(accumulate_price)}).",
             ]
             shortcuts = [
-                f"• Jual 1 Saham  : /sell_mstr 1 {mstr_price:,.2f}",
-                f"• Jual 0.5 Saham: /sell_mstr 0.5 {mstr_price:,.2f}",
-                "• Cek Saldo Kas : /cash",
+                f"👉 Jual 1 Saham:\n/sell_mstr 1 {mstr_price:,.2f}",
+                f"👉 Jual 0.5 Saham:\n/sell_mstr 0.5 {mstr_price:,.2f}",
+                "👉 Cek Saldo Kas:\n/cash",
             ]
         elif mstr_qty > 0:
             advice_lines = [
-                f"1. Posisi MSTR Anda ({mstr_qty:g} saham) sudah profit {pl_sign}{unrealized_pct:.2f}%.",
-                "2. Anda bisa kunci sebagian/seluruh laba atau tetap hold karena ukuran posisi relatif kecil.",
-                "3. Hindari membeli lagi di atas harga wajar.",
+                f"1. Kunci Keuntungan:\nPosisi MSTR Anda ({mstr_qty:g} saham) sudah profit {pl_sign}{unrealized_pct:.2f}%.",
+                "2. Opsi Fleksibel:\nAnda bisa kunci sebagian/seluruh laba atau tetap hold karena ukuran posisi relatif kecil.",
+                "3. Jangan FOMO:\nHindari membeli lagi di atas harga wajar.",
             ]
             shortcuts = [
-                f"• Jual Posisi   : /sell_mstr {mstr_qty:g} {mstr_price:,.2f}",
-                "• Cek Portofolio: /portofolio",
+                f"👉 Jual Posisi:\n/sell_mstr {mstr_qty:g} {mstr_price:,.2f}",
+                "👉 Cek Portofolio:\n/portofolio",
             ]
         else:
             advice_lines = [
-                "1. Anda belum memiliki posisi saham MSTR.",
-                "2. Hindari masuk di harga saat ini karena risiko valuasi sedang tinggi.",
-                f"3. Tunggu momentum diskon di zona Accumulate (≤ {_fmt_usd(accumulate_price)}).",
+                "1. Belum Ada Posisi:\nAnda belum memiliki posisi saham MSTR.",
+                "2. Hindari Masuk:\nHindari masuk di harga saat ini karena risiko valuasi sedang tinggi.",
+                f"3. Tunggu Diskon:\nTunggu momentum diskon di zona Accumulate (≤ {_fmt_usd(accumulate_price)}).",
             ]
             shortcuts = [
-                "• Cek Saldo Kas : /cash",
-                "• Status        : /challenge_status",
+                "👉 Cek Saldo Kas:\n/cash",
+                "👉 Status Challenge:\n/challenge_status",
             ]
 
     else:  # SELL
@@ -1230,57 +1230,61 @@ def format_portfolio_recommendation(
         if mstr_qty > 0:
             sell_qty = max(1.0, round(mstr_qty * 0.7, 1))
             advice_lines = [
-                "1. De-risking Prioritas: Sangat disarankan menjual sebagian besar atau seluruh posisi MSTR.",
-                "2. Amankan profit maksimal dan pindahkan aset ke kas USD yang aman.",
-                "3. Jangan tergiur FOMO; risiko koreksi tajam sangat tinggi.",
+                "1. De-risking Prioritas:\nSangat disarankan menjual sebagian besar atau seluruh posisi MSTR.",
+                "2. Amankan Cuan:\nAmankan profit maksimal dan pindahkan aset ke kas USD yang aman.",
+                "3. Disiplin Risiko:\nJangan tergiur FOMO; risiko koreksi tajam sangat tinggi.",
             ]
             shortcuts = [
-                f"• Jual Sebagian: /sell_mstr {sell_qty:g} {mstr_price:,.2f}",
-                f"• Jual Semua   : /sell_mstr {mstr_qty:g} {mstr_price:,.2f}",
+                f"👉 Jual Sebagian:\n/sell_mstr {sell_qty:g} {mstr_price:,.2f}",
+                f"👉 Jual Semua:\n/sell_mstr {mstr_qty:g} {mstr_price:,.2f}",
             ]
         else:
             advice_lines = [
-                "1. Sikap Defensif: Tetap di kas USD. Pasar sedang di puncak euforia.",
-                "2. Tunggu koreksi sehat sebelum mempertimbangkan posisi baru.",
+                "1. Sikap Defensif:\nTetap di kas USD. Pasar sedang di puncak euforia.",
+                "2. Sabar Menunggu:\nTunggu koreksi sehat sebelum mempertimbangkan posisi baru.",
             ]
             shortcuts = [
-                "• Cek Saldo Kas: /cash",
+                "👉 Cek Saldo Kas:\n/cash",
             ]
 
     if run.gates.strong_buy_blocked:
-        advice_lines.append("⚠️ Catatan Risiko: Strong Buy dibatasi oleh gate fundamental; pertahankan kehati-hatian.")
+        advice_lines.append("⚠️ Catatan Risiko:\nStrong Buy dibatasi oleh gate fundamental; pertahankan kehati-hatian.")
     elif run.gates.distress:
-        advice_lines.append("🚨 Catatan Risiko: Distress gate aktif; risiko struktural tinggi terdeteksi.")
+        advice_lines.append("🚨 Catatan Risiko:\nDistress gate aktif; risiko struktural tinggi terdeteksi.")
 
-    advice_block = "\n".join(f"  {line}" for line in advice_lines)
-    shortcut_block = "\n".join(f"  {line}" for line in shortcuts)
+    advice_block = "\n\n".join(advice_lines)
+    shortcut_block = "\n\n".join(shortcuts)
 
     return f"""
-💼 PORTOFOLIO & REKOMENDASI MSTR CHALLENGE
+💼 PORTOFOLIO & REKOMENDASI
 📅 {timestamp}
-Asset: MSTR | Challenge: mstr-live-thesis-v1
+Asset: MSTR | Challenge V2
 ━━━━━━━━━━━━━━━━━
 
 📊 POSISI PORTOFOLIO SAAT INI
-💵 Kas USD       : {_fmt_usd(cash_usd)}
-🇮🇩 Kas IDR       : Rp {cash_idr:,.0f}
-📈 Saham MSTR    : {mstr_qty:g} saham @ avg {_fmt_usd(mstr_avg_cost)}
-💰 Nilai Pasar   : {_fmt_usd(mstr_market_val)}
-📊 Floating P&L  : {pl_sign}{_fmt_usd(unrealized_pl)} ({pl_sign}{unrealized_pct:.2f}%)
-💼 Total Nilai   : {_fmt_usd(total_usd)} (~Rp {total_idr:,.0f})
-📊 Total Return  : {ret_sign}{total_return_pct:.2f}% (Modal Bersih: {_fmt_usd(net_contributions)})
-⚖️ Rasio Alokasi : Kas {cash_alloc:.1f}% | MSTR {mstr_alloc:.1f}%
+💵 Kas USD: {_fmt_usd(cash_usd)}
+🇮🇩 Kas IDR: Rp {cash_idr:,.0f}
+📈 Posisi MSTR: {mstr_qty:g} saham
+🏷 Avg Beli: {_fmt_usd(mstr_avg_cost)} / saham
+💰 Nilai Pasar: {_fmt_usd(mstr_market_val)}
+📊 Floating P/L: {pl_sign}{_fmt_usd(unrealized_pl)} ({pl_sign}{unrealized_pct:.2f}%)
+💼 Total Nilai: {_fmt_usd(total_usd)}
+   (~Rp {total_idr:,.0f})
+📊 Total Return: {ret_sign}{total_return_pct:.2f}%
+   (Modal Bersih: {_fmt_usd(net_contributions)})
+⚖️ Alokasi: {cash_alloc:.1f}% Kas | {mstr_alloc:.1f}% MSTR
 
 ━━━━━━━━━━━━━━━━━
-🎯 REKOMENDASI TINDAKAN (ACTIONABLE ADVICE)
-Status Valuasi : 🏷 {action}
-Harga MSTR     : {_fmt_usd(mstr_price)} | Fair Price: {_fmt_usd(fair_price)}
+🎯 REKOMENDASI TINDAKAN
+Status Valuasi: 🏷 {action}
+Harga MSTR: {_fmt_usd(mstr_price)}
+Fair Price: {_fmt_usd(fair_price)}
 
 • Analisis Valuasi:
-  {val_analysis}
+{val_analysis}
 
 • Kondisi Portofolio Anda:
-  {port_analysis}
+{port_analysis}
 
 • Saran Aksi Hari Ini:
 {advice_block}
