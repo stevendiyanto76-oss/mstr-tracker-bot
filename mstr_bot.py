@@ -564,7 +564,56 @@ def calculate_financial_metrics(snapshot: StrategySnapshot) -> FinancialMetrics:
     )
 
 
+def fetch_btc_12m_metrics() -> tuple[float, float]:
+    """Fetches trailing 12-month BTC momentum and realized volatility with fast local fallbacks."""
+    try:
+        req = Request(
+            "https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD?range=1y&interval=1d",
+            headers=HEADERS,
+        )
+        with urlopen(req, timeout=5) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+            quote = payload["chart"]["result"][0]["indicators"]["quote"][0]["close"]
+            closes = [float(x) for x in quote if x is not None]
+            if len(closes) >= 90:
+                log_ret = [math.log(closes[i] / closes[i - 1]) for i in range(1, len(closes))]
+                mom = math.exp(sum(log_ret)) - 1.0
+                vol = (sum((r - mean(log_ret)) ** 2 for r in log_ret) / (len(log_ret) - 1)) ** 0.5 * math.sqrt(365)
+                return mom, vol
+    except Exception:
+        pass
+    return 0.18, 0.65
+
+
 def calculate_zones(snapshot: StrategySnapshot, metrics: FinancialMetrics) -> ZoneResult:
+    momentum_12m, realized_vol_12m = fetch_btc_12m_metrics()
+
+    # 1. State-dependent beta (0.45 in bull momentum > 50%, else 0.35)
+    beta = 0.45 if momentum_12m > 0.50 else 0.35
+
+    # 2. Continuous liquidity penalty (scales from 0 at >=15m down to -0.30 at 0m)
+    liquidity_penalty = 0.30 * clip((15.0 - snapshot.usd_div_coverage_months) / 15.0, 0.0, 1.0)
+
+    # 3. Volatility spread adjustment (relative to base 65%)
+    vol_adj = 0.20 * (realized_vol_12m - 0.65)
+
+    # 4. Continuous, regime-aware dynamic mNAV (Thesis Section 8.7 upgraded to 2.20x ceiling)
+    raw_dynamic_mnav = 1.0 + beta * math.tanh(momentum_12m) - vol_adj - liquidity_penalty
+    fair_ev_nav = clip(raw_dynamic_mnav, 0.50, 2.20)
+
+    # 5. Software business operating floor ($1.0B baseline)
+    software_floor_b = 1.0
+    net_senior_claims_b = snapshot.debt_b + snapshot.preferred_b - metrics.usd_reserve_b
+    structural_floor = max(0.0, (net_senior_claims_b - software_floor_b) / max(metrics.btc_nav_b, 1e-6))
+
+    # Helper for Residual / ADSO valuation bridge using diluted shares (ADSO)
+    def price_from_ev_nav(multiple: float) -> float:
+        equity_b = max(0.0, multiple * metrics.btc_nav_b - snapshot.debt_b - snapshot.preferred_b + metrics.usd_reserve_b + software_floor_b)
+        return equity_b * 1000.0 / max(snapshot.diluted_shares_m, 1e-6)
+
+    fair_price = price_from_ev_nav(fair_ev_nav)
+
+    # Sub-scores for thesis reporting & backward-compatible audit contracts
     days_elapsed = (snapshot.snapshot_date - date(snapshot.snapshot_date.year, 1, 1)).days + 1
     ytd_yield = snapshot.btc_yield_ytd_pct / 100
     annualized_yield = -1.0 if ytd_yield <= -1 else (1 + ytd_yield) ** (365 / max(days_elapsed, 1)) - 1
@@ -579,66 +628,45 @@ def calculate_zones(snapshot: StrategySnapshot, metrics: FinancialMetrics) -> Zo
         )
     )
     maturity_pressure = clip(maturity_pressure, 0, 1)
-    net_leverage_risk = clip(metrics.net_leverage / 0.25, 0, 1)
-    preferred_risk = clip((snapshot.preferred_b / metrics.btc_nav_b) / 0.40, 0, 1)
-    fixed_charge_risk = clip((metrics.annual_fixed_charges_b / metrics.btc_nav_b) / 0.05, 0, 1)
-    dilution_risk = clip(metrics.dilution / 0.20, 0, 1)
-    drawdown_risk = clip(max(0, -metrics.drawdown) / 0.40, 0, 1)
     tail_coverage_score = clip(math.log(max(snapshot.btc_div_coverage_years, 1e-9) / 5) / math.log(40 / 5), 0, 1)
-    structural_floor = (snapshot.debt_b + snapshot.preferred_b - metrics.usd_reserve_b) / metrics.btc_nav_b
-    fair_ev_nav = clip(
-        1.00
-        + 0.40 * accretion_score
-        + 0.08 * liquidity_score
-        + 0.06 * (1 - maturity_pressure)
-        + 0.04 * tail_coverage_score
-        - 0.08 * net_leverage_risk
-        - 0.12 * preferred_risk
-        - 0.08 * fixed_charge_risk
-        - 0.04 * dilution_risk
-        - 0.04 * drawdown_risk,
-        structural_floor + 0.15,
-        1.75,
-    )
     risk_score = clip(
         0.20 * (1 - liquidity_score)
         + 0.15 * maturity_pressure
-        + 0.15 * net_leverage_risk
-        + 0.20 * preferred_risk
-        + 0.15 * fixed_charge_risk
-        + 0.08 * dilution_risk
-        + 0.07 * drawdown_risk,
+        + 0.35 * (1.0 - clip(fair_ev_nav / 1.50, 0, 1)),
         0,
         1,
     )
-    uncertainty_band = 0.10 + 0.18 * risk_score + 0.06 * (1 - metrics.data_quality)
-    strong_buy_mnav = max(structural_floor + 0.10, fair_ev_nav - 1.50 * uncertainty_band)
-    accumulate_mnav = max(strong_buy_mnav + 0.01, fair_ev_nav - 0.50 * uncertainty_band)
-    hold_mnav = max(accumulate_mnav + 0.01, fair_ev_nav + 0.50 * uncertainty_band)
-    reduce_mnav = max(hold_mnav + 0.01, fair_ev_nav + 1.50 * uncertainty_band)
+    uncertainty_band = clip(0.10 + 0.18 * risk_score + 0.06 * (1 - metrics.data_quality), 0.10, 0.35)
 
-    def price_from_ev_nav(multiple: float) -> float:
-        common_equity_b = multiple * metrics.btc_nav_b - snapshot.debt_b - snapshot.preferred_b + metrics.usd_reserve_b
-        return max(0, common_equity_b * 1000 / snapshot.basic_shares_m)
+    # Full Dynamic Uncertainty & Equilibrium Dispersion Bands
+    strong_buy_mnav = max(structural_floor + 0.10, fair_ev_nav - 1.50 * uncertainty_band)
+    accumulate_mnav = fair_ev_nav
+    hold_mnav = max(accumulate_mnav + 0.02, fair_ev_nav + 1.75 * uncertainty_band)
+    reduce_mnav = max(hold_mnav + 0.02, fair_ev_nav + 3.00 * uncertainty_band)
+
+    strong_buy_price = price_from_ev_nav(strong_buy_mnav)
+    accumulate_price = price_from_ev_nav(accumulate_mnav)
+    hold_price = price_from_ev_nav(hold_mnav)
+    reduce_price = price_from_ev_nav(reduce_mnav)
 
     return ZoneResult(
-        fair_ev_nav,
-        price_from_ev_nav(fair_ev_nav),
-        uncertainty_band,
-        risk_score,
-        structural_floor,
-        strong_buy_mnav,
-        accumulate_mnav,
-        hold_mnav,
-        reduce_mnav,
-        price_from_ev_nav(strong_buy_mnav),
-        price_from_ev_nav(accumulate_mnav),
-        price_from_ev_nav(hold_mnav),
-        price_from_ev_nav(reduce_mnav),
-        maturity_pressure,
-        liquidity_score,
-        accretion_score,
-        tail_coverage_score,
+        fair_ev_nav=fair_ev_nav,
+        fair_price=fair_price,
+        uncertainty_band=uncertainty_band,
+        risk_score=risk_score,
+        structural_floor=structural_floor,
+        strong_buy_mnav=strong_buy_mnav,
+        accumulate_mnav=accumulate_mnav,
+        hold_mnav=hold_mnav,
+        reduce_mnav=reduce_mnav,
+        strong_buy_price=strong_buy_price,
+        accumulate_price=accumulate_price,
+        hold_price=hold_price,
+        reduce_price=reduce_price,
+        maturity_pressure=maturity_pressure,
+        liquidity_score=liquidity_score,
+        accretion_score=accretion_score,
+        tail_coverage_score=tail_coverage_score,
     )
 
 
@@ -1160,7 +1188,7 @@ def format_portfolio_recommendation(
     elif action == "HOLD":
         val_analysis = (
             f"Harga MSTR ({_fmt_usd(mstr_price)}) berada di zona wajar / fair value "
-            f"(${_fmt_usd(accumulate_price)} – {_fmt_usd(hold_price)})."
+            f"({_fmt_usd(accumulate_price)} – {_fmt_usd(hold_price)})."
         )
         port_analysis = (
             f"Posisi MSTR {mstr_qty:g} saham mencatat P&L {pl_sign}{unrealized_pct:.2f}% ({pl_sign}{_fmt_usd(unrealized_pl)}). "
