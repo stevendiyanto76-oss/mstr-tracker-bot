@@ -509,37 +509,50 @@ def fetch_strategy_snapshot(
         shares = fetch_shares_data()
     except Exception as exc:
         if cached_fingerprint.get("basic_shares_m") and cached_fingerprint.get("diluted_shares_m"):
-            print(f"::warning::Failed to fetch shares data from strategy.com ({exc}). Using cached state fundamentals.")
+            print(f"::warning::Failed to fetch shares data from strategy.com ({exc}). Using Layer 2 cached state fundamentals.")
             shares = {
                 "shares_as_of": None,
                 "basic_shares_m": float(cached_fingerprint["basic_shares_m"]),
                 "diluted_shares_m": float(cached_fingerprint["diluted_shares_m"]),
             }
         else:
-            raise StrategyDataError(f"Failed to fetch shares data and no cached state available: {exc}") from exc
+            print(f"::warning::Failed to fetch shares data ({exc}) and no cache. Using Layer 3 SEC baseline fundamentals.")
+            shares = {
+                "shares_as_of": None,
+                "basic_shares_m": 420.497,
+                "diluted_shares_m": 450.121,
+            }
 
     try:
         latest_purchase = fetch_latest_average_btc_cost()
     except Exception as exc:
         if cached_fingerprint.get("average_btc_cost"):
-            print(f"::warning::Failed to fetch purchase data from strategy.com ({exc}). Using cached state fundamentals.")
+            print(f"::warning::Failed to fetch purchase data from strategy.com ({exc}). Using Layer 2 cached state fundamentals.")
             latest_purchase = LatestPurchaseMetrics(
                 as_of_date=snapshot_date or _wib_today(),
                 average_btc_cost=float(cached_fingerprint["average_btc_cost"]),
-                btc_holdings=None,
-                diluted_shares_m=None,
+                btc_holdings=float(cached_fingerprint.get("btc_holdings", 845050.0)),
+                diluted_shares_m=float(cached_fingerprint.get("diluted_shares_m", 450.121)),
                 btc_yield_qtd_pct=None,
-                btc_yield_ytd_pct=float(cached_fingerprint.get("btc_yield_ytd_pct", 0.0)),
+                btc_yield_ytd_pct=float(cached_fingerprint.get("btc_yield_ytd_pct", -3.7)),
             )
         else:
-            raise StrategyDataError(f"Failed to fetch purchase data and no cached state available: {exc}") from exc
+            print(f"::warning::Failed to fetch purchase data ({exc}) and no cache. Using Layer 3 SEC purchase baseline.")
+            latest_purchase = LatestPurchaseMetrics(
+                as_of_date=snapshot_date or _wib_today(),
+                average_btc_cost=75412.0,
+                btc_holdings=845050.0,
+                diluted_shares_m=450.121,
+                btc_yield_qtd_pct=-11.8,
+                btc_yield_ytd_pct=-3.7,
+            )
 
     try:
         debt_instruments = fetch_debt_instruments()
     except Exception as exc:
         raw_schedule = cached_fingerprint.get("debt_schedule", [])
         if raw_schedule:
-            print(f"::warning::Failed to fetch debt instruments from strategy.com ({exc}). Using cached state fundamentals.")
+            print(f"::warning::Failed to fetch debt instruments from strategy.com ({exc}). Using Layer 2 cached debt schedule.")
             debt_instruments = tuple(
                 DebtInstrument(
                     amount_b=float(item["amount_b"]),
@@ -550,7 +563,15 @@ def fetch_strategy_snapshot(
                 for item in raw_schedule
             )
         else:
-            raise StrategyDataError(f"Failed to fetch debt instruments and no cached state available: {exc}") from exc
+            print(f"::warning::Failed to fetch debt instruments ({exc}) and no cache. Using Layer 3 SEC baseline schedule.")
+            debt_instruments = (
+                DebtInstrument(1.01, date(2027, 9, 16), date(2028, 9, 16), date(2027, 9, 16)),
+                DebtInstrument(1.50, date(2028, 6, 2), date(2029, 12, 2), date(2028, 6, 2)),
+                DebtInstrument(2.00, date(2028, 3, 2), date(2030, 3, 2), date(2028, 3, 2)),
+                DebtInstrument(0.80, date(2028, 9, 16), date(2030, 3, 16), date(2028, 9, 16)),
+                DebtInstrument(0.60375, date(2028, 9, 16), date(2031, 3, 16), date(2028, 9, 16)),
+                DebtInstrument(0.80, date(2029, 6, 16), date(2032, 6, 16), date(2029, 6, 16)),
+            )
 
     mstr, btc = dashboard["mstr"], dashboard["btc"]
     market_cap_b = _require_money_b(mstr.get("marketCap"), "marketCap", "m", positive=True)
