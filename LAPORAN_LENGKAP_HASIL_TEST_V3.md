@@ -6,6 +6,34 @@
 **Periode Data Historis:** 2020 – 2026 (1.675 Hari Bursa Riil)  
 **Periode Simulasi Forward:** Juli 2026 – Desember 2030 (54 Bulan)  
 
+## 0. Master Equation: Satu Rumus Panjang Terpadu (Versi Terkini)
+
+$$\large P_{\text{fair}} = \frac{1000}{S_{\text{diluted}}} \cdot \max\left(0, \; \left[\text{clip}\left(1.0 + \left(0.35 + \frac{0.10}{1 + e^{-\frac{M_{12} - 0.50}{0.05}}}\right) \cdot \tanh(M_{12}) - 0.20 \cdot \max(0, RV_{12} - 0.65) - 0.30 \cdot \text{clip}\left(\frac{15 - \frac{R_{\text{USD}} \cdot 12}{\text{Div}}}{15}, 0, 1\right), \; 0.50, \; 2.20\right)\right] \cdot \left[\frac{P_{\text{BTC}} \cdot H_{\text{BTC}}}{10^9}\right] - D - Pref + R_{\text{USD}} + V_{\text{soft}}\right)$$
+
+### Bedah Komponen Rumus Master:
+1. **$mNAV^*(t)$ (Kelipatan Dinamis):**
+   - **$1.0$ (Basis Paritas):** Ekuilibrium nilai aset Bitcoin murni.
+   - **$\beta(t) \cdot \tanh(M_{12})$:** Premi momentum dengan transisi *Smooth Sigmoid* ($\beta = 0.35 \to 0.45$) dan saturasi batas atas $\tanh$.
+   - **$-0.20 \cdot \max(0, RV_{12} - 0.65)$:** Penalti volatilitas realized 1-arah (*strict one-sided penalty* tanpa bonus semu).
+   - **$-0.30 \cdot \text{clip}\left(\frac{15 - \text{Runway}}{15}, 0, 1\right)$:** Penalti likuiditas jika cadangan kas di bawah 15 bulan.
+   - **$\text{clip}(\dots, 0.50, 2.20)$:** Pembatas struktural ekstrim.
+2. **$\left[\frac{P_{\text{BTC}} \cdot H_{\text{BTC}}}{10^9}\right]$ ($NAV_{\text{BTC}}$):** Nilai pasar kotor Bitcoin dalam miliar USD.
+3. **$- D - Pref + R_{\text{USD}} + V_{\text{soft}}$:** Pengurang kewajiban utang senior (\$6.71B) & saham preferen (\$14.62B), penambah kas liquid (\$6.54B), dan lantai operasional software (\$1.0B).
+4. **$\frac{1000}{S_{\text{diluted}}}$:** Pembagi jumlah saham terdilusi penuh (ADSO: 450.12 juta lembar).
+
+### Skalasi 5 Zona Adaptif:
+$$\sigma_{\text{band}} = \text{clip}\left(0.10 + 0.18 \cdot \boldsymbol{Risk} + 0.06 \cdot (1 - DQ), \; 0.10, \; 0.35\right)$$
+$$\boldsymbol{Risk} = 0.20(1 - \text{Liq}) + 0.15\Pi_{\text{debt}} + 0.20(1 - \text{clip}(mNAV^*/1.50, 0, 1)) + 0.15\text{NetLev} + 0.15\text{Dilution} + 0.15(1 - \text{TailScore})$$
+*(Total bobot risiko dinormalkan genap 1.00).*
+
+$$\begin{aligned}
+P_{\text{StrongBuy}} &\le P_{\text{fair}} - 1.50 \cdot \sigma_{\text{band}} \cdot P_{\text{fair}} &&\implies \mathbf{\le \$73.15} \\
+P_{\text{Accumulate}} &\in \left(P_{\text{StrongBuy}}, \; P_{\text{fair}}\right] &&\implies \mathbf{\$73.15 – \$102.45} \\
+P_{\text{HOLD}} &\in \left(P_{\text{fair}}, \; P_{\text{fair}} + 1.75 \cdot \sigma_{\text{band}} \cdot P_{\text{fair}}\right] &&\implies \mathbf{\$102.45 – \$136.64} \\
+P_{\text{Reduce}} &\in \left(P_{\text{HOLD}}, \; P_{\text{fair}} + 3.00 \cdot \sigma_{\text{band}} \cdot P_{\text{fair}}\right] &&\implies \mathbf{\$136.64 – \$161.05} \\
+P_{\text{Sell}} &> P_{\text{fair}} + 3.00 \cdot \sigma_{\text{band}} \cdot P_{\text{fair}} &&\implies \mathbf{> \$161.05}
+\end{aligned}$$
+
 ---
 
 ## 1. Ringkasan Performa Backtest Historis (2020 – 2026)
