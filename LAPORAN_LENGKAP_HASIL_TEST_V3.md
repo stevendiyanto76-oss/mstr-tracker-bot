@@ -17,22 +17,33 @@ $$\large P_{\text{fair}} = \frac{1000}{S_{\text{diluted}}} \cdot \max\left(0, \;
    - **$-0.20 \cdot \max(0, RV_{12} - 0.65)$:** Penalti volatilitas realized 1-arah (*strict one-sided penalty* tanpa bonus semu).
    - **$-0.30 \cdot \text{clip}\left(\frac{15 - \text{Runway}}{15}, 0, 1\right)$:** Penalti likuiditas jika cadangan kas di bawah 15 bulan.
    - **$\text{clip}(\dots, 0.50, 2.20)$:** Pembatas struktural ekstrim.
-2. **$\left[\frac{P_{\text{BTC}} \cdot H_{\text{BTC}}}{10^9}\right]$ ($NAV_{\text{BTC}}$):** Nilai pasar kotor Bitcoin dalam miliar USD.
-3. **$- D - Pref + R_{\text{USD}} + V_{\text{soft}}$:** Pengurang kewajiban utang senior (\$6.71B) & saham preferen (\$14.62B), penambah kas liquid (\$6.54B), dan lantai operasional software (\$1.0B).
-4. **$\frac{1000}{S_{\text{diluted}}}$:** Pembagi jumlah saham terdilusi penuh (ADSO: 450.12 juta lembar).
+2. **$\left[\frac{P_{\text{BTC}} \cdot H_{\text{BTC}}}{10^9}\right]$ ($NAV_{\text{BTC}}$):** Nilai pasar kotor Bitcoin dalam miliar USD ($66.547B pada spot \$78,749.95 dan 845,050 BTC).
+3. **$- D - Pref + R_{\text{USD}} + V_{\text{soft}}$:** Pengurang kewajiban utang senior (\$6.714B) & saham preferen (\$14.625B), penambah kas liquid (\$6.538B), dan lantai operasional software (\$1.000B) $\implies$ Total beban klaim bersih $= -\$13.801\text{B}$.
+4. **$\frac{1000}{S_{\text{diluted}}}$:** Pembagi jumlah saham terdilusi penuh (ADSO: 450.121 juta lembar).
 
-### Skalasi 5 Zona Adaptif:
-$$\sigma_{\text{band}} = \text{clip}\left(0.10 + 0.18 \cdot \boldsymbol{Risk} + 0.06 \cdot (1 - DQ), \; 0.10, \; 0.35\right)$$
-$$\boldsymbol{Risk} = 0.20(1 - \text{Liq}) + 0.15\Pi_{\text{debt}} + 0.20(1 - \text{clip}(mNAV^*/1.50, 0, 1)) + 0.15\text{NetLev} + 0.15\text{Dilution} + 0.15(1 - \text{TailScore})$$
-*(Total bobot risiko dinormalkan genap 1.00).*
+### Parameter Input Pasar Live Terkini:
+* **Momentum BTC 12-Bulan ($M_{12}$):** **-29.38%** (koreksi siklus 12 bulan) $\implies \tanh(-0.2938) = -0.2856$, $\beta = 0.35 \implies$ Penyesuaian momentum $= -0.1000x$.
+* **Realized Volatility ($RV_{12}$):** **60.1%** $\le 65\%$ baseline $\implies$ Penalti volatilitas $\Omega(t) = 0.00x$.
+* **Cadangan Kas USD ($R_{\text{USD}}$):** **$6.538B** (Runway dividen = **47.2 bulan** $\ge 15$ bulan) $\implies$ Penalti likuiditas $\Lambda(t) = 0.00x$.
+* **Hasil Evaluasi Kelipatan:** $mNAV^*(t) = 1.0 - 0.1000 - 0.00 - 0.00 = \mathbf{0.9000x}$
+* **Nilai Wajar Ekuitas:** $V_{\text{equity}} = 0.900032 \times \$66.547\text{B} - \$13.801\text{B} = \$46.094\text{B}$
+* **Harga Saham Wajar ($P_{\text{fair}}$):** $(\$46.094\text{B} \times 1000) / 450.121\text{M} = \mathbf{\$102.40\text{ per lembar}}$
+
+### Skalasi 5 Zona Adaptif (Evaluasi di Ruang Kelipatan mNAV Terlebih Dahulu):
+Zona dihitung di ruang kelipatan mNAV ($m_{\text{zone}}$) untuk menangkap efek pengungkit modal (*balance sheet leverage amplification*), lalu dikonversi ke harga via jembatan $P(m)$:
+$$P(m) = \frac{1000}{S_{\text{diluted}}} \cdot \max\left(0, \; m \cdot NAV_{\text{BTC}} - D - Pref + R_{\text{USD}} + V_{\text{soft}}\right)$$
+
+$$\sigma_{\text{band}} = \text{clip}\left(0.10 + 0.18 \cdot \boldsymbol{Risk} + 0.06 \cdot (1 - DQ), \; 0.10, \; 0.35\right) = \mathbf{13.21\%}$$
+$$\boldsymbol{Risk} = 0.20(1 - \text{Liq}) + 0.15\Pi_{\text{debt}} + 0.20(1 - \text{clip}(mNAV^*/1.50, 0, 1)) + 0.15\text{NetLev} + 0.15\text{Dilution} + 0.15(1 - \text{TailScore}) = \mathbf{17.83\%}$$
 
 $$\begin{aligned}
-P_{\text{StrongBuy}} &\le P_{\text{fair}} - 1.50 \cdot \sigma_{\text{band}} \cdot P_{\text{fair}} &&\implies \mathbf{\le \$73.15} \\
-P_{\text{Accumulate}} &\in \left(P_{\text{StrongBuy}}, \; P_{\text{fair}}\right] &&\implies \mathbf{\$73.15 – \$102.45} \\
-P_{\text{HOLD}} &\in \left(P_{\text{fair}}, \; P_{\text{fair}} + 1.75 \cdot \sigma_{\text{band}} \cdot P_{\text{fair}}\right] &&\implies \mathbf{\$102.45 – \$136.64} \\
-P_{\text{Reduce}} &\in \left(P_{\text{HOLD}}, \; P_{\text{fair}} + 3.00 \cdot \sigma_{\text{band}} \cdot P_{\text{fair}}\right] &&\implies \mathbf{\$136.64 – \$161.05} \\
-P_{\text{Sell}} &> P_{\text{fair}} + 3.00 \cdot \sigma_{\text{band}} \cdot P_{\text{fair}} &&\implies \mathbf{> \$161.05}
+m_{\text{SB}} &= \max\left(\text{Floor} + 0.10, \; mNAV^* - 1.50 \cdot \sigma_{\text{band}}\right) = 0.7019x &&\implies P_{\text{StrongBuy}} = P(m_{\text{SB}}) \le \mathbf{\$73.11} \\
+m_{\text{Acc}} &= mNAV^* = 0.9000x &&\implies P_{\text{Accumulate}} \in \left(\$73.11, \; \mathbf{\$102.40}\right] \\
+m_{\text{Hold}} &= \max(m_{\text{Acc}} + 0.02, \; mNAV^* + 1.75 \cdot \sigma_{\text{band}}) = 1.1312x &&\implies P_{\text{HOLD}} \in \left(\$102.40, \; \mathbf{\$136.58}\right] \\
+m_{\text{Red}} &= \max(m_{\text{Hold}} + 0.02, \; mNAV^* + 3.00 \cdot \sigma_{\text{band}}) = 1.2963x &&\implies P_{\text{Reduce}} \in \left(\$136.58, \; \mathbf{\$161.00}\right] \\
+m_{\text{Sell}} &> m_{\text{Red}} &&\implies P_{\text{Sell}} > \mathbf{\$161.00}
 \end{aligned}$$
+*(Catatan: Karena net senior claims bernilai konstan \$13.801B, pergeseran kelipatan $\Delta m$ melahirkan pergeseran harga saham yang teramplifikasi leverage: $\Delta P = \frac{NAV_{\text{BTC}} \cdot \Delta m \cdot 1000}{S_{\text{diluted}}}$, bukan sekadar perkalian linier $k \cdot \sigma_{\text{band}} \cdot P_{\text{fair}}$).*
 
 ---
 

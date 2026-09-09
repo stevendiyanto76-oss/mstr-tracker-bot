@@ -674,7 +674,10 @@ class ForwardScenarioSimulator:
             )
 
             mom_12 = (curr_btc / btc_0) ** (12.0 / 54.0) - 1.0
-            fair_p = self.engine.residual_per_adso(1.20, curr_btc, terminal_cap)
+            burden_annual = base_cap.tier1_mandatory_cash_burden_b + adjusted_flex_burden
+            res_months = (curr_reserve / max(burden_annual, 1e-6)) * 12.0
+            terminal_mnav = self.engine.compute_dynamic_mnav(mom_12, vol_annual, res_months)
+            fair_p = self.engine.residual_per_adso(terminal_mnav, curr_btc, terminal_cap)
             parity_p = self.engine.residual_per_adso(1.0, curr_btc, terminal_cap)
 
             terminal_v3_fair_prices.append(fair_p)
