@@ -99,14 +99,14 @@ class V3ModelEngine:
         reserve_coverage_months: float,
     ) -> float:
         """Computes continuous, regime-aware dynamic mNAV (Thesis Section 8.7 upgraded)."""
-        # 1. State-dependent beta
-        beta = self.beta_bull if momentum_12m > 0.50 else self.beta_base
+        # 1. Smooth sigmoid beta transition (continuous from 0.35 → 0.45 around M₁₂ = 50%)
+        beta = self.beta_base + (self.beta_bull - self.beta_base) / (1.0 + math.exp(-(momentum_12m - 0.50) / 0.05))
 
         # 2. Continuous liquidity penalty (scales from 0 at >=15m down to -0.30 at 0m)
         liquidity_penalty = 0.30 * max(0.0, min(1.0, (15.0 - reserve_coverage_months) / 15.0))
 
-        # 3. Volatility spread adjustment
-        vol_adj = 0.20 * (realized_vol_12m - self.vol_base)
+        # 3. Volatility penalty (one-sided: only penalizes elevated vol above baseline)
+        vol_adj = 0.20 * max(0.0, realized_vol_12m - self.vol_base)
 
         raw_mnav = 1.0 + beta * math.tanh(momentum_12m) - vol_adj - liquidity_penalty
         return max(self.mnav_floor, min(self.mnav_ceiling, raw_mnav))

@@ -768,21 +768,37 @@ def fetch_btc_12m_metrics() -> tuple[float, float]:
         except Exception:
             pass
 
-    # Layer 4: Mathematical statistical baseline
+    # Layer 3.5: CoinGecko Historical 365-day Market Chart
+    try:
+        req = Request("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=365&interval=daily", headers=HEADERS)
+        with urlopen(req, timeout=8) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+            prices = payload.get("prices", [])
+            closes = [float(p[1]) for p in prices if p[1] is not None]
+            if len(closes) >= 90:
+                log_ret = [math.log(closes[i] / closes[i - 1]) for i in range(1, len(closes))]
+                mom = math.exp(sum(log_ret)) - 1.0
+                vol = (sum((r - mean(log_ret)) ** 2 for r in log_ret) / (len(log_ret) - 1)) ** 0.5 * math.sqrt(365)
+                return mom, vol
+    except Exception:
+        pass
+
+    # Layer 4: Mathematical statistical baseline (CAUTION: may not reflect current market)
+    print("::warning::All momentum/vol data sources failed. Using static baseline (mom=0.18, vol=0.65).")
     return 0.18, 0.65
 
 
 def calculate_zones(snapshot: StrategySnapshot, metrics: FinancialMetrics) -> ZoneResult:
     momentum_12m, realized_vol_12m = fetch_btc_12m_metrics()
 
-    # 1. State-dependent beta (0.45 in bull momentum > 50%, else 0.35)
-    beta = 0.45 if momentum_12m > 0.50 else 0.35
+    # 1. Smooth sigmoid beta transition (continuous from 0.35 → 0.45 around M₁₂ = 50%)
+    beta = 0.35 + 0.10 / (1.0 + math.exp(-(momentum_12m - 0.50) / 0.05))
 
     # 2. Continuous liquidity penalty (scales from 0 at >=15m down to -0.30 at 0m)
     liquidity_penalty = 0.30 * clip((15.0 - snapshot.usd_div_coverage_months) / 15.0, 0.0, 1.0)
 
-    # 3. Volatility spread adjustment (relative to base 65%)
-    vol_adj = 0.20 * (realized_vol_12m - 0.65)
+    # 3. Volatility penalty (one-sided: only penalizes elevated vol above 65% baseline)
+    vol_adj = 0.20 * max(0.0, realized_vol_12m - 0.65)
 
     # 4. Continuous, regime-aware dynamic mNAV (Thesis Section 8.7 upgraded to 2.20x ceiling)
     raw_dynamic_mnav = 1.0 + beta * math.tanh(momentum_12m) - vol_adj - liquidity_penalty
@@ -819,7 +835,10 @@ def calculate_zones(snapshot: StrategySnapshot, metrics: FinancialMetrics) -> Zo
     risk_score = clip(
         0.20 * (1 - liquidity_score)
         + 0.15 * maturity_pressure
-        + 0.35 * (1.0 - clip(fair_ev_nav / 1.50, 0, 1)),
+        + 0.20 * (1.0 - clip(fair_ev_nav / 1.50, 0, 1))
+        + 0.15 * clip(metrics.net_leverage / 0.50, 0, 1)
+        + 0.15 * clip(metrics.dilution / 0.50, 0, 1)
+        + 0.15 * (1.0 - tail_coverage_score),
         0,
         1,
     )

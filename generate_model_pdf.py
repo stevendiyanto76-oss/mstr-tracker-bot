@@ -380,7 +380,7 @@ def build_pdf(filename="MSTR_Model_Matematika_Lengkap_V3.pdf"):
     <font color='#1E3A8A' size='9'><b>mNAV*(t) = clip[ 1.0 + β(t) * tanh(M_12) - Ω(t) - Λ(t), &nbsp; 0.50, &nbsp; 2.20 ]</b></font><br/><br/>
     <b>Komponen-Komponen Pembentuk:</b><br/>
     • <b>Momentum 12-Bulan (M_12):</b> &nbsp; <i>M_12 = exp( sum(ln(P_BTC(t) / P_BTC(t-1))) ) - 1.0</i> &nbsp;(Trailing 12-Month Log Return)<br/>
-    • <b>State-Dependent Beta (β):</b> &nbsp; <i>β(t) = 0.45 jika M_12 &gt; 0.50 (Rezim Bull Kuat), sebaliknya 0.35</i><br/>
+    • <b>Smooth Sigmoid Beta (β):</b> &nbsp; <i>β(t) = 0.35 + 0.10 / [ 1.0 + exp( -(M_12 - 0.50) / 0.05 ) ]</i> &nbsp;(Transisi Kontinu)<br/>
     • <b>Penalti Volatilitas Realized (Ω):</b> &nbsp; <i>Ω(t) = 0.20 * max(0, RV_12 - 0.65)</i> &nbsp;(Di mana RV_12 = std_dev * sqrt(365))<br/>
     • <b>Penalti Likuiditas Kas Kontinu (Λ):</b> &nbsp; <i>Λ(t) = 0.30 * clip( (15.0 - USD_Coverage_Months) / 15.0, &nbsp; 0.0, &nbsp; 1.0 )</i><br/>
     • <b>Lantai Struktural Solvabilitas (Structural Floor):</b> &nbsp; <i>Floor = max(0, (D + Pref - R_USD - V_soft) / NAV_BTC)</i>
@@ -412,20 +412,17 @@ def build_pdf(filename="MSTR_Model_Matematika_Lengkap_V3.pdf"):
     # ==========================================
     # BAB 4: MULTI-FACTOR RISK SCORE
     # ==========================================
-    story.append(Paragraph("4. Multi-Factor Risk Score & Tekanan Jatuh Tempo Obligasi", h1_style))
+    story.append(Paragraph("4. Multi-Factor Risk Score (6 Faktor Seimbang, Total Bobot 1.00)", h1_style))
     story.append(Paragraph(
-        "Tingkat risiko struktural MSTR dievaluasi secara dinamis melalui 4 sub-skor independen "
-        "yang memantau jatuh tempo obligasi, solvabilitas, dan daya tahan dividen:", body_style
+        "Tingkat risiko struktural MSTR dievaluasi secara dinamis melalui 6 faktor risiko fundamental "
+        "dengan normalisasi bobot penuh 1.00 (100%):", body_style
     ))
 
     risk_math_html = """
-    <b>1. Tekanan Jatuh Tempo Obligasi (Debt Maturity Pressure - Π_debt):</b><br/>
-    &nbsp;&nbsp;&nbsp;&nbsp;<i>Π_debt = sum[ (Amount_i / D) * exp( -max(Δt_i, 0.10) / 2.5 ) ]</i> &nbsp;&nbsp;(di-clip ke rentang [0, 1])<br/>
-    &nbsp;&nbsp;&nbsp;&nbsp;<i>Keterangan:</i> Instrumen obligasi yang mendekati jatuh tempo (Δt &lt; 2.5 tahun) menghasilkan bobot eksponensial tinggi.<br/>
-    <b>2. Skor Likuiditas Kas (Liquidity Score):</b> &nbsp; <i>Score_liq = clip( (USD_Coverage_Months - 3) / 15, &nbsp; 0, &nbsp; 1 )</i><br/>
-    <b>3. Skor Daya Tahan Ekor Ekstrem (Tail Coverage Score):</b> &nbsp; <i>Score_tail = clip( ln( max(Coverage_BTC, 1e-9) / 5 ) / ln( 40 / 5 ), &nbsp; 0, &nbsp; 1 )</i><br/>
-    <b>4. Komposit Skor Risiko Total (Composite Risk Score):</b><br/>
-    &nbsp;&nbsp;&nbsp;&nbsp;<i>Risk_Score = clip[ 0.20 * (1 - Score_liq) + 0.15 * Π_debt + 0.35 * (1 - clip(mNAV* / 1.50, 0, 1)), &nbsp; 0, &nbsp; 1 ]</i>
+    <b>1. Tekanan Jatuh Tempo Obligasi:</b> &nbsp; <i>Π_debt = sum[ (Amount_i / D) * exp( -max(Δt_i, 0.10) / 2.5 ) ]</i> &nbsp;(clip [0, 1])<br/>
+    <b>2. Sub-Skor Penunjang:</b> &nbsp; <i>Score_liq = clip((USD_Cov - 3)/15, 0, 1) &nbsp;|&nbsp; Score_tail = clip(ln(max(Cov_BTC, 1e-9)/5)/ln(40/5), 0, 1)</i><br/>
+    <b>3. Komposit Skor Risiko Total 6-Faktor (Total Bobot 1.00):</b><br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;<i>Risk_Score = clip[ 0.20*(1 - Score_liq) + 0.15*Π_debt + 0.20*(1 - clip(mNAV*/1.50, 0, 1)) + 0.15*clip(NetLev/0.50, 0, 1) + 0.15*clip(Dilution/0.50, 0, 1) + 0.15*(1 - Score_tail), &nbsp; 0, &nbsp; 1 ]</i>
     """
     story.append(
         Table(
