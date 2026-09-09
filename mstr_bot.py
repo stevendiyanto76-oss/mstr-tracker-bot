@@ -66,6 +66,8 @@ class SourceMetadata:
     btc_as_of: datetime | None = None
     shares_as_of: date | None = None
     purchase_as_of: date | None = None
+    fallback_active: bool = False
+    fallback_reasons: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -440,7 +442,14 @@ def fetch_dashboard_data(state_path: Path | None = DEFAULT_STATE_FILE) -> Mappin
         "debtByBN": (debt_b / btc_nav_b) * 100.0 if btc_nav_b > 0 else 0.0,
         "debtPrefByBN": ((debt_b + pref_b) / btc_nav_b) * 100.0 if btc_nav_b > 0 else 0.0,
     }
-    return {"mstr": mstr_synthetic, "btc": btc_synthetic, "btc_timestamp": datetime.now(timezone.utc).isoformat()}
+    return {
+        "mstr": mstr_synthetic,
+        "btc": btc_synthetic,
+        "btc_timestamp": datetime.now(timezone.utc).isoformat(),
+        "fallback_active": True,
+        "btc_source": btc_src,
+        "mstr_source": mstr_src,
+    }
 
 
 def fetch_shares_data() -> Mapping[str, Any]:
@@ -504,10 +513,15 @@ def fetch_strategy_snapshot(
 ) -> StrategySnapshot:
     dashboard = fetch_dashboard_data(state_path=state_path)
     cached_fingerprint = _load_cached_fingerprint(state_path)
+    fallback_reasons: list[str] = []
+
+    if dashboard.get("fallback_active"):
+        fallback_reasons.append(f"Dashboard Strategy.com (BTC via {dashboard.get('btc_source')}, MSTR via {dashboard.get('mstr_source')})")
 
     try:
         shares = fetch_shares_data()
     except Exception as exc:
+        fallback_reasons.append("Jumlah Saham (ADSO): Fallback State Cache / SEC Baseline")
         if cached_fingerprint.get("basic_shares_m") and cached_fingerprint.get("diluted_shares_m"):
             print(f"::warning::Failed to fetch shares data from strategy.com ({exc}). Using Layer 2 cached state fundamentals.")
             shares = {
@@ -526,6 +540,7 @@ def fetch_strategy_snapshot(
     try:
         latest_purchase = fetch_latest_average_btc_cost()
     except Exception as exc:
+        fallback_reasons.append("Riwayat Beli BTC: Fallback State Cache / SEC Baseline")
         if cached_fingerprint.get("average_btc_cost"):
             print(f"::warning::Failed to fetch purchase data from strategy.com ({exc}). Using Layer 2 cached state fundamentals.")
             latest_purchase = LatestPurchaseMetrics(
@@ -550,6 +565,7 @@ def fetch_strategy_snapshot(
     try:
         debt_instruments = fetch_debt_instruments()
     except Exception as exc:
+        fallback_reasons.append("Obligasi Konversi: Fallback State Cache / SEC Schedule Baseline")
         raw_schedule = cached_fingerprint.get("debt_schedule", [])
         if raw_schedule:
             print(f"::warning::Failed to fetch debt instruments from strategy.com ({exc}). Using Layer 2 cached debt schedule.")
@@ -609,6 +625,8 @@ def fetch_strategy_snapshot(
             btc_as_of=_parse_datetime(dashboard.get("btc_timestamp"), "btc.timestamp"),
             shares_as_of=shares.get("shares_as_of"),
             purchase_as_of=latest_purchase.as_of_date,
+            fallback_active=bool(fallback_reasons),
+            fallback_reasons=tuple(fallback_reasons),
         ),
     )
     validate_snapshot(snapshot)
@@ -1130,12 +1148,17 @@ def format_telegram_report(run: EngineRun, now: datetime | None = None) -> str:
             else "Distress gates override normal valuation zones." if run.gates.distress else "No hard gate blocks the normal valuation ladder."
         ),
     ]
+    fallback_banner = ""
+    if source.fallback_active and source.fallback_reasons:
+        reasons_fmt = "\n".join(f"• {r}" for r in source.fallback_reasons)
+        fallback_banner = f"\n⚠️ PERINGATAN SISTEM: SUMBER PRIMER (STRATEGY.COM) GAGAL\nSistem otomatis mengaktifkan data cadangan (Fallback):\n{reasons_fmt}\n━━━━━━━━━━━━━━━━━\n"
+        findings.append("Sumber data cadangan aktif karena Strategy.com mengalami kendala.")
+
     return f"""
 🏦 NEVETS HOLDING | MSTR DECISION ENGINE
 📅 {timestamp}
 Asset: MSTR | Benchmark: BTC
-━━━━━━━━━━━━━━━━━
-
+━━━━━━━━━━━━━━━━━{fallback_banner}
 📈 MARKET SNAPSHOT
 BTC Spot: {_fmt_usd(snapshot.btc_price)}
 MSTR Last: {_fmt_usd(snapshot.mstr_price)}
@@ -1198,10 +1221,7 @@ Reduce: {_fmt_usd(zones.hold_price)} – {_fmt_usd(zones.reduce_price)}
 Sell: > {_fmt_usd(zones.reduce_price)}
 
 📝 EXECUTIVE SUMMARY
-- {findings[0]}
-- {findings[1]}
-- {findings[2]}
-- {findings[3]}
+{chr(10).join(f"- {item}" for item in findings)}
 Final action: {run.decision.action}
 
 Internal use only
@@ -1462,15 +1482,24 @@ def format_portfolio_recommendation(
     elif run.gates.distress:
         advice_lines.append("🚨 Catatan Risiko:\nDistress gate aktif; risiko struktural tinggi terdeteksi.")
 
+    if run.snapshot.source_metadata.fallback_active:
+        advice_lines.append(
+            "⚠️ Peringatan Sistem:\nSumber primer Strategy.com offline. Rekomendasi portofolio tetap akurat menggunakan feed cadangan (CoinGecko/Yahoo/SEC)."
+        )
+
     advice_block = "\n\n".join(advice_lines)
     shortcut_block = "\n\n".join(shortcuts)
+
+    fallback_banner = ""
+    if run.snapshot.source_metadata.fallback_active and run.snapshot.source_metadata.fallback_reasons:
+        reasons_fmt = "\n".join(f"• {r}" for r in run.snapshot.source_metadata.fallback_reasons)
+        fallback_banner = f"\n⚠️ PERINGATAN SISTEM: DATA CADANGAN AKTIF\n{reasons_fmt}\n━━━━━━━━━━━━━━━━━\n"
 
     return f"""
 💼 PORTOFOLIO & REKOMENDASI
 📅 {timestamp}
 Asset: MSTR | Challenge V2
-━━━━━━━━━━━━━━━━━
-
+━━━━━━━━━━━━━━━━━{fallback_banner}
 📊 POSISI PORTOFOLIO SAAT INI
 💵 Kas USD: {_fmt_usd(cash_usd)}
 🇮🇩 Kas IDR: Rp {cash_idr:,.0f}
