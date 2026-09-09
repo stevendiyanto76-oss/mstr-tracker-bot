@@ -8,10 +8,8 @@ on:
       - ".github/workflows/mstr_tracker.yml"
 
   schedule:
-    # 05:25 WIB = 22:25 UTC (Briefing Pagi Portofolio & Rekomendasi)
+    # 05:25 WIB = 22:25 UTC (Laporan Harian Pagi: Decision Engine + Portofolio & Rekomendasi)
     - cron: "25 22 * * *"
-    # 17:25 WIB = 10:25 UTC (Update Sore)
-    - cron: "25 10 * * *"
 
   workflow_dispatch:
 
