@@ -287,6 +287,20 @@ def build_pdf(filename="MSTR_Model_Matematika_Lengkap_V3.pdf"):
             Paragraph("Model Parameter", table_cell),
             Paragraph("Konstanta Konservatif ($1.000B)", table_cell),
         ],
+        [
+            Paragraph("M_12", table_cell_formula),
+            Paragraph("Momentum BTC 12-Bulan (Log Return 365h)", table_cell),
+            Paragraph("%", table_cell),
+            Paragraph("Yahoo Finance Q1/Q2", table_cell),
+            Paragraph("CoinGecko 365d Chart → CSV Historis (-29.38%)", table_cell),
+        ],
+        [
+            Paragraph("RV_12", table_cell_formula),
+            Paragraph("Volatilitas Realized 12-Bulan (σ × √365)", table_cell),
+            Paragraph("%", table_cell),
+            Paragraph("Yahoo Finance Q1/Q2", table_cell),
+            Paragraph("CoinGecko 365d Chart → CSV Historis (60.1%)", table_cell),
+        ],
     ]
 
     t_var = Table(var_table_data, colWidths=[15 * mm, 44 * mm, 15 * mm, 40 * mm, 56 * mm])
@@ -447,20 +461,21 @@ def build_pdf(filename="MSTR_Model_Matematika_Lengkap_V3.pdf"):
     zone_block.append(Paragraph("5. Dynamic Uncertainty Band & Saluran 5 Zona Adaptif", h1_style))
     zone_block.append(Paragraph(
         "Untuk menghindari penyempitan zona artifisial, batas toleransi ketidakpastian (σ_band) ditentukan "
-        "oleh skor risiko fundamental dan kualitas data feed. Seluruh zona dihitung secara proporsional terhadap Fair Price:", body_style
+        "oleh skor risiko fundamental dan kualitas data feed. Seluruh zona dihitung di ruang kelipatan mNAV (m_zone) "
+        "untuk merefleksikan amplifikasi leverage neraca secara eksak, lalu dikonversikan ke harga via jembatan P(m):", body_style
     ))
 
     zone_math_html = """
     <b>1. Pita Ketidakpastian Dinamis (Dynamic Uncertainty Band):</b><br/>
     &nbsp;&nbsp;&nbsp;&nbsp;<i>σ_band = clip[ 0.10 + 0.18 * Risk_Score + 0.06 * (1 - Data_Quality), &nbsp; 0.10, &nbsp; 0.35 ]</i><br/>
-    &nbsp;&nbsp;&nbsp;&nbsp;<i>(Saat ini pada Risk 20.7% dan Kualitas Data 100%, σ_band = 13.72%)</i><br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;<i>(Saat ini pada Risk 17.83% dan Kualitas Data 100%, σ_band = 13.21%)</i><br/>
     <b>2. Formulasi Kelipatan mNAV 5 Zona:</b><br/>
-    &nbsp;&nbsp;&nbsp;&nbsp;• <b>Strong Buy:</b> &nbsp; <i>mNAV_SB = max( Structural_Floor + 0.10, &nbsp; mNAV* - 1.50 * σ_band )</i><br/>
-    &nbsp;&nbsp;&nbsp;&nbsp;• <b>Accumulate:</b> &nbsp; <i>mNAV_Acc = mNAV*</i> &nbsp;&nbsp;(Plafon akumulasi = Fair Value)<br/>
-    &nbsp;&nbsp;&nbsp;&nbsp;• <b>HOLD (Kanal Wajar):</b> &nbsp; <i>mNAV_Hold = max( mNAV_Acc + 0.02, &nbsp; mNAV* + 1.75 * σ_band )</i><br/>
-    &nbsp;&nbsp;&nbsp;&nbsp;• <b>Reduce (Profit Taking):</b> &nbsp; <i>mNAV_Red = max( mNAV_Hold + 0.02, &nbsp; mNAV* + 3.00 * σ_band )</i><br/>
-    &nbsp;&nbsp;&nbsp;&nbsp;• <b>Sell (Mania / Gelembung):</b> &nbsp; <i>mNAV_Sell &gt; mNAV_Red</i><br/>
-    <b>3. Konversi ke Batas Harga Saham ($):</b><br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;• <b>Strong Buy:</b> &nbsp; <i>mNAV_SB = max( Structural_Floor + 0.10, &nbsp; mNAV* - 1.50 * σ_band ) = 0.7019x</i><br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;• <b>Accumulate:</b> &nbsp; <i>mNAV_Acc = mNAV* = 0.9000x</i> &nbsp;&nbsp;(Plafon akumulasi = Fair Value)<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;• <b>HOLD (Kanal Wajar):</b> &nbsp; <i>mNAV_Hold = max( mNAV_Acc + 0.02, &nbsp; mNAV* + 1.75 * σ_band ) = 1.1312x</i><br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;• <b>Reduce (Profit Taking):</b> &nbsp; <i>mNAV_Red = max( mNAV_Hold + 0.02, &nbsp; mNAV* + 3.00 * σ_band ) = 1.2963x</i><br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;• <b>Sell (Mania / Gelembung):</b> &nbsp; <i>mNAV_Sell &gt; mNAV_Red (&gt; 1.2963x)</i><br/>
+    <b>3. Konversi ke Batas Harga Saham ($) via Jembatan P(m):</b><br/>
     &nbsp;&nbsp;&nbsp;&nbsp;<i>P_SB = P(mNAV_SB) &nbsp;|&nbsp; P_Fair = P(mNAV_Acc) &nbsp;|&nbsp; P_Hold = P(mNAV_Hold) &nbsp;|&nbsp; P_Red = P(mNAV_Red)</i>
     """
     zone_block.append(
@@ -488,32 +503,32 @@ def build_pdf(filename="MSTR_Model_Matematika_Lengkap_V3.pdf"):
         ],
         [
             Paragraph("STRONG BUY", table_cell_bold),
-            Paragraph("&le; $78.81", table_cell),
-            Paragraph("P &le; P_SB", table_cell_formula),
+            Paragraph("&le; $73.11", table_cell),
+            Paragraph("P &le; P(0.7019x)", table_cell_formula),
             Paragraph("Diskon ekstrem di bawah nilai intrinsik. Belanja agresif 25% – 50% kas USD.", table_cell),
         ],
         [
             Paragraph("ACCUMULATE", table_cell_bold),
-            Paragraph("$78.81 – $109.42", table_cell),
-            Paragraph("P_SB &lt; P &le; P_Fair", table_cell_formula),
+            Paragraph("$73.11 – $102.40", table_cell),
+            Paragraph("P_SB &lt; P &le; P(0.9000x)", table_cell_formula),
             Paragraph("Diskon sehat di bawah Fair Price. Cicil Dollar Cost Averaging (DCA bertahap).", table_cell),
         ],
         [
             Paragraph("HOLD", table_cell_bold),
-            Paragraph("$109.42 – $145.12", table_cell),
-            Paragraph("P_Fair &lt; P &le; P_Hold", table_cell_formula),
+            Paragraph("$102.40 – $136.58", table_cell),
+            Paragraph("P_Fair &lt; P &le; P(1.1312x)", table_cell_formula),
             Paragraph("Zona ekuilibrium wajar. Tahan posisi penuh, jangan FOMO, biarkan laba bertumbuh.", table_cell),
         ],
         [
             Paragraph("REDUCE", table_cell_bold),
-            Paragraph("$145.12 – $170.63", table_cell),
-            Paragraph("P_Hold &lt; P &le; P_Red", table_cell_formula),
+            Paragraph("$136.58 – $161.00", table_cell),
+            Paragraph("P_Hold &lt; P &le; P(1.2963x)", table_cell_formula),
             Paragraph("Premi di atas nilai wajar. Realisasikan laba bertahap (ambil profit ke kas USD).", table_cell),
         ],
         [
             Paragraph("SELL", table_cell_bold),
-            Paragraph("&gt; $170.63", table_cell),
-            Paragraph("P &gt; P_Red", table_cell_formula),
+            Paragraph("&gt; $161.00", table_cell),
+            Paragraph("P &gt; P(1.2963x)", table_cell_formula),
             Paragraph("Euforia gelembung ekstrem (> +3.00σ). Amankan seluruh modal ke kas likuid.", table_cell),
         ],
     ]

@@ -34,7 +34,7 @@ Zona dihitung di ruang kelipatan mNAV ($m_{\text{zone}}$) untuk menangkap efek p
 $$P(m) = \frac{1000}{S_{\text{diluted}}} \cdot \max\left(0, \; m \cdot NAV_{\text{BTC}} - D - Pref + R_{\text{USD}} + V_{\text{soft}}\right)$$
 
 $$\sigma_{\text{band}} = \text{clip}\left(0.10 + 0.18 \cdot \boldsymbol{Risk} + 0.06 \cdot (1 - DQ), \; 0.10, \; 0.35\right) = \mathbf{13.21\%}$$
-$$\boldsymbol{Risk} = 0.20(1 - \text{Liq}) + 0.15\Pi_{\text{debt}} + 0.20(1 - \text{clip}(mNAV^*/1.50, 0, 1)) + 0.15\text{NetLev} + 0.15\text{Dilution} + 0.15(1 - \text{TailScore}) = \mathbf{17.83\%}$$
+$$\boldsymbol{Risk} = \text{clip}\left(0.20(1 - \text{Liq}) + 0.15\Pi_{\text{debt}} + 0.20(1 - \text{clip}(mNAV^*/1.50, 0, 1)) + 0.15 \cdot \text{clip}\left(\frac{\text{NetLev}}{0.50}, 0, 1\right) + 0.15 \cdot \text{clip}\left(\frac{\text{Dilution}}{0.50}, 0, 1\right) + 0.15(1 - \text{TailScore}), \; 0, \; 1\right) = \mathbf{17.83\%}$$
 
 $$\begin{aligned}
 m_{\text{SB}} &= \max\left(\text{Floor} + 0.10, \; mNAV^* - 1.50 \cdot \sigma_{\text{band}}\right) = 0.7019x &&\implies P_{\text{StrongBuy}} = P(m_{\text{SB}}) \le \mathbf{\$73.11} \\
@@ -44,6 +44,17 @@ m_{\text{Red}} &= \max(m_{\text{Hold}} + 0.02, \; mNAV^* + 3.00 \cdot \sigma_{\t
 m_{\text{Sell}} &> m_{\text{Red}} &&\implies P_{\text{Sell}} > \mathbf{\$161.00}
 \end{aligned}$$
 *(Catatan: Karena net senior claims bernilai konstan \$13.801B, pergeseran kelipatan $\Delta m$ melahirkan pergeseran harga saham yang teramplifikasi leverage: $\Delta P = \frac{NAV_{\text{BTC}} \cdot \Delta m \cdot 1000}{S_{\text{diluted}}}$, bukan sekadar perkalian linier $k \cdot \sigma_{\text{band}} \cdot P_{\text{fair}}$).*
+
+### Klarifikasi Arsitektural Dual-Engine & Metodologi Stress Test:
+1. **Backtest Macro Allocation Engine (`backtest_engine.py`):**
+   - Berfungsi sebagai **Continuous Risk-Budgeted Sizing Engine** ($w^*(t) \in [0.0\%, 3.0\%]$).
+   - Memakai ambang batas berbasis paritas aset Bitcoin ($1.0x$ Parity, $0.80x$ Margin of Safety, $1.15x$ Rich) untuk merekonstruksi alokasi portofolio multi-aset jangka panjang (2020–2026) dengan batas modal 3% hard cap dan toleransi anti-churning $\pm 0.50\%$.
+2. **Production Bot Execution Engine (`mstr_bot.py`):**
+   - Berfungsi sebagai **Discrete Zone Tactical Classifier** (5 zona ekuilibrium: Strong Buy, Accumulate, Hold, Reduce, Sell).
+   - Memakai kanal probabilitas adaptif ($\pm 1.50\sigma, +1.75\sigma, +3.00\sigma$) di sekitar Fair Price untuk eksekusi operasional harian.
+3. **Omni-Universe Stochastic Stress Test (`stress_test_suite.py` Seksi 7):**
+   - Menggunakan **Exogenous Global Parameter Sweep** ($mNAV \sim U[0.55, 2.20]$).
+   - Mengundi seluruh kemungkinan realisasi kelipatan pasar secara independen dari model untuk memvalidasi batas absolut solvabilitas neraca (*capital structure solvency boundary*) dalam skenario ekstrem.
 
 ---
 
