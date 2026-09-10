@@ -16,6 +16,7 @@ from datetime import date
 
 from backtest_engine import (
     ForwardScenarioSimulator,
+    HistoricalBacktester,
     V3CapitalStructure,
     V3ModelEngine,
     get_interpolated_capital_structure,
@@ -156,6 +157,23 @@ class TestV3ModelEngine(unittest.TestCase):
         wipeout_stressed = (net_senior * 1e9) / (0.70 * latest_cap.btc_holdings)
         self.assertAlmostEqual(wipeout_parity, 16331.58, delta=10.0)
         self.assertAlmostEqual(wipeout_stressed, 23330.83, delta=10.0)
+
+    def test_econometric_metrics_calmar_and_psr(self) -> None:
+        tester = HistoricalBacktester(engine=self.engine)
+        res = tester.run()
+        # Verify econometric properties:
+        self.assertGreater(res.sleeve_calmar_ratio, 0.20)
+        self.assertGreaterEqual(res.sleeve_psr_pct, 95.0)
+        self.assertLessEqual(res.sleeve_trades, 75)  # Rebalance discipline: < 75 trades across 6 years
+        self.assertGreater(res.sleeve_trades, 10)
+
+    def test_cash_yield_overlay_enhancement(self) -> None:
+        tester = HistoricalBacktester(engine=self.engine)
+        res_baseline = tester.run(cash_yield_annual_pct=0.0)
+        res_with_yield = tester.run(cash_yield_annual_pct=0.04)
+        # Cash yield overlay should enhance total return and maintain or improve drawdown
+        self.assertGreater(res_with_yield.sleeve_total_return_pct, res_baseline.sleeve_total_return_pct)
+        self.assertGreater(res_with_yield.total_return_pct, res_baseline.total_return_pct)
 
 
 if __name__ == "__main__":

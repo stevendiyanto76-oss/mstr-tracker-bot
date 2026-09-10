@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>MSTR Quant Engine V3.4 - Pure Mathematical Model</title>
+  <!-- KaTeX CSS & JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #070a12;
+      color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      padding: 40px;
+      width: 1850px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+      border-bottom: 2px solid #1e293b;
+      padding-bottom: 20px;
+    }
+    .header h1 {
+      font-size: 44px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: #38bdf8;
+      margin-bottom: 8px;
+      text-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+    }
+    .header .subtitle {
+      font-size: 20px;
+      color: #94a3b8;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .grid-full {
+      grid-column: 1 / -1;
+    }
+    .card {
+      background: #0d1322;
+      border: 1.5px solid #1e293b;
+      border-radius: 16px;
+      padding: 26px 32px;
+      box-shadow: 0 12px 30px -6px rgba(0, 0, 0, 0.6);
+    }
+    .card-highlight {
+      border-color: #0284c7;
+      background: linear-gradient(180deg, #0f233d 0%, #0d1322 100%);
+      box-shadow: 0 0 25px rgba(2, 132, 199, 0.2);
+    }
+    .card-title {
+      font-size: 22px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #f8fafc;
+    }
+    .badge {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+    }
+    .badge-cyan { background: #0284c7; color: #ffffff; }
+    .badge-green { background: #059669; color: #ffffff; }
+    .badge-amber { background: #d97706; color: #ffffff; }
+    .badge-purple { background: #7c3aed; color: #ffffff; }
+    .badge-rose { background: #e11d48; color: #ffffff; }
+
+    .eq-box {
+      font-size: 29px;
+      color: #f8fafc;
+      padding: 12px 0;
+      text-align: center;
+    }
+    .eq-box-lg {
+      font-size: 36px;
+      color: #38bdf8;
+      padding: 16px 0;
+    }
+    .sub-eq-row {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin-top: 14px;
+      border-top: 1px solid #1e293b;
+      padding-top: 14px;
+      font-size: 23px;
+    }
+    .zone-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      margin-top: 10px;
+    }
+    .zone-item {
+      padding: 22px 18px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .zone-buy {
+      background: rgba(16, 185, 129, 0.14);
+      border: 2px solid #10b981;
+    }
+    .zone-hold {
+      background: rgba(59, 130, 246, 0.14);
+      border: 2px solid #3b82f6;
+    }
+    .zone-sell {
+      background: rgba(239, 68, 68, 0.14);
+      border: 2px solid #ef4444;
+    }
+    .zone-name {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      margin-bottom: 8px;
+    }
+    .zone-buy .zone-name { color: #34d399; }
+    .zone-hold .zone-name { color: #60a5fa; }
+    .zone-sell .zone-name { color: #f87171; }
+    .zone-eq {
+      font-size: 26px;
+      color: #f8fafc;
+      margin: 10px 0;
+    }
+    .zone-target {
+      font-size: 18px;
+      font-weight: 700;
+      color: #cbd5e1;
+    }
+
+    .param-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    .param-table th, .param-table td {
+      padding: 12px 16px;
+      text-align: center;
+      border-bottom: 1px solid #1e293b;
+    }
+    .param-table th {
+      font-size: 16px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      background: #080c14;
+    }
+    .param-table td {
+      font-size: 22px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+    .param-table .val {
+      font-family: "Courier New", monospace;
+      color: #38bdf8;
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>MSTR QUANTITATIVE ALLOCATION ENGINE V3.4</h1>
+    <div class="subtitle">PURE CONTINUOUS STOCHASTIC CONTROL &amp; 3-ZONE STRUCTURAL VALUATION MODEL</div>
+  </div>
+
+  <div class="grid">
+
+    <!-- 1. MERTON-KELLY MASTER ALLOCATION -->
+    <div class="card card-highlight grid-full">
+      <div class="card-title">
+        <span class="badge badge-cyan">MASTER LAW</span>
+        <span>1. PERSAMAAN ALOKASI OPTIMAL KONTINU MERTON-KELLY</span>
+      </div>
+      <div class="eq-box eq-box-lg">
+        $$w^*(t) = \max\left(0.0, \, \min\left(1.0, \, \frac{\mu(t) - r_f}{\gamma(t) \cdot \Sigma_{\text{eff}}^2(t)}\right)\right) \quad \Longleftrightarrow \quad w_{\text{cash}}^*(t) = 1.0 - w^*(t)$$
+      </div>
+    </div>
+
+    <!-- 2. EXPECTED DRIFT EQUATION -->
+    <div class="card grid-full">
+      <div class="card-title">
+        <span class="badge badge-purple">DRIFT DYNAMICS</span>
+        <span>2. PERSAMAAN HANYUTAN EKSPEKTASI HASIL &mu;(t)</span>
+      </div>
+      <div class="eq-box" style="font-size: 26px;">
+        $$\begin{aligned}
+        \mu(t) = r_f &+ \underbrace{\kappa \tanh\left(\frac{v(t)}{\sigma_v}\right)}_{\text{Valuation Mean-Reversion}} + \underbrace{\lambda_{\text{fast}} \tanh(m_{\text{fast}}) + \lambda_{\text{med}} \tanh(m_{\text{med}}) + \theta_{\text{accel}} \tanh(m_{\text{accel}})}_{\text{Multi-Horizon Continuous Momentum}} \\
+        &+ \underbrace{\rho_{\text{reflex}} \tanh(\pi_{\text{prem}}) \cdot \max\left(0, \tanh(m_{\text{fast}})\right)}_{\text{Soros Reflexive Equity Accretion}}
+        \end{aligned}$$
+      </div>
+      <div class="sub-eq-row">
+        <div>$$v(t) = \ln\left(\frac{P^*(t)}{P(t)}\right)$$</div>
+        <div>$$\pi_{\text{prem}}(t) = \max\left(0.0, \, \frac{P(t) - P^*(t)}{P^*(t)}\right)$$</div>
+        <div>$$m_{\text{accel}}(t) = m_{\text{fast}}(t) - m_{\text{med}}(t)$$</div>
+      </div>
+    </div>
+
+    <!-- 3. FUNDAMENTAL VALUATION & BALANCE SHEET -->
+    <div class="card">
+      <div class="card-title">
+        <span class="badge badge-amber">BALANCE SHEET</span>
+        <span>3. NILAI WAJAR INTRINSIK P*(t) &amp; MULTIPLIER m*(t)</span>
+      </div>
+      <div class="eq-box" style="font-size: 27px;">
+        $$P^*(t) = \frac{m^*(t) \cdot \text{NAV}_{\text{BTC}}(t) - \big(D(t) + P_{\text{pref}}(t) - C(t)\big) + V_{\text{software}}}{N(t)}$$
+      </div>
+      <div class="sub-eq-row">
+        <div>$$m^*(t) = \text{clip}\Big(1.0 + \beta(t) \tanh(m_{\text{slow}}) - \Pi_{\text{liq}}(t), \, 0.50, \, 2.50\Big)$$</div>
+      </div>
+      <div class="sub-eq-row" style="font-size: 20px;">
+        <div>$$\beta(t) = 0.35 + \frac{0.10}{1 + e^{-\frac{m_{\text{slow}}-0.50}{0.10}}}$$</div>
+        <div>$$R_{\text{months}}(t) = 12 \times \frac{C(t)}{K_{\text{mand}}(t) + K_{\text{flex}}(t)}$$</div>
+      </div>
+    </div>
+
+    <!-- 4. ASYMMETRIC VARIANCE & DYNAMIC RISK -->
+    <div class="card">
+      <div class="card-title">
+        <span class="badge badge-rose">RISK CONTROL</span>
+        <span>4. PENALTI BUBBLE KUADRATIK &amp; RISIKO DINAMIS</span>
+      </div>
+      <div class="eq-box" style="font-size: 27px;">
+        $$\Sigma_{\text{eff}}^2(t) = \sigma_{\text{eff}}^2(t) \times \left(1.0 + \eta_{\text{bubble}} \cdot \pi_{\text{prem}}^2(t)\right)$$
+      </div>
+      <div class="sub-eq-row">
+        <div>$$\sigma_{\text{eff}}(t) = (1 - w_{\text{down}}) \sigma_{\text{mstr}} + w_{\text{down}} \big(\sigma_{\text{downside}} \sqrt{2}\big)$$</div>
+      </div>
+      <div class="sub-eq-row" style="font-size: 20px;">
+        <div>$$\gamma(t) = \gamma_0 \times \left(1.0 + \psi_{\text{dd}} \cdot \text{DD}^2(t)\right)$$</div>
+        <div>$$\text{DD}(t) = \frac{V_{\text{peak}}(t) - V(t)}{V_{\text{peak}}(t)}$$</div>
+      </div>
+    </div>
+
+    <!-- 5. 3 ADAPTIVE PRICE ZONES -->
+    <div class="card grid-full">
+      <div class="card-title">
+        <span class="badge badge-green">EXECUTION ZONES</span>
+        <span>5. BATAS HARGA ANALITIK 3 ZONA ADAPTIF</span>
+      </div>
+      <div class="zone-box">
+        <div class="zone-item zone-buy">
+          <div class="zone-name">ZONA 1: BUY (DISCOUNT)</div>
+          <div class="zone-eq">$$P \le P^*(t)$$</div>
+          <div class="zone-target">Target Alokasi: $w^*(P) \ge 70\%$</div>
+        </div>
+        <div class="zone-item zone-hold">
+          <div class="zone-name">ZONA 2: HOLD (LET PROFITS RUN)</div>
+          <div class="zone-eq">$$P^*(t) < P \le P_{\text{bubble}}(t)$$</div>
+          <div class="zone-target">Target Alokasi: $40\% \le w^*(P) < 70\%$</div>
+        </div>
+        <div class="zone-item zone-sell">
+          <div class="zone-name">ZONA 3: SELL (CRASH PROTECTION)</div>
+          <div class="zone-eq">$$P > P_{\text{bubble}}(t) \quad \lor \quad \mu(t) \le r_f$$</div>
+          <div class="zone-target">Target Alokasi: $w^*(P) < 40\% \implies 100\%\text{ Cash}$</div>
+        </div>
+      </div>
+      <div class="sub-eq-row" style="margin-top: 14px; font-size: 22px;">
+        <div>$$P_{\text{bubble}}(t) = \arg_P \left\{ w^*(P) = 0.40 \right\} \quad \in \quad \left[1.25 \cdot P^*(t), \, 2.20 \cdot P^*(t)\right]$$</div>
+      </div>
+    </div>
+
+    <!-- 6. CERTIFIED INSTITUTIONAL HYPERPARAMETERS -->
+    <div class="card grid-full">
+      <div class="card-title">
+        <span class="badge badge-cyan">CALIBRATION</span>
+        <span>6. MATRIKS PARAMETER TERSERTIFIKASI (QUANTCONNECT HIGH-GROWTH CALIBRATION)</span>
+      </div>
+      <table class="param-table">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>$\kappa$</th>
+            <th>$\sigma_v$</th>
+            <th>$\lambda_{\text{fast}}$</th>
+            <th>$\lambda_{\text{med}}$</th>
+            <th>$\theta_{\text{accel}}$</th>
+            <th>$\rho_{\text{reflex}}$</th>
+            <th>$\gamma_0$</th>
+            <th>$\psi_{\text{dd}}$</th>
+            <th>$w_{\text{down}}$</th>
+            <th>$\eta_{\text{bubble}}$</th>
+            <th>$\phi_{\text{liq}}$</th>
+            <th>$r_f$</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Nilai Numerik</strong></td>
+            <td class="val">1.2000</td>
+            <td class="val">0.3500</td>
+            <td class="val">0.8000</td>
+            <td class="val">0.3000</td>
+            <td class="val">0.0500</td>
+            <td class="val">1.2000</td>
+            <td class="val">1.5000</td>
+            <td class="val">1.5000</td>
+            <td class="val">0.5000</td>
+            <td class="val">1.5000</td>
+            <td class="val">0.1000</td>
+            <td class="val">0.0450</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</body>
+</html>

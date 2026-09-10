@@ -1,0 +1,38 @@
+{
+  "model_name": "MSTR Merton-Kelly High-Growth Institutional Champion",
+  "status": "PRODUCTION_READY",
+  "parameters": {
+    "kappa": 1.2,
+    "sigma_v": 0.35,
+    "lambda_fast": 0.8,
+    "lambda_med": 0.3,
+    "theta_accel": 0.05,
+    "rho_reflex": 1.2,
+    "psi_dd": 1.5,
+    "downside_vol_weight": 0.5,
+    "eta_bubble_penalty": 1.5,
+    "phi_liquidity_penalty": 0.1
+  },
+  "risk_profile": "High-Growth with Controlled Drawdown (Target MaxDD <= 30%)",
+  "metrics": {
+    "full_cycle_2020_2026": {
+      "total_return_pct": 2219.41,
+      "max_drawdown_pct": -25.5,
+      "sharpe_ratio": 1.52,
+      "calmar_ratio": 2.68
+    },
+    "blind_holdout_2025_2026": {
+      "total_return_pct": -10.76,
+      "max_drawdown_pct": -17.24,
+      "sharpe_ratio": -1.12,
+      "calmar_ratio": -0.39,
+      "mean_weight_in_mstr": 0.055,
+      "final_weight_in_mstr": 0.0
+    },
+    "training_period_2020_2024": {
+      "total_return_pct": 2498.59,
+      "max_drawdown_pct": -25.5,
+      "sharpe_ratio": 1.91
+    }
+  }
+}

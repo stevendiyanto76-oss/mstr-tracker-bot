@@ -66,6 +66,10 @@ def run_historical_backtest() -> None:
         ("Annualized Volatility", f"{result.sleeve_vol_pct:,.2f}%"),
         ("Sharpe Ratio (Rf=3%)", f"{result.sleeve_sharpe:,.2f}"),
         ("Maximum Drawdown", f"-{result.sleeve_max_dd_pct:,.2f}%"),
+        ("Calmar Ratio (CAGR/MaxDD)", f"{result.sleeve_calmar_ratio:,.2f}"),
+        ("Probabilistic Sharpe (PSR)", f"{result.sleeve_psr_pct:,.1f}%"),
+        ("p-value vs BTC Benchmark", f"{result.sleeve_p_value_vs_btc:,.4f}"),
+        ("Total Sleeve Rebalances", f"{result.sleeve_trades}"),
     ]
     for label, val in sleeve_table:
         print(f"  • {label:<32}: {val}")

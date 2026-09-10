@@ -295,6 +295,11 @@ class BacktestResult:
     benchmark_btc_return_pct: float
     benchmark_mstr_max_dd_pct: float
     benchmark_btc_max_dd_pct: float
+    # Advanced Econometric Metrics (V3.1 Institutional Upgrades)
+    sleeve_calmar_ratio: float = 0.0
+    sleeve_psr_pct: float = 0.0
+    sleeve_p_value_vs_btc: float = 1.0
+    sleeve_trades: int = 0
 
 
 class HistoricalBacktester:
@@ -344,6 +349,7 @@ class HistoricalBacktester:
         market_df: pd.DataFrame | None = None,
         fee_rate: float = 0.0035,
         execution_lag: int = 0,
+        cash_yield_annual_pct: float = 0.0,
     ) -> BacktestResult:
         if market_df is None:
             market_df = self.load_market_data()
@@ -367,6 +373,7 @@ class HistoricalBacktester:
         sleeve_cash = self.initial_capital
         sleeve_mstr_shares = 0.0
         sleeve_values = []
+        sleeve_trades = 0
 
         pending_target_weights = [0.0] * execution_lag
 
@@ -435,12 +442,20 @@ class HistoricalBacktester:
                         s_shares = s_invest / p_mstr
                         sleeve_cash -= s_cost
                         sleeve_mstr_shares += s_shares
+                        sleeve_trades += 1
                 elif s_diff < 0:
                     s_sell = min(sleeve_mstr_shares * p_mstr, abs(s_diff))
                     if s_sell > 10.0:
                         s_shares = s_sell / p_mstr
                         sleeve_cash += s_sell * (1.0 - fee_rate)
                         sleeve_mstr_shares = max(0.0, sleeve_mstr_shares - s_shares)
+                        sleeve_trades += 1
+
+            # Cash yield overlay on idle cash balances if configured
+            if cash_yield_annual_pct > 0.0:
+                daily_yield_factor = 1.0 + (cash_yield_annual_pct / 252.0)
+                cash *= daily_yield_factor
+                sleeve_cash *= daily_yield_factor
 
             # Daily end valuation
             daily_end_val = cash + mstr_shares * p_mstr
@@ -489,6 +504,37 @@ class HistoricalBacktester:
         sleeve_cummax = res_df["Sleeve_Val"].cummax()
         sleeve_dd = (res_df["Sleeve_Val"] - sleeve_cummax) / sleeve_cummax
         sleeve_max_dd = abs(sleeve_dd.min())
+        sleeve_calmar = sleeve_cagr / max(sleeve_max_dd, 1e-6)
+
+        # Probabilistic Sharpe Ratio (PSR) of sleeve (Marcos Lopez de Prado formula)
+        excess_s = sleeve_ret_daily - 0.03 / 252.0
+        n_obs = len(excess_s)
+        mean_e = float(excess_s.mean())
+        std_e = float(excess_s.std())
+        if std_e > 1e-9 and n_obs >= 30:
+            sr_obs = (mean_e / std_e) * math.sqrt(252.0)
+            m3 = float(((excess_s - mean_e) ** 3).mean())
+            m4 = float(((excess_s - mean_e) ** 4).mean())
+            skew_e = m3 / (std_e ** 3 + 1e-12)
+            kurt_e = m4 / (std_e ** 4 + 1e-12)
+            denom = math.sqrt(max(1e-6, 1.0 - skew_e * sr_obs + ((kurt_e - 1.0) / 4.0) * (sr_obs ** 2)))
+            z_score = sr_obs * math.sqrt(n_obs - 1.0) / denom
+            sleeve_psr = 0.5 * (1.0 + math.erf(z_score / math.sqrt(2.0))) * 100.0
+        else:
+            sleeve_psr = 50.0
+
+        # Two-sided p-value vs BTC excess returns
+        btc_ret_daily = pd.Series(btc_prices).pct_change().dropna()
+        if len(sleeve_ret_daily) == len(btc_ret_daily) and len(btc_ret_daily) >= 30:
+            diff_r = sleeve_ret_daily.values - btc_ret_daily.values
+            se_diff = float(diff_r.std() / math.sqrt(len(diff_r)))
+            if se_diff > 1e-12:
+                t_val = float(diff_r.mean()) / se_diff
+                sleeve_p_val = 2.0 * (1.0 - 0.5 * (1.0 + math.erf(abs(t_val) / math.sqrt(2.0))))
+            else:
+                sleeve_p_val = 1.0
+        else:
+            sleeve_p_val = 1.0
 
         # Benchmarks
         mstr_ret = (mstr_prices[-1] / mstr_prices[0]) - 1.0
@@ -517,6 +563,10 @@ class HistoricalBacktester:
             benchmark_btc_return_pct=btc_ret * 100.0,
             benchmark_mstr_max_dd_pct=mstr_max_dd * 100.0,
             benchmark_btc_max_dd_pct=btc_max_dd * 100.0,
+            sleeve_calmar_ratio=sleeve_calmar,
+            sleeve_psr_pct=sleeve_psr,
+            sleeve_p_value_vs_btc=sleeve_p_val,
+            sleeve_trades=sleeve_trades,
         )
 
 
