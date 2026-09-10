@@ -790,28 +790,48 @@ def fetch_btc_multi_moments() -> tuple[float, float, float, float, float]:
         except Exception:
             pass
 
-    # Layer 2: Yahoo Finance query
+    # Layer 2: Yahoo Finance multi-asset query (BTC + MSTR)
     try:
-        req = Request("https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD?range=1y&interval=1d", headers=HEADERS)
-        with urlopen(req, timeout=5) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-            quote = payload["chart"]["result"][0]["indicators"]["quote"][0]["close"]
-            closes = [float(x) for x in quote if x is not None]
-            if len(closes) >= 90:
-                log_ret = [math.log(closes[i] / closes[i - 1]) for i in range(1, len(closes))]
+        req_btc = Request("https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD?range=1y&interval=1d", headers=HEADERS)
+        with urlopen(req_btc, timeout=5) as response:
+            payload_btc = json.loads(response.read().decode("utf-8"))
+            quote_btc = payload_btc["chart"]["result"][0]["indicators"]["quote"][0]["close"]
+            closes_btc = [float(x) for x in quote_btc if x is not None]
 
-                def compute_ema_drift(returns, span):
-                    alpha = 2.0 / (span + 1.0)
-                    ema = returns[0]
-                    for r in returns[1:]:
-                        ema = alpha * r + (1.0 - alpha) * ema
-                    return ema * 252.0
+        if len(closes_btc) >= 90:
+            log_ret_btc = [math.log(closes_btc[i] / closes_btc[i - 1]) for i in range(1, len(closes_btc))]
 
-                m_fast = compute_ema_drift(log_ret, 21)
-                m_med = compute_ema_drift(log_ret, 63)
-                m_slow = compute_ema_drift(log_ret, 252)
-                vol = (sum((r - mean(log_ret)) ** 2 for r in log_ret) / (len(log_ret) - 1)) ** 0.5 * math.sqrt(365)
-                return m_fast, m_med, m_slow, max(0.40, vol), max(0.40, vol)
+            def compute_ema_drift(returns, span):
+                alpha = 2.0 / (span + 1.0)
+                ema = returns[0]
+                for r in returns[1:]:
+                    ema = alpha * r + (1.0 - alpha) * ema
+                return ema * 252.0
+
+            m_fast = compute_ema_drift(log_ret_btc, 21)
+            m_med = compute_ema_drift(log_ret_btc, 63)
+            m_slow = compute_ema_drift(log_ret_btc, 252)
+
+            # Query MSTR specifically for authentic equity volatility and Sortino downside
+            sigma_mstr = 0.81
+            sigma_down = 0.56
+            try:
+                req_mstr = Request("https://query1.finance.yahoo.com/v8/finance/chart/MSTR?range=1y&interval=1d", headers=HEADERS)
+                with urlopen(req_mstr, timeout=5) as resp_mstr:
+                    payload_m = json.loads(resp_mstr.read().decode("utf-8"))
+                    quote_m = payload_m["chart"]["result"][0]["indicators"]["quote"][0]["close"]
+                    closes_m = [float(x) for x in quote_m if x is not None]
+                    if len(closes_m) >= 30:
+                        m_rets = [math.log(closes_m[i] / closes_m[i - 1]) for i in range(max(1, len(closes_m) - 60), len(closes_m))]
+                        mean_m = sum(m_rets) / len(m_rets)
+                        var_m = sum((r - mean_m) ** 2 for r in m_rets) / max(1, len(m_rets) - 1)
+                        sigma_mstr = max(0.35, math.sqrt(var_m) * math.sqrt(252.0))
+                        neg_m = [r for r in m_rets if r < 0.0]
+                        sigma_down = math.sqrt(sum(r ** 2 for r in neg_m) / len(m_rets)) * math.sqrt(252.0) if neg_m else sigma_mstr
+            except Exception:
+                pass
+
+            return m_fast, m_med, m_slow, sigma_mstr, sigma_down
     except Exception:
         pass
 
