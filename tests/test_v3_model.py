@@ -176,5 +176,43 @@ class TestV3ModelEngine(unittest.TestCase):
         self.assertGreater(res_with_yield.total_return_pct, res_baseline.total_return_pct)
 
 
+class TestLayer1FailureAlerts(unittest.TestCase):
+    def test_layer1_failure_recording_and_alert_formatting(self) -> None:
+        from mstr_bot import (
+            LAYER_1_FAILURES,
+            clear_layer1_failures,
+            format_layer1_warning_alert,
+            record_layer1_failure,
+        )
+
+        clear_layer1_failures()
+        self.assertEqual(len(LAYER_1_FAILURES), 0)
+
+        # Record single failure
+        record_layer1_failure("Strategy.com Dashboard", "Connection Timeout", "CoinGecko / Yahoo")
+        self.assertEqual(len(LAYER_1_FAILURES), 1)
+        self.assertEqual(LAYER_1_FAILURES[0]["component"], "Strategy.com Dashboard")
+
+        # Deduplication check
+        record_layer1_failure("Strategy.com Dashboard", "Second error", "CoinGecko")
+        self.assertEqual(len(LAYER_1_FAILURES), 1)
+
+        # Second distinct failure
+        record_layer1_failure("Portofolio V2", "HTTP 500", "Local Mirror")
+        self.assertEqual(len(LAYER_1_FAILURES), 2)
+
+        # Alert formatting validation
+        alert_msg = format_layer1_warning_alert(LAYER_1_FAILURES)
+        self.assertIn("🚨 PERINGATAN SISTEM: GANGGUAN LAYER 1", alert_msg)
+        self.assertIn("Strategy.com Dashboard", alert_msg)
+        self.assertIn("Connection Timeout", alert_msg)
+        self.assertIn("Portofolio V2", alert_msg)
+        self.assertIn("HTTP 500", alert_msg)
+        self.assertIn("STATUS PENANGANAN SISTEM", alert_msg)
+
+        clear_layer1_failures()
+        self.assertEqual(len(LAYER_1_FAILURES), 0)
+
+
 if __name__ == "__main__":
     unittest.main()

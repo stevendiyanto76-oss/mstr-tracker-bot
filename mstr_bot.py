@@ -39,6 +39,51 @@ LOCAL_OVERVIEW_PATH = Path("data/public/challenge_overview.json")
 NORMAL_ACTIONS = ("BUY", "HOLD", "SELL")
 LEGACY_ACTIONS = ("STRONG BUY", "ACCUMULATE", "HOLD", "REDUCE", "SELL")
 
+LAYER_1_FAILURES: list[dict[str, str]] = []
+
+
+def record_layer1_failure(component: str, error_detail: str, fallback_used: str) -> None:
+    """Records when any Layer 1 primary data source fails and fallback is activated."""
+    if any(item.get("component") == component for item in LAYER_1_FAILURES):
+        return
+    LAYER_1_FAILURES.append({
+        "component": component,
+        "error": str(error_detail),
+        "fallback": fallback_used,
+        "timestamp": datetime.now(timezone(timedelta(hours=7))).strftime("%d %b %Y | %H:%M WIB"),
+    })
+
+
+def clear_layer1_failures() -> None:
+    LAYER_1_FAILURES.clear()
+
+
+def format_layer1_warning_alert(failures: Sequence[Mapping[str, str]], now: datetime | None = None) -> str:
+    timestamp = (now or datetime.now(timezone(timedelta(hours=7)))).astimezone(timezone(timedelta(hours=7))).strftime("%d %b %Y | %H:%M WIB")
+    failure_items = []
+    for f in failures:
+        comp = f.get("component", "Sumber Data Primer")
+        err = f.get("error", "Tidak merespons / Timeout")
+        fb = f.get("fallback", "Layer 2 Cadangan")
+        failure_items.append(f"❌ *{comp}*\n   • Kendala: `{err}`\n   ↳ Dialihkan ke: *{fb}*")
+
+    failures_formatted = "\n\n".join(failure_items)
+    return f"""
+🚨 PERINGATAN SISTEM: GANGGUAN LAYER 1
+📅 {timestamp}
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ Terdeteksi kegagalan pada sumber data primer (Layer 1).
+Sistem secara otomatis mengaktifkan failover cadangan:
+
+{failures_formatted}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🛡️ STATUS PENANGANAN SISTEM:
+• Seluruh mesin V3.4 & kalkulasi portofolio tetap beroperasi normal via data cadangan (Layer 2/3).
+• Laporan harian tetap dikirim dengan angka presisi.
+• Mohon periksa API Strategy.com / Cloudflare jika kendala berlanjut.
+""".strip()
+
 
 class StrategyDataError(RuntimeError):
     """Raised when Strategy data is missing, malformed, or unusable."""
@@ -324,8 +369,9 @@ def fetch_live_btc_price_with_fallbacks() -> tuple[float, str]:
             price = float(btc_payload["results"].get("ufPrice") or btc_payload["results"].get("latestPrice") or 0)
             if price > 0:
                 return price, "Strategy.com (Primary)"
-    except Exception:
-        pass
+        record_layer1_failure("Harga BTC Live (Strategy.com)", "Payload tidak valid atau harga 0", "CoinGecko (Fallback 1)")
+    except Exception as exc:
+        record_layer1_failure("Harga BTC Live (Strategy.com)", str(exc), "CoinGecko (Fallback 1)")
 
     # Layer 2: CoinGecko Free Public API
     try:
@@ -372,8 +418,9 @@ def fetch_live_mstr_price_with_fallbacks() -> tuple[float, str]:
             price = float(mstr_payload[0].get("ufPrice") or mstr_payload[0].get("price") or 0)
             if price > 0:
                 return price, "Strategy.com (Primary)"
-    except Exception:
-        pass
+        record_layer1_failure("Harga MSTR Live (Strategy.com)", "Payload tidak valid atau harga 0", "Yahoo Finance Q1")
+    except Exception as exc:
+        record_layer1_failure("Harga MSTR Live (Strategy.com)", str(exc), "Yahoo Finance Q1")
 
     # Layer 2: Yahoo Finance Query 1
     try:
@@ -406,7 +453,9 @@ def fetch_dashboard_data(state_path: Path | None = DEFAULT_STATE_FILE) -> Mappin
         mstr_payload, btc_payload = _http_get_json(MSTR_KPI_URL), _http_get_json(BITCOIN_KPI_URL)
         if isinstance(mstr_payload, list) and mstr_payload and isinstance(btc_payload, Mapping) and isinstance(btc_payload.get("results"), Mapping):
             return {"mstr": mstr_payload[0], "btc": btc_payload["results"], "btc_timestamp": btc_payload.get("timestamp")}
+        record_layer1_failure("Dashboard Strategy.com (MSTR & BTC KPI)", "Payload data kosong atau tidak lengkap", "CoinGecko / Yahoo & State Cache")
     except Exception as exc:
+        record_layer1_failure("Dashboard Strategy.com (MSTR & BTC KPI)", str(exc), "CoinGecko / Yahoo & State Cache")
         print(f"::warning::Strategy.com dashboard fetch failed ({exc}). Activating multi-layer fallbacks.", file=sys.stderr)
 
     # 2. Resilient Fallback: Multi-layer free APIs + cached state fundamentals
@@ -526,6 +575,7 @@ def fetch_strategy_snapshot(
     try:
         shares = fetch_shares_data()
     except Exception as exc:
+        record_layer1_failure("Data Saham ADSO (Strategy.com /shares)", str(exc), "State Cache JSON / SEC Baseline")
         fallback_reasons.append("Jumlah Saham (ADSO): Fallback State Cache / SEC Baseline")
         if cached_fingerprint.get("basic_shares_m") and cached_fingerprint.get("diluted_shares_m"):
             print(f"::warning::Failed to fetch shares data from strategy.com ({exc}). Using Layer 2 cached state fundamentals.")
@@ -545,6 +595,7 @@ def fetch_strategy_snapshot(
     try:
         latest_purchase = fetch_latest_average_btc_cost()
     except Exception as exc:
+        record_layer1_failure("Riwayat Pembelian Bitcoin (Strategy.com /purchases)", str(exc), "State Cache JSON / SEC Baseline")
         fallback_reasons.append("Riwayat Beli BTC: Fallback State Cache / SEC Baseline")
         if cached_fingerprint.get("average_btc_cost"):
             print(f"::warning::Failed to fetch purchase data from strategy.com ({exc}). Using Layer 2 cached state fundamentals.")
@@ -570,6 +621,7 @@ def fetch_strategy_snapshot(
     try:
         debt_instruments = fetch_debt_instruments()
     except Exception as exc:
+        record_layer1_failure("Jadwal Obligasi Konversi (Strategy.com /debt)", str(exc), "State Cache JSON / SEC Schedule Baseline")
         fallback_reasons.append("Obligasi Konversi: Fallback State Cache / SEC Schedule Baseline")
         raw_schedule = cached_fingerprint.get("debt_schedule", [])
         if raw_schedule:
@@ -788,8 +840,11 @@ def fetch_btc_multi_moments() -> tuple[float, float, float, float, float]:
                     sigma_mstr = 0.65
                     sigma_down = 0.65
                 return m_fast, m_med, m_slow, sigma_mstr, sigma_down
-        except Exception:
-            pass
+            record_layer1_failure("Dataset Historis CSV (Volatilitas/Drift)", f"Data tidak mencukupi ({len(btc_closes)} < 90)", "Yahoo Finance Multi-Asset API")
+        except Exception as exc:
+            record_layer1_failure("Dataset Historis CSV (Volatilitas/Drift)", str(exc), "Yahoo Finance Multi-Asset API")
+    else:
+        record_layer1_failure("Dataset Historis CSV (Volatilitas/Drift)", "File CSV tidak ditemukan", "Yahoo Finance Multi-Asset API")
 
     # Layer 2: Yahoo Finance multi-asset query (BTC + MSTR)
     try:
@@ -1405,7 +1460,11 @@ def fetch_v2_portfolio_snapshot() -> dict[str, Any] | None:
                 overview = payload.get("documents", {}).get("overview")
                 if isinstance(overview, dict) and "portfolio" in overview:
                     return overview
+            record_layer1_failure("Portofolio V2 (Cloudflare Worker API)", "Format JSON overview/portfolio tidak ditemukan", "Local Audit Mirror / Baseline")
+        else:
+            record_layer1_failure("Portofolio V2 (Cloudflare Worker API)", f"HTTP {response.status_code}", "Local Audit Mirror / Baseline")
     except Exception as exc:
+        record_layer1_failure("Portofolio V2 (Cloudflare Worker API)", str(exc), "Local Audit Mirror / Baseline")
         print(f"::notice::Remote V2 snapshot fetch failed ({exc}), trying Layer 2 local mirror...", file=sys.stderr)
 
     # Layer 2: Local public audit mirror
@@ -1668,6 +1727,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--sample", action="store_true", help="Use the deterministic golden sample snapshot.")
     parser.add_argument("--audit-live", action="store_true", help="Print live source values and reconciliation without changing state.")
     parser.add_argument("--no-portfolio", action="store_true", help="Skip the personalized portfolio recommendation message.")
+    parser.add_argument("--test-layer1-alert", action="store_true", help="Simulate a Layer 1 failure to verify warning dispatch.")
     parser.add_argument("--state-file", type=Path, default=DEFAULT_STATE_FILE)
     return parser.parse_args(argv)
 
@@ -1685,6 +1745,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.audit_live:
             print(format_source_audit())
             return 0
+
+        if args.test_layer1_alert:
+            record_layer1_failure("Simulasi Komponen Primer", "Simulasi Timeout 504 Gateway Error", "Layer 2 Fallback Aktif")
+
         run = evaluate_snapshot(
             golden_snapshot() if args.sample else fetch_strategy_snapshot(state_path=args.state_file),
             state_path=args.state_file,
@@ -1702,8 +1766,26 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print("\n" + "=" * 40 + "\n")
                 print(portfolio_report)
 
+        # Layer 1 Failure Warning Alert (if even 1 component failed)
+        warning_report = None
+        if LAYER_1_FAILURES:
+            warning_report = format_layer1_warning_alert(LAYER_1_FAILURES)
+            print("\n" + "!" * 50 + "\n" + warning_report + "\n" + "!" * 50 + "\n", file=sys.stderr)
+
         if args.dry_run:
+            if warning_report:
+                print("\n[DRY RUN] Layer 1 Warning Alert would be sent to Telegram:\n" + warning_report)
             return 0
+
+        # Message Dispatch Priority:
+        # 1. If even 1 Layer 1 component failed, immediately send warning alert first!
+        if warning_report:
+            send_telegram_message(warning_report)
+            import time
+
+            time.sleep(1)
+
+        # 2. Decision Engine Snapshot Report
         if not send_telegram_message(report):
             print("Telegram credentials unavailable; report rendered but not sent.", file=sys.stderr)
         elif portfolio_report:
@@ -1713,10 +1795,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             send_telegram_message(portfolio_report)
         return 0
     except Exception as exc:
-        message = f"MSTR Decision Engine error: {exc}"
-        print(message, file=sys.stderr)
+        record_layer1_failure("Sistem Utama / Eksekusi Bot", str(exc), "Emergency Error Handler")
+        error_alert = format_layer1_warning_alert(LAYER_1_FAILURES) if LAYER_1_FAILURES else f"🚨 MSTR Decision Engine error: {exc}"
+        print(error_alert, file=sys.stderr)
         if not args.dry_run:
-            send_telegram_message(message)
+            send_telegram_message(error_alert)
         return 1
 
 
