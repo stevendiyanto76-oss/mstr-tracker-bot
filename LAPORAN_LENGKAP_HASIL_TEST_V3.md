@@ -96,10 +96,16 @@ m_{\text{Sell}} &> m_{\text{Red}} &&\implies P_{\text{Sell}} > \mathbf{\$161.00}
 
 ### A. Reverse Stress Testing (Pemetaan Tebing Kehancuran)
 1. **Titik Nol Ekuitas (Zero Residual Wipeout Point):**  
-   $$P_{\text{BTC}}^{\text{wipeout}} = \frac{D + Pref - V_{\text{soft}} - R_{\text{USD}}}{H_{\text{BTC}}} = \mathbf{\$16.326\text{ per BTC}}$$  
-   *Di atas harga \$16.326 per BTC, nilai intrinsik ekuitas MSTR selalu positif.*
-2. **Batas Ketahanan Likuiditas Kas:**  
-   Pada beban dividen saat ini (\$1.662B/tahun) dan kas \$6.538B, cadangan kas bertahan **47.2 bulan** tanpa menjual satupun BTC.
+   * **Kondisi Ekuilibrium Paritas ($mNAV = 1.0x$):**  
+     $$P_{\text{BTC}}^{\text{wipeout, parity}} = \frac{D + Pref - V_{\text{soft}} - R_{\text{USD}}}{1.0 \times H_{\text{BTC}}} = \mathbf{\$16.326\text{ per BTC}}$$  
+   * **Kondisi Krisis Tertekan (*Stressed Panic*, $mNAV = 0.70x$):**  
+     $$P_{\text{BTC}}^{\text{wipeout, stressed}} = \frac{D + Pref - V_{\text{soft}} - R_{\text{USD}}}{0.70 \times H_{\text{BTC}}} = \mathbf{\$23.331\text{ per BTC}}$$  
+     *Di atas harga \$23.331 per BTC, nilai intrinsik ekuitas MSTR selalu positif bahkan dalam kepanikan likuiditas saat pasar mendiskon mNAV ke 0.70x.*
+2. **Batas Ketahanan Likuiditas Kas Bersusun (Tiered Liquidity Runway):**  
+   * **Tier 1 (Kewajiban Utang Senior Murni — Kupon Kas ~$34.5M/tahun):**  
+     Cadangan kas \$6.538B memberikan runway pertahanan luar biasa selama **186.8 bulan (15.5 tahun)** tanpa memerlukan refinancing atau penjualan Bitcoin.  
+   * **Tier 1 + Tier 2 (Utang Senior + Dividen Preferen Fleksibel Penuh ~$1.660B/tahun):**  
+     Cadangan kas bertahan **47.2 bulan (3.9 tahun)** penuh tanpa menjual satupun Bitcoin.
 3. **Lantai Likuidasi Defensif 5% BTC Bulanan:**  
    Jika kas habis total dan MSTR menjual maksimal 5% BTC per bulan, MSTR tetap dapat melunasi kupon selama BTC di atas **\$3.933 per BTC**.
 
@@ -152,6 +158,10 @@ m_{\text{Sell}} &> m_{\text{Red}} &&\implies P_{\text{Sell}} > \mathbf{\$161.00}
 * **Rata-rata Profit:** **+87.3%**
 * **Rata-rata Kerugian:** **-11.8%**
 * **Payoff Ratio (Risk/Reward):** **7.41x** *(Rata-rata profit dibagi rata-rata loss)*
+* **Uji Signifikansi Statistik (Two-Tailed Binomial Test):**
+  - Hipotesis Nol ($H_0$): Peluang acak 50% (koin seimbang).
+  - Hasil Uji ($k=18, N=27$): Nilai **$p = 0.059$** dengan Rentang Keyakinan 95% Clopper-Pearson: **[46.0%, 83.5%]**.
+  - *Catatan Metodologi:* Menolak hipotesis acak pada level kepercayaan $\alpha = 0.10$, namun belum menembus ambang batas ketat $\alpha = 0.05$ murni karena keterbatasan ukuran sampel transaksi historis ($N=27$).
 
 ### B. Win Rate Probabilitas 100.000 Path ke Depan (2026 – 2030)
 * **Peluang Profit Positif ($R > 0\%$):** **56.96%** (56.960 path)

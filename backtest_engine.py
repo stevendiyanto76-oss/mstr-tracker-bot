@@ -39,8 +39,8 @@ class V3CapitalStructure:
     preferred_notional_b: float     # Total preferred liquidation notional in $B
     usd_reserve_b: float            # Policy cash & liquid reserve in $B
     software_floor_b: float = 1.0   # Baseline recurring software value in $B
-    tier1_mandatory_cash_burden_b: float = 0.30  # Debt coupon + senior cumulative pref
-    tier2_discretionary_burden_b: float = 1.46   # STRC, STRD, STRK flexible burden
+    tier1_mandatory_cash_burden_b: float = 0.035  # Pure senior debt coupon burden (~$35M/yr)
+    tier2_discretionary_burden_b: float = 1.625   # STRC, STRD, STRK flexible non-cumulative burden
 
 
 @dataclass(frozen=True)
@@ -245,7 +245,7 @@ HISTORICAL_CAPITAL_STACK_TIMELINE = [
     (date(2026, 3, 31), 830000, 380.0, 340.0, 8.25, 13.52, 2.25, 0.250, 1.25),
     (date(2026, 6, 21), 846842, 386.052, 356.32, 6.754, 15.475, 1.101, 0.280, 1.43),
     (date(2026, 7, 9), 843775, 401.294, 371.614, 6.754, 15.464, 2.550, 0.280, 1.48),
-    (date(2026, 9, 9), 845050, 450.121, 420.497, 6.714, 14.625, 6.538, 0.270, 1.39),
+    (date(2026, 9, 9), 845050, 450.121, 420.497, 6.714, 14.625, 6.538, 0.035, 1.625),
 ]
 
 
@@ -542,6 +542,8 @@ class ForwardScenarioSimulator:
             "E_WEAK_MNAV_REFIN":   {"btc_2030": 175000, "btc_holdings": 710638, "adso": 444.3, "reserve": 2.20},
             "F_SEVERE_DILUTION":   {"btc_2030": 175000, "btc_holdings": 889751, "adso": 628.3, "reserve": 2.50},
             "G_MODERATE_DELEVER":  {"btc_2030": 130000, "btc_holdings": 784345, "adso": 489.3, "reserve": 2.65},
+            "H_PROLONGED_BEAR_35K": {"btc_2030": 35000, "btc_holdings": 750000, "adso": 460.0, "reserve": 1.20},
+            "I_DEEP_RECESSION_25K": {"btc_2030": 25000, "btc_holdings": 700000, "adso": 470.0, "reserve": 0.80},
         }
 
         records = []
@@ -594,7 +596,7 @@ class ForwardScenarioSimulator:
         df_t: float = 4.5,
         pref_rate_shift: float = 0.0,
         initial_reserve_b: float | None = None,
-        geometric_cagr: bool = True,
+        geometric_cagr: bool = False,
     ) -> Mapping[str, Any]:
         """Simulates 54 monthly forward steps (2026-2030) using Student-t innovations and customizable regimes."""
         rng = np.random.default_rng(seed)
@@ -641,7 +643,7 @@ class ForwardScenarioSimulator:
                 # State-dependent volatility multiplier
                 vol_mult = max(0.75, min(1.80, 0.85 + 0.35 * abs(shock)))
                 r_m = mu_monthly + sigma_monthly * vol_mult * shock
-                r_m = max(-0.70, min(0.70, r_m))
+                r_m = max(-0.90, min(1.50, r_m))
                 curr_btc *= math.exp(r_m)
 
                 # Monthly debt interest & preferred cash drain

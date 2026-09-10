@@ -597,9 +597,10 @@ def build_pdf(filename="MSTR_Model_Matematika_Lengkap_V3.pdf"):
 
     stress_html = """
     <b>1. Titik Nol Ekuitas (Zero Residual Wipeout BTC Price):</b><br/>
-    &nbsp;&nbsp;&nbsp;&nbsp;<i>P_BTC_wipeout = ( D + Pref - V_soft - R_USD ) / H_BTC</i><br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;<i>P_BTC_wipeout = ( D + Pref - V_soft - R_USD ) / ( mNAV * H_BTC )</i><br/>
     &nbsp;&nbsp;&nbsp;&nbsp;Pada struktur neraca saat ini ($6.71B utang, $14.62B preferen, $6.54B kas, $1.0B software, 845.050 BTC):<br/>
-    &nbsp;&nbsp;&nbsp;&nbsp;==&gt; <b>Batas Nol Ekuitas MSTR adalah $16.326 per BTC</b>. Di atas harga ini, ekuitas selalu bernilai positif.<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;==&gt; <b>Batas Nol Ekuitas Paritas (mNAV 1.0x): $16.326 per BTC</b>.<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;==&gt; <b>Batas Nol Ekuitas Stressed Panic (mNAV 0.70x): $23.331 per BTC</b>. Di atas $23.331, ekuitas selalu positif.<br/>
     <b>2. Lantai Ketahanan Likuidasi Defensif 5% BTC Bulanan (Defensive Survival Floor):</b><br/>
     &nbsp;&nbsp;&nbsp;&nbsp;Jika kas habis total dan MSTR menjual maksimal 5% kepemilikan BTC per bulan (42.252 BTC):<br/>
     &nbsp;&nbsp;&nbsp;&nbsp;<i>P_BTC_defensive = Beban_Kupon_Tahunan / ( 0.05 * H_BTC ) = $1.662B / 42.252 BTC = <b>$3.933 per BTC</b></i><br/>

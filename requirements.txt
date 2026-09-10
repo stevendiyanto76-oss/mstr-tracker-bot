@@ -1,0 +1,8 @@
+﻿# MSTR Quantitative Decision Engine & Dynamic Valuation Model (V3)
+# Pinned Production Dependencies
+numpy>=1.26.0,<2.0.0
+pandas>=2.2.0,<3.0.0
+reportlab>=4.2.0,<5.0.0
+python-dotenv>=1.0.0,<2.0.0
+requests>=2.31.0,<3.0.0
+yfinance>=0.2.38,<1.0.0

@@ -126,9 +126,36 @@ class TestV3ModelEngine(unittest.TestCase):
     def test_deterministic_forward_simulation(self) -> None:
         sim = ForwardScenarioSimulator(engine=self.engine)
         det_df = sim.run_deterministic_paths()
-        self.assertEqual(len(det_df), 7)
+        self.assertEqual(len(det_df), 9)
         self.assertIn("A_FALL_THEN_RECOVER", det_df["Path"].values)
         self.assertIn("B_RISE_IMMEDIATELY", det_df["Path"].values)
+        self.assertIn("H_PROLONGED_BEAR_35K", det_df["Path"].values)
+        self.assertIn("I_DEEP_RECESSION_25K", det_df["Path"].values)
+
+    def test_fee_calculation_no_capital_stranding(self) -> None:
+        cash = 10000.0
+        fee_rate = 0.0035
+        diff_val = 15000.0  # Wants to deploy more than available cash
+        invest_amt = min(cash / (1.0 + fee_rate), diff_val)
+        cost = invest_amt * (1.0 + fee_rate)
+        self.assertLessEqual(cost, cash)
+        self.assertAlmostEqual(cost, cash, places=6)
+
+    def test_tier1_mandatory_runway_calculation(self) -> None:
+        latest_cap = get_interpolated_capital_structure(date(2026, 9, 9))
+        self.assertEqual(latest_cap.tier1_mandatory_cash_burden_b, 0.035)
+        # $6.538B cash / $0.035B pure debt coupon * 12 months > 180 months
+        runway_months = (latest_cap.usd_reserve_b / latest_cap.tier1_mandatory_cash_burden_b) * 12.0
+        self.assertGreater(runway_months, 180.0)
+
+    def test_stressed_wipeout_price_at_70pct_mnav(self) -> None:
+        latest_cap = get_interpolated_capital_structure(date(2026, 9, 9))
+        net_senior = latest_cap.debt_b + latest_cap.preferred_notional_b - latest_cap.usd_reserve_b - latest_cap.software_floor_b
+        # P_wipeout = net_senior / (mnav * H_btc)
+        wipeout_parity = (net_senior * 1e9) / (1.0 * latest_cap.btc_holdings)
+        wipeout_stressed = (net_senior * 1e9) / (0.70 * latest_cap.btc_holdings)
+        self.assertAlmostEqual(wipeout_parity, 16331.58, delta=10.0)
+        self.assertAlmostEqual(wipeout_stressed, 23330.83, delta=10.0)
 
 
 if __name__ == "__main__":
