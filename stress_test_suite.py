@@ -210,7 +210,7 @@ def run_historical_crisis_replay() -> pd.DataFrame:
         btc_dd = (p_btc_trough - p_btc_start) / p_btc_start * 100.0
 
         # Run strategy specifically on this window
-        bt_sub = backtester.run(market_df=sub_df, fee_rate=0.0010)
+        bt_sub = backtester.run(market_df=sub_df, fee_rate=0.0035)
 
         results.append({
             "Crisis_Episode": name,

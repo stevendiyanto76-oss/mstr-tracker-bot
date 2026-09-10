@@ -69,12 +69,18 @@ m_{\text{Sell}} &> m_{\text{Red}} &&\implies P_{\text{Sell}} > \mathbf{\$161.00}
 | **Sharpe Ratio (Rf=3%)** | *N/A (Dominan Kas)* | **0.33** | 0.40 | 0.67 |
 | **Total Transaksi Rebalancing** | **49 transaksi** | N/A | 0 | 0 |
 
-> **Kekuatan Utama:** Model V3 memangkas risiko penurunan ekstrem dari **-89.27%** pada saham MSTR murni menjadi hanya **-1.47%** pada level portofolio makro, sekaligus menghasilkan return +107.48% pada active sleeve.
+> **Kekuatan Utama & Transparansi Risiko:**  
+> • **Level Portofolio Makro (3% Cap):** Memangkas drawdown dari **-89.27%** menjadi **-1.47%** karena ditopang oleh 97% kas likuid.  
+> • **Level Active Sleeve (100% Eksposur):** Drawdown maksimal tercatat **-42.22%**, tetap berhasil memotong separuh risiko penurunan ekstrem Beli & Tahan MSTR murni (**-89.27%**) dan menghasilkan return **+107.48%**.
 
 ---
 
 ## 2. Hasil Validasi Monte Carlo Multi-Kondisi (100.000 Total Path)
 *Simulasi 54 bulan ke depan (2026 – 2030) menggunakan Student-t fat tails, Poisson jump-diffusion, dan pembagian ke 5 rezim makro (masing-masing 20.000 path):*
+
+> **Dokumentasi Asumsi Struktural Monte Carlo:**  
+> 1. **State-Dependent Volatility Multiplier:** $\text{vol\_mult} = \text{clip}(0.85 + 0.35|\text{shock}|, 0.75, 1.80)$ memodelkan fenomena empiris *volatility clustering* (efek ARCH/GARCH).  
+> 2. **Beban Dividen Fleksibel (50% Cash Drain):** Mengasumsikan 50% dari beban dividen preferen fleksibel dibayarkan tunai dan 50% dikonservasi/ditunda melalui klausul fleksibel non-kumulatif MSTR saat krisis.
 
 | Rezim Makro | Jumlah Path | Median BTC 2030 | Rentang IQR BTC (P25 - P75) | Median MSTR 2030 | Rentang IQR MSTR (P25 - P75) | Zero Residual (Bangkrut) | Underperform BTC |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -141,10 +147,11 @@ m_{\text{Sell}} &> m_{\text{Red}} &&\implies P_{\text{Sell}} > \mathbf{\$161.00}
 * **Total Transaksi Selesai:** 27 transaksi
 * **Transaksi Menang (Profit):** **18 transaksi (66.7%)**
 * **Transaksi Kalah (Cut Loss Disiplin):** 9 transaksi (33.3%)
-* **Profit Factor:** **3.91x** *(Total laba kotor 3.91 kali lipat lebih besar dibanding total rugi)*
+* **Profit Factor (Trade-Weighted %):** **14.80x** *(Rasio akumulasi persentase: [18 × +87.3%] / [9 × 11.8%] = 1571.4% / 106.2%)*
+* **Profit Factor (Dollar-Weighted PnL):** **3.91x** *(Total nominal dolar USD laba kotor dibagi total nominal dolar USD rugi kotor riil)*
 * **Rata-rata Profit:** **+87.3%**
 * **Rata-rata Kerugian:** **-11.8%**
-* **Payoff Ratio (Risk/Reward):** **7.41x**
+* **Payoff Ratio (Risk/Reward):** **7.41x** *(Rata-rata profit dibagi rata-rata loss)*
 
 ### B. Win Rate Probabilitas 100.000 Path ke Depan (2026 – 2030)
 * **Peluang Profit Positif ($R > 0\%$):** **56.96%** (56.960 path)

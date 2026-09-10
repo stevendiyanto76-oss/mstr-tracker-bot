@@ -401,7 +401,7 @@ class HistoricalBacktester:
                 diff_val = target_mstr_val - (mstr_shares * p_mstr)
 
                 if diff_val > 0:
-                    invest_amt = min(cash, diff_val)
+                    invest_amt = min(cash / (1.0 + fee_rate), diff_val)
                     cost = invest_amt * (1.0 + fee_rate)
                     if cost <= cash and invest_amt > 10.0:
                         shares_to_buy = invest_amt / p_mstr
@@ -429,7 +429,7 @@ class HistoricalBacktester:
                 sleeve_target_val = sleeve_equity * sleeve_w_star
                 s_diff = sleeve_target_val - (sleeve_mstr_shares * p_mstr)
                 if s_diff > 0:
-                    s_invest = min(sleeve_cash, s_diff)
+                    s_invest = min(sleeve_cash / (1.0 + fee_rate), s_diff)
                     s_cost = s_invest * (1.0 + fee_rate)
                     if s_cost <= sleeve_cash and s_invest > 10.0:
                         s_shares = s_invest / p_mstr
