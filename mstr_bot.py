@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import html as html_lib
 import json
@@ -1063,6 +1064,45 @@ def save_state(path: Path, snapshot: StrategySnapshot, zones: ZoneResult, action
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
 
+def sync_daily_historical_csv(
+    snapshot: StrategySnapshot,
+    zones: ZoneResult,
+    csv_path: Path = Path("data/historical_mstr_btc_2020_2026.csv"),
+) -> bool:
+    """
+    Synchronizes today's market snapshot into the historical CSV dataset.
+    Guarantees strict idempotency: exactly 1 row per date, updated in-place on multiple runs.
+    """
+    if not csv_path.exists():
+        return False
+    try:
+        today_date = datetime.now(timezone(timedelta(hours=7))).strftime("%Y-%m-%d")
+        with open(csv_path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            rows_by_date = {r["Date"]: r for r in reader if r.get("Date")}
+
+        ratio = snapshot.mstr_price / max(1e-6, snapshot.btc_price)
+        rows_by_date[today_date] = {
+            "Date": today_date,
+            "BTC_Price_USD": f"{snapshot.btc_price:.2f}",
+            "MSTR_Price_USD": f"{snapshot.mstr_price:.2f}",
+            "BTC_Momentum_12M": f"{zones.expected_drift:.4f}",
+            "BTC_Volatility_12M": f"{zones.effective_vol:.4f}",
+            "MSTR_to_BTC_Ratio": f"{ratio:.6f}",
+        }
+
+        fieldnames = ["Date", "BTC_Price_USD", "MSTR_Price_USD", "BTC_Momentum_12M", "BTC_Volatility_12M", "MSTR_to_BTC_Ratio"]
+        with open(csv_path, "w", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            for d in sorted(rows_by_date.keys()):
+                writer.writerow(rows_by_date[d])
+        return True
+    except Exception as exc:
+        print(f"Warning: Could not sync historical CSV: {exc}", file=sys.stderr)
+        return False
+
+
 def evaluate_snapshot(snapshot: StrategySnapshot, state_path: Path | None = DEFAULT_STATE_FILE) -> EngineRun:
     metrics, state, current_hash = calculate_financial_metrics(snapshot), load_state(state_path) if state_path else {}, fingerprint_hash(snapshot)
     reused_zones = state.get("fingerprint_hash") == current_hash and isinstance(state.get("zones"), Mapping)
@@ -1072,7 +1112,10 @@ def evaluate_snapshot(snapshot: StrategySnapshot, state_path: Path | None = DEFA
     gates = calculate_gates(snapshot, metrics, zones)
     previous_action = state.get("last_action") if isinstance(state.get("last_action"), str) else None
     decision = classify_price(snapshot.mstr_price, zones, gates, previous_action=previous_action)
-    if state_path:
+    if state_path and state_path == DEFAULT_STATE_FILE:
+        save_state(state_path, snapshot, zones, decision.action)
+        sync_daily_historical_csv(snapshot, zones)
+    elif state_path:
         save_state(state_path, snapshot, zones, decision.action)
     return EngineRun(snapshot, metrics, zones, gates, decision, reused_zones)
 
