@@ -1366,6 +1366,7 @@ Internal use only
 def send_telegram_message(message: str) -> bool:
     if not (bot_token := os.getenv("TELEGRAM_BOT_TOKEN")) or not (chat_id := os.getenv("TELEGRAM_CHAT_ID")):
         return False
+    # Layer 1: requests
     try:
         import requests  # type: ignore
 
@@ -1375,8 +1376,20 @@ def send_telegram_message(message: str) -> bool:
         response.raise_for_status()
         return True
     except Exception as exc:
-        print(f"Telegram send failed: {exc}", file=sys.stderr)
-        return False
+        print(f"::warning::Telegram send via requests failed: {exc}. Trying urllib safety fallback...", file=sys.stderr)
+
+    # Layer 2: standard library urllib fallback
+    try:
+        from urllib.request import Request, urlopen
+        data = json.dumps({"chat_id": chat_id, "text": message, "disable_web_page_preview": True}).encode("utf-8")
+        req = Request(f"https://api.telegram.org/bot{bot_token}/sendMessage", data=data, headers={"Content-Type": "application/json"})
+        with urlopen(req, timeout=15) as resp:
+            if 200 <= resp.status < 300:
+                return True
+    except Exception as exc2:
+        print(f"Telegram send via urllib fallback failed: {exc2}", file=sys.stderr)
+
+    return False
 
 
 def fetch_v2_portfolio_snapshot() -> dict[str, Any] | None:
