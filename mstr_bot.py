@@ -742,13 +742,25 @@ def fetch_btc_multi_moments() -> tuple[float, float, float, float, float]:
     csv_path = Path("data/historical_mstr_btc_2020_2026.csv")
     if csv_path.exists():
         try:
-            import pandas as pd
+            import csv
 
-            df = pd.read_csv(csv_path)
-            btc_col = "BTC_Price_USD" if "BTC_Price_USD" in df.columns else "btc_close"
-            mstr_col = "MSTR_Price_USD" if "MSTR_Price_USD" in df.columns else "mstr_close"
-            btc_closes = [float(x) for x in df[btc_col].dropna()]
-            mstr_closes = [float(x) for x in df[mstr_col].dropna()] if mstr_col in df.columns else []
+            btc_closes = []
+            mstr_closes = []
+            with open(csv_path, "r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    b = row.get("BTC_Price_USD") or row.get("btc_close")
+                    m = row.get("MSTR_Price_USD") or row.get("mstr_close")
+                    if b:
+                        try:
+                            btc_closes.append(float(b))
+                        except ValueError:
+                            pass
+                    if m:
+                        try:
+                            mstr_closes.append(float(m))
+                        except ValueError:
+                            pass
 
             if len(btc_closes) >= 90:
                 btc_rets = [math.log(btc_closes[i] / btc_closes[i - 1]) for i in range(1, len(btc_closes))]
