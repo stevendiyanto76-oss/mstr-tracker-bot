@@ -105,17 +105,17 @@ m_{\text{Sell}} &> m_{\text{Red}} &&\implies P_{\text{Sell}} > \mathbf{\$161.00}
 
 ---
 
-### B. Replay 5 Krisis Nyata Sejarah Pasar (Historical Crisis Replay)
+### B. Replay 5 Krisis Nyata Sejarah Pasar (Historical Crisis Replay, Fee 35 bps Riil)
 
-| Episode Krisis Nyata | Periode Waktu | Raw MSTR Drawdown | Raw BTC Drawdown | V3 Macro (3% Cap) Drawdown | Alpha Perlindungan Modal |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **1. COVID-19 Liquidity Shock** | Feb 2020 – Apr 2020 | -38.4% | -48.4% | **-1.15%** | **+4.4% alpha** |
-| **2. China Mining Ban Crash** | Apr 2021 – Jul 2021 | -38.7% | -52.8% | **-0.25%** | **+29.3% alpha** |
-| **3. Terra/Luna & 3AC Contagion** | Mar 2022 – Jun 2022 | -70.2% | -58.0% | **-1.33%** | **+29.8% alpha** |
-| **4. FTX Collapse & Winter Lows** | Nov 2022 – Des 2022 | -50.7% | -25.3% | **0.00% (100% Cash)** | **+50.7% alpha** |
-| **5. Yen Carry Trade Flash Crash**| Jul 2024 – Agu 2024 | -27.3% | -20.1% | **0.00% (100% Cash)** | **+27.3% alpha** |
+| Episode Krisis Nyata | Periode Waktu | Raw MSTR Drawdown | Raw BTC Drawdown | V3 Active Sleeve DD (100%) | V3 Macro (3% Cap) DD | Alpha Perlindungan Modal |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1. COVID-19 Liquidity Shock** | Feb 2020 – Apr 2020 | -38.4% | -48.4% | **-34.0%** | **-1.16%** | **+4.3% alpha** |
+| **2. China Mining Ban Crash** | Apr 2021 – Jul 2021 | -38.7% | -52.8% | **-9.5%** | **-0.26%** | **+29.2% alpha** |
+| **3. Terra/Luna & 3AC Contagion** | Mar 2022 – Jun 2022 | -70.2% | -58.0% | **-40.5%** | **-1.34%** | **+29.7% alpha** |
+| **4. FTX Collapse & Winter Lows** | Nov 2022 – Des 2022 | -50.7% | -25.3% | **0.0% (100% Kas)**| **0.00% (100% Kas)** | **+50.7% alpha** |
+| **5. Yen Carry Trade Flash Crash**| Jul 2024 – Agu 2024 | -27.3% | -20.1% | **0.0% (100% Kas)**| **0.00% (100% Kas)** | **+27.3% alpha** |
 
-> **Bukti Proteksi:** Pada krisis **FTX** dan **Yen Carry Trade**, model V3 sudah berada dalam posisi **100% Cash**, sehingga portofolio mencatat **0.00% Drawdown** saat pasar saham ambruk puluhan persen.
+> **Bukti Proteksi Multilateral:** Pada krisis **FTX** dan **Yen Carry Trade**, model V3 baik pada level Active Sleeve maupun Portofolio Makro sudah 100% berada dalam posisi Kas Likuid, mencatatkan **0.00% Drawdown** saat pasar saham ambruk puluhan persen. Pada krisis Terra/Luna, drawdown Active Sleeve berhasil ditekan ke -40.5% (memotong separuh crash MSTR murni -70.2%).
 
 ---
 
