@@ -1,28 +1,28 @@
 {
   "audit": {
-    "generated_at": "2026-09-15T11:52:36.390Z",
+    "generated_at": "2026-09-15T17:06:58.984Z",
     "ledger_hash": "5df73094d38d3c7dea37ed41d074b88e6a8151998735d4294ad74d8dcbbb47e7",
     "source_commit_sha": "2208b5baf9ab8d111252df46a7a29dc3d1743fe8"
   },
   "challenge": {
     "id": "mstr-live-thesis-v1",
     "include_legacy_position": false,
-    "last_updated_at": "2026-09-15T11:52:36.390Z",
+    "last_updated_at": "2026-09-15T17:06:58.984Z",
     "name": "MSTR Live Thesis Challenge",
     "start_at": "2026-06-26T22:13:45+00:00",
     "status": "active"
   },
   "disclaimer": "Public ledger history is not broker verification and is not investment advice.",
-  "generated_at": "2026-09-15T11:52:36.390Z",
+  "generated_at": "2026-09-15T17:06:58.984Z",
   "market": {
-    "btc_as_of": "2026-09-15T11:52:36.390Z",
-    "btc_price": "76885.12",
-    "fetched_at": "2026-09-15T11:52:36.390Z",
+    "btc_as_of": "2026-09-15T17:06:58.984Z",
+    "btc_price": "76236.15",
+    "fetched_at": "2026-09-15T17:06:58.984Z",
     "freshness": "fresh",
     "fx_as_of": "2026-09-15",
-    "market_status": "CLOSED",
-    "mstr_price": "136.94",
-    "price_as_of": "2026-09-15T11:52:36.390Z",
+    "market_status": "OPEN",
+    "mstr_price": "131.44",
+    "price_as_of": "2026-09-15T17:06:58.984Z",
     "sources": {
       "BTC": "Strategy",
       "MSTR": "Strategy",
@@ -32,23 +32,23 @@
     "warnings": []
   },
   "portfolio": {
-    "absolute_pl_usd": "115.386",
-    "cash_allocation_pct": "67.18480414083967026647070100325899418493",
+    "absolute_pl_usd": "103.836",
+    "cash_allocation_pct": "68.08210972786582700620032053876414498713",
     "cash_idr": "0",
     "cash_idr_equivalent": "0",
     "cash_usd": "588.77",
-    "mstr_allocation_pct": "32.81519585916032973352929899674100581507",
+    "mstr_allocation_pct": "31.91789027213417299379967946123585501287",
     "mstr_average_cost": "81.99428571428571428571428571428571428571",
     "mstr_cost_basis": "172.188",
-    "mstr_market_value": "287.574",
+    "mstr_market_value": "276.024",
     "mstr_quantity": "2.1",
     "net_contributions_usd": "760.958",
     "realized_pl_usd": "0",
     "setup_required": false,
-    "total_portfolio_idr": "15499896.328",
-    "total_portfolio_usd": "876.344",
-    "total_return_pct": "15.16325473942057248888900570070884332644",
-    "unrealized_pl_usd": "115.386"
+    "total_portfolio_idr": "15295611.478",
+    "total_portfolio_usd": "864.794",
+    "total_return_pct": "13.64543115388759957842614178443488339698",
+    "unrealized_pl_usd": "103.836"
   },
   "schema_version": 1
 }
