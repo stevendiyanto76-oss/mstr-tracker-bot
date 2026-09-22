@@ -1,6 +1,6 @@
 {
   "challenge_id": "mstr-live-thesis-v1",
-  "count": 9,
+  "count": 10,
   "events": [
     {
       "actual_fx_rate": null,
@@ -388,8 +388,51 @@
       "to_currency": null,
       "type": "DEPOSIT",
       "value_usd": "27.9"
+    },
+    {
+      "actual_fx_rate": null,
+      "amount": "348.6",
+      "asset": "MSTR",
+      "balance_after": {
+        "cash_idr": "0",
+        "cash_usd": "965.27",
+        "initialized": true,
+        "mstr_average_cost": "0",
+        "mstr_quantity": "0",
+        "net_contributions_usd": "788.858",
+        "realized_pl_usd": "176.412"
+      },
+      "balance_before": {
+        "cash_idr": "0",
+        "cash_usd": "616.67",
+        "initialized": true,
+        "mstr_average_cost": "81.99428571428571428571428571428571428571",
+        "mstr_quantity": "2.1",
+        "net_contributions_usd": "788.858",
+        "realized_pl_usd": "0"
+      },
+      "base_amount_usd": null,
+      "currency": "USD",
+      "event_id": "CH-000018",
+      "from_amount": null,
+      "from_currency": null,
+      "opening_mstr_average_cost": null,
+      "opening_mstr_quantity": null,
+      "price_usd": "166",
+      "quantity": "2.1",
+      "related_event_id": null,
+      "source_commit_sha": "2208b5baf9ab8d111252df46a7a29dc3d1743fe8",
+      "status": "active",
+      "target_event_id": null,
+      "thesis_zone": null,
+      "timestamp_utc": "2026-09-22T00:53:58+00:00",
+      "timestamp_wib": "2026-09-22T07:53:58+07:00",
+      "to_amount": null,
+      "to_currency": null,
+      "type": "SELL",
+      "value_usd": "348.6"
     }
   ],
-  "generated_at": "2026-09-21T23:40:42.411Z",
+  "generated_at": "2026-09-22T01:55:38.532Z",
   "schema_version": 1
 }
