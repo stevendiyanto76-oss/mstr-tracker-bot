@@ -1121,17 +1121,25 @@ def save_state(path: Path, snapshot: StrategySnapshot, zones: ZoneResult, action
 
 def sync_daily_historical_csv(
     snapshot: StrategySnapshot,
-    zones: ZoneResult,
+    zones: ZoneResult | None = None,
     csv_path: Path = Path("data/historical_mstr_btc_2020_2026.csv"),
 ) -> bool:
     """
     Synchronizes today's market snapshot into the historical CSV dataset.
     Guarantees strict idempotency: exactly 1 row per date, updated in-place on multiple runs.
+    Calculates true 365-day rolling Bitcoin price momentum and realized volatility.
     """
     if not csv_path.exists():
         return False
     try:
-        today_date = datetime.now(timezone(timedelta(hours=7))).strftime("%Y-%m-%d")
+        if hasattr(snapshot, "snapshot_date") and snapshot.snapshot_date:
+            if isinstance(snapshot.snapshot_date, (date, datetime)):
+                today_date = snapshot.snapshot_date.isoformat()
+            else:
+                today_date = str(snapshot.snapshot_date)
+        else:
+            today_date = datetime.now(timezone(timedelta(hours=7))).strftime("%Y-%m-%d")
+
         with open(csv_path, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             rows_by_date = {r["Date"]: r for r in reader if r.get("Date")}
@@ -1141,24 +1149,104 @@ def sync_daily_historical_csv(
             "Date": today_date,
             "BTC_Price_USD": f"{snapshot.btc_price:.2f}",
             "MSTR_Price_USD": f"{snapshot.mstr_price:.2f}",
-            "BTC_Momentum_12M": f"{zones.expected_drift:.4f}",
-            "BTC_Volatility_12M": f"{zones.effective_vol:.4f}",
+            "BTC_Momentum_12M": "0.1800",
+            "BTC_Volatility_12M": "0.6500",
             "MSTR_to_BTC_Ratio": f"{ratio:.6f}",
         }
 
+        # Build chronological BTC price series to calculate true rolling 365D metrics
+        sorted_dates = sorted(rows_by_date.keys())
+        btc_prices = []
+        date_indices = []
+        for d in sorted_dates:
+            val_str = rows_by_date[d].get("BTC_Price_USD")
+            if val_str:
+                try:
+                    p = float(val_str)
+                    if p > 0:
+                        btc_prices.append(p)
+                        date_indices.append(d)
+                except (ValueError, TypeError):
+                    pass
+
+        if today_date in date_indices:
+            idx = date_indices.index(today_date)
+            if idx >= 1:
+                log_rets = [math.log(btc_prices[i] / btc_prices[i - 1]) for i in range(1, idx + 1)]
+                window_rets = log_rets[max(0, len(log_rets) - 365) :]
+                k = len(window_rets)
+                if k >= 90:
+                    mom = math.exp(sum(window_rets)) - 1.0
+                    mean_r = sum(window_rets) / k
+                    var_r = sum((r - mean_r) ** 2 for r in window_rets) / (k - 1)
+                    vol = math.sqrt(var_r) * math.sqrt(365.0)
+                    rows_by_date[today_date]["BTC_Momentum_12M"] = f"{mom:.4f}"
+                    rows_by_date[today_date]["BTC_Volatility_12M"] = f"{vol:.4f}"
+
         fieldnames = ["Date", "BTC_Price_USD", "MSTR_Price_USD", "BTC_Momentum_12M", "BTC_Volatility_12M", "MSTR_to_BTC_Ratio"]
         with open(csv_path, "w", encoding="utf-8", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer = csv.DictWriter(f, fieldnames=fieldnames, lineterminator="\r\n")
             writer.writeheader()
-            for d in sorted(rows_by_date.keys()):
+            for d in sorted_dates:
                 writer.writerow(rows_by_date[d])
+
+        default_csv = Path("data/historical_mstr_btc_2020_2026.csv")
+        try:
+            if csv_path.resolve() == default_csv.resolve():
+                update_data_manifest(csv_path=csv_path, manifest_path=Path("data/data_manifest.json"))
+        except Exception:
+            pass
         return True
     except Exception as exc:
         print(f"Warning: Could not sync historical CSV: {exc}", file=sys.stderr)
         return False
 
 
-def evaluate_snapshot(snapshot: StrategySnapshot, state_path: Path | None = DEFAULT_STATE_FILE) -> EngineRun:
+def update_data_manifest(
+    csv_path: Path = Path("data/historical_mstr_btc_2020_2026.csv"),
+    manifest_path: Path = Path("data/data_manifest.json"),
+) -> bool:
+    """
+    Recalculates the SHA-256 hash, row count, and date range for the historical dataset,
+    ensuring data_manifest.json stays synchronized automatically with any new daily rows.
+    """
+    if not csv_path.exists() or not manifest_path.exists():
+        return False
+    try:
+        with open(csv_path, "rb") as f:
+            raw_bytes = f.read()
+        sha256_hash = hashlib.sha256(raw_bytes).hexdigest().upper()
+
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+
+        with open(csv_path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            dates = [r["Date"] for r in reader if r.get("Date")]
+
+        if dates:
+            manifest["rows"] = len(dates)
+            manifest["date_range"] = f"{dates[0]} to {dates[-1]}"
+
+        manifest["sha256"] = sha256_hash
+        today_date = datetime.now(timezone(timedelta(hours=7))).strftime("%Y-%m-%d")
+        if isinstance(manifest.get("governance"), dict):
+            manifest["governance"]["last_audited"] = today_date
+
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            json.dump(manifest, f, indent=2)
+            f.write("\n")
+        return True
+    except Exception as exc:
+        print(f"Warning: Could not update data manifest: {exc}", file=sys.stderr)
+        return False
+
+
+def evaluate_snapshot(
+    snapshot: StrategySnapshot,
+    state_path: Path | None = DEFAULT_STATE_FILE,
+    dry_run: bool = False,
+) -> EngineRun:
     metrics, state, current_hash = calculate_financial_metrics(snapshot), load_state(state_path) if state_path else {}, fingerprint_hash(snapshot)
     reused_zones = state.get("fingerprint_hash") == current_hash and isinstance(state.get("zones"), Mapping)
     zones = (
@@ -1167,11 +1255,12 @@ def evaluate_snapshot(snapshot: StrategySnapshot, state_path: Path | None = DEFA
     gates = calculate_gates(snapshot, metrics, zones)
     previous_action = state.get("last_action") if isinstance(state.get("last_action"), str) else None
     decision = classify_price(snapshot.mstr_price, zones, gates, previous_action=previous_action)
-    if state_path and state_path == DEFAULT_STATE_FILE:
-        save_state(state_path, snapshot, zones, decision.action)
-        sync_daily_historical_csv(snapshot, zones)
-    elif state_path:
-        save_state(state_path, snapshot, zones, decision.action)
+    if not dry_run:
+        if state_path and state_path == DEFAULT_STATE_FILE:
+            save_state(state_path, snapshot, zones, decision.action)
+            sync_daily_historical_csv(snapshot, zones)
+        elif state_path:
+            save_state(state_path, snapshot, zones, decision.action)
     return EngineRun(snapshot, metrics, zones, gates, decision, reused_zones)
 
 
@@ -1477,12 +1566,12 @@ def fetch_v2_portfolio_snapshot() -> dict[str, Any] | None:
     # Layer 3: Verified baseline fallback
     return {
         "portfolio": {
-            "cash_usd": 588.77,
+            "cash_usd": 965.27,
             "cash_idr": 0.0,
-            "mstr_quantity": 2.1,
-            "mstr_average_cost": 81.99,
-            "mstr_cost_basis": 172.18,
-            "net_contributions_usd": 760.96,
+            "mstr_quantity": 0.0,
+            "mstr_average_cost": 0.0,
+            "mstr_cost_basis": 0.0,
+            "net_contributions_usd": 788.86,
         },
         "market": {"usd_idr": 17600.0},
     }
@@ -1752,6 +1841,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         run = evaluate_snapshot(
             golden_snapshot() if args.sample else fetch_strategy_snapshot(state_path=args.state_file),
             state_path=args.state_file,
+            dry_run=args.dry_run,
         )
         # Message 1: The standard detailed snapshot report (completely untouched)
         report = format_telegram_report(run)

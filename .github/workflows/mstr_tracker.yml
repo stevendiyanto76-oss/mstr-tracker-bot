@@ -54,6 +54,7 @@ jobs:
         run: |
           STATE_FILE="mstr_decision_engine_v2_state.json"
           CSV_FILE="data/historical_mstr_btc_2020_2026.csv"
+          MANIFEST_FILE="data/data_manifest.json"
 
           if [ -f "$STATE_FILE" ]; then
             cp "$STATE_FILE" /tmp/mstr-state.json
@@ -61,30 +62,34 @@ jobs:
           if [ -f "$CSV_FILE" ]; then
             cp "$CSV_FILE" /tmp/mstr-hist.csv
           fi
+          if [ -f "$MANIFEST_FILE" ]; then
+            cp "$MANIFEST_FILE" /tmp/mstr-manifest.json
+          fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           for attempt in 1 2 3; do
-            echo "Percobaan penyimpanan state & CSV: $attempt"
+            echo "Percobaan penyimpanan state, CSV & manifest: $attempt"
 
             git fetch origin main
             git reset --hard origin/main
 
             [ -f /tmp/mstr-state.json ] && cp /tmp/mstr-state.json "$STATE_FILE"
             [ -f /tmp/mstr-hist.csv ] && cp /tmp/mstr-hist.csv "$CSV_FILE"
+            [ -f /tmp/mstr-manifest.json ] && cp /tmp/mstr-manifest.json "$MANIFEST_FILE"
 
-            git add "$STATE_FILE" "$CSV_FILE"
+            git add "$STATE_FILE" "$CSV_FILE" "$MANIFEST_FILE"
 
             if git diff --cached --quiet; then
-              echo "State & CSV tidak berubah; tidak perlu commit."
+              echo "State, CSV & manifest tidak berubah; tidak perlu commit."
               exit 0
             fi
 
-            git commit -m "chore: auto-update MSTR engine state and historical dataset [skip ci]"
+            git commit -m "chore: auto-update MSTR engine state, historical dataset, and manifest [skip ci]"
 
             if git push origin HEAD:main; then
-              echo "MSTR state & dataset berhasil disimpan."
+              echo "MSTR state, dataset & manifest berhasil disimpan."
               exit 0
             fi
 

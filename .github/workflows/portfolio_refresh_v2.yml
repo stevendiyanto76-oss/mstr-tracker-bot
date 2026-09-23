@@ -2,8 +2,8 @@ name: V2 GitHub Audit Mirror
 
 on:
   schedule:
+    # Fires at :20 and :50 every hour UTC (WIB = UTC+7)
     - cron: "20,50 * * * *"
-      timezone: "Asia/Jakarta"
 
   workflow_dispatch:
 
