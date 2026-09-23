@@ -427,15 +427,11 @@ class EmpiricalChallengerM2Tests(unittest.TestCase):
             self.assertEqual(float(p2.get("cash_usd")), 965.27)
             self.assertEqual(float(p2.get("mstr_quantity")), 0.0)
 
-        # Layer 3 test: Network down and local mirror missing -> fallback to verified baseline
+        # Layer 3 test: Network down and local mirror missing -> fail cleanly (None) instead of fabricating hardcoded baseline
         with patch("requests.get", side_effect=RuntimeError("Simulated Network Down")):
             with patch("mstr_bot.LOCAL_OVERVIEW_PATH", ROOT_DIR / "nonexistent.json"):
                 l3_snap = mstr_bot.fetch_v2_portfolio_snapshot()
-                self.assertIsNotNone(l3_snap)
-                p3 = l3_snap.get("portfolio", {})
-                self.assertEqual(float(p3.get("cash_usd")), 965.27)
-                self.assertEqual(float(p3.get("mstr_quantity")), 0.0)
-                self.assertEqual(float(p3.get("net_contributions_usd")), 788.86)
+                self.assertIsNone(l3_snap)
 
 
 if __name__ == "__main__":

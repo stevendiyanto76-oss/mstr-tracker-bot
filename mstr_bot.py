@@ -406,7 +406,9 @@ def fetch_live_btc_price_with_fallbacks() -> tuple[float, str]:
     except Exception:
         pass
 
-    return 79500.0, "Safety Baseline"
+    raise StrategyDataError(
+        "Tidak dapat memperoleh harga Bitcoin spot real-time dari seluruh sumber publik (Strategy.com, CoinGecko, Blockchain.info, Yahoo); menolak fallback hardcode."
+    )
 
 
 def fetch_live_mstr_price_with_fallbacks() -> tuple[float, str]:
@@ -444,7 +446,9 @@ def fetch_live_mstr_price_with_fallbacks() -> tuple[float, str]:
     except Exception:
         pass
 
-    return 136.52, "Safety Baseline"
+    raise StrategyDataError(
+        "Tidak dapat memperoleh harga MSTR real-time dari seluruh sumber publik (Strategy.com, Yahoo Finance Q1 & Q2); menolak fallback hardcode."
+    )
 
 
 def fetch_dashboard_data(state_path: Path | None = DEFAULT_STATE_FILE) -> Mapping[str, Any]:
@@ -464,14 +468,30 @@ def fetch_dashboard_data(state_path: Path | None = DEFAULT_STATE_FILE) -> Mappin
     print(f"::notice::Fallback active: BTC from {btc_src} (${live_btc_price:,.2f}), MSTR from {mstr_src} (${live_mstr_price:,.2f})", file=sys.stderr)
 
     cached_fingerprint = _load_cached_fingerprint(state_path)
-    basic_shares_m = float(cached_fingerprint.get("basic_shares_m", 420.497))
-    debt_b = float(cached_fingerprint.get("debt_b", 6.714))
-    pref_b = float(cached_fingerprint.get("preferred_b", 14.625))
-    reserve_b = float(cached_fingerprint.get("usd_reserve_b", 6.538))
-    btc_holdings = float(cached_fingerprint.get("btc_holdings", 845050.0))
-    usd_coverage = float(cached_fingerprint.get("usd_div_coverage_months", 47.21))
-    btc_coverage = float(cached_fingerprint.get("btc_div_coverage_years", 40.44))
-    annual_divs = float(cached_fingerprint.get("annual_dividends_b", 1.662))
+    required_keys = (
+        "basic_shares_m",
+        "debt_b",
+        "preferred_b",
+        "usd_reserve_b",
+        "btc_holdings",
+        "usd_div_coverage_months",
+        "btc_div_coverage_years",
+        "annual_dividends_b",
+    )
+    missing = [k for k in required_keys if cached_fingerprint.get(k) is None]
+    if missing:
+        raise StrategyDataError(
+            f"Strategy.com dashboard gagal dan file cache state tidak memiliki data fundamental lengkap: {missing}; menolak fallback hardcode."
+        )
+
+    basic_shares_m = float(cached_fingerprint["basic_shares_m"])
+    debt_b = float(cached_fingerprint["debt_b"])
+    pref_b = float(cached_fingerprint["preferred_b"])
+    reserve_b = float(cached_fingerprint["usd_reserve_b"])
+    btc_holdings = float(cached_fingerprint["btc_holdings"])
+    usd_coverage = float(cached_fingerprint["usd_div_coverage_months"])
+    btc_coverage = float(cached_fingerprint["btc_div_coverage_years"])
+    annual_divs = float(cached_fingerprint["annual_dividends_b"])
 
     market_cap_b = live_mstr_price * basic_shares_m / 1000.0
     enterprise_value_b = market_cap_b + debt_b + pref_b - reserve_b
@@ -575,8 +595,8 @@ def fetch_strategy_snapshot(
     try:
         shares = fetch_shares_data()
     except Exception as exc:
-        record_layer1_failure("Data Saham ADSO (Strategy.com /shares)", str(exc), "State Cache JSON / SEC Baseline")
-        fallback_reasons.append("Jumlah Saham (ADSO): Fallback State Cache / SEC Baseline")
+        record_layer1_failure("Data Saham ADSO (Strategy.com /shares)", str(exc), "State Cache JSON")
+        fallback_reasons.append("Jumlah Saham (ADSO): Fallback State Cache")
         if cached_fingerprint.get("basic_shares_m") and cached_fingerprint.get("diluted_shares_m"):
             print(f"::warning::Failed to fetch shares data from strategy.com ({exc}). Using Layer 2 cached state fundamentals.")
             shares = {
@@ -585,44 +605,40 @@ def fetch_strategy_snapshot(
                 "diluted_shares_m": float(cached_fingerprint["diluted_shares_m"]),
             }
         else:
-            print(f"::warning::Failed to fetch shares data ({exc}) and no cache. Using Layer 3 SEC baseline fundamentals.")
-            shares = {
-                "shares_as_of": None,
-                "basic_shares_m": 420.497,
-                "diluted_shares_m": 450.121,
-            }
+            raise StrategyDataError(
+                f"Failed to fetch shares data from strategy.com ({exc}) and no cached fundamentals in state file; refusing hardcoded fallback."
+            ) from exc
 
     try:
         latest_purchase = fetch_latest_average_btc_cost()
     except Exception as exc:
-        record_layer1_failure("Riwayat Pembelian Bitcoin (Strategy.com /purchases)", str(exc), "State Cache JSON / SEC Baseline")
-        fallback_reasons.append("Riwayat Beli BTC: Fallback State Cache / SEC Baseline")
-        if cached_fingerprint.get("average_btc_cost"):
+        record_layer1_failure("Riwayat Pembelian Bitcoin (Strategy.com /purchases)", str(exc), "State Cache JSON")
+        fallback_reasons.append("Riwayat Beli BTC: Fallback State Cache")
+        if (
+            cached_fingerprint.get("average_btc_cost")
+            and cached_fingerprint.get("btc_holdings")
+            and cached_fingerprint.get("diluted_shares_m")
+            and cached_fingerprint.get("btc_yield_ytd_pct")
+        ):
             print(f"::warning::Failed to fetch purchase data from strategy.com ({exc}). Using Layer 2 cached state fundamentals.")
             latest_purchase = LatestPurchaseMetrics(
                 as_of_date=snapshot_date or _wib_today(),
                 average_btc_cost=float(cached_fingerprint["average_btc_cost"]),
-                btc_holdings=float(cached_fingerprint.get("btc_holdings", 845050.0)),
-                diluted_shares_m=float(cached_fingerprint.get("diluted_shares_m", 450.121)),
+                btc_holdings=float(cached_fingerprint["btc_holdings"]),
+                diluted_shares_m=float(cached_fingerprint["diluted_shares_m"]),
                 btc_yield_qtd_pct=None,
-                btc_yield_ytd_pct=float(cached_fingerprint.get("btc_yield_ytd_pct", -3.7)),
+                btc_yield_ytd_pct=float(cached_fingerprint["btc_yield_ytd_pct"]),
             )
         else:
-            print(f"::warning::Failed to fetch purchase data ({exc}) and no cache. Using Layer 3 SEC purchase baseline.")
-            latest_purchase = LatestPurchaseMetrics(
-                as_of_date=snapshot_date or _wib_today(),
-                average_btc_cost=75412.0,
-                btc_holdings=845050.0,
-                diluted_shares_m=450.121,
-                btc_yield_qtd_pct=-11.8,
-                btc_yield_ytd_pct=-3.7,
-            )
+            raise StrategyDataError(
+                f"Failed to fetch purchase data from strategy.com ({exc}) and incomplete cached fundamentals; refusing hardcoded fallback."
+            ) from exc
 
     try:
         debt_instruments = fetch_debt_instruments()
     except Exception as exc:
-        record_layer1_failure("Jadwal Obligasi Konversi (Strategy.com /debt)", str(exc), "State Cache JSON / SEC Schedule Baseline")
-        fallback_reasons.append("Obligasi Konversi: Fallback State Cache / SEC Schedule Baseline")
+        record_layer1_failure("Jadwal Obligasi Konversi (Strategy.com /debt)", str(exc), "State Cache JSON")
+        fallback_reasons.append("Obligasi Konversi: Fallback State Cache")
         raw_schedule = cached_fingerprint.get("debt_schedule", [])
         if raw_schedule:
             print(f"::warning::Failed to fetch debt instruments from strategy.com ({exc}). Using Layer 2 cached debt schedule.")
@@ -636,15 +652,9 @@ def fetch_strategy_snapshot(
                 for item in raw_schedule
             )
         else:
-            print(f"::warning::Failed to fetch debt instruments ({exc}) and no cache. Using Layer 3 SEC baseline schedule.")
-            debt_instruments = (
-                DebtInstrument(1.01, date(2027, 9, 16), date(2028, 9, 16), date(2027, 9, 16)),
-                DebtInstrument(1.50, date(2028, 6, 2), date(2029, 12, 2), date(2028, 6, 2)),
-                DebtInstrument(2.00, date(2028, 3, 2), date(2030, 3, 2), date(2028, 3, 2)),
-                DebtInstrument(0.80, date(2028, 9, 16), date(2030, 3, 16), date(2028, 9, 16)),
-                DebtInstrument(0.60375, date(2028, 9, 16), date(2031, 3, 16), date(2028, 9, 16)),
-                DebtInstrument(0.80, date(2029, 6, 16), date(2032, 6, 16), date(2029, 6, 16)),
-            )
+            raise StrategyDataError(
+                f"Failed to fetch debt instruments ({exc}) and no cached schedule in state file; refusing hardcoded fallback."
+            ) from exc
 
     mstr, btc = dashboard["mstr"], dashboard["btc"]
     market_cap_b = _require_money_b(mstr.get("marketCap"), "marketCap", "m", positive=True)
@@ -815,7 +825,7 @@ def fetch_btc_multi_moments() -> tuple[float, float, float, float, float]:
                         except ValueError:
                             pass
 
-            if len(btc_closes) >= 90:
+            if len(btc_closes) >= 90 and len(mstr_closes) >= 30:
                 btc_rets = [math.log(btc_closes[i] / btc_closes[i - 1]) for i in range(1, len(btc_closes))]
 
                 def compute_ema_drift(returns, span):
@@ -829,18 +839,14 @@ def fetch_btc_multi_moments() -> tuple[float, float, float, float, float]:
                 m_med = compute_ema_drift(btc_rets, 63)
                 m_slow = compute_ema_drift(btc_rets, 252)
 
-                if len(mstr_closes) >= 30:
-                    mstr_rets = [math.log(mstr_closes[i] / mstr_closes[i - 1]) for i in range(max(1, len(mstr_closes) - 60), len(mstr_closes))]
-                    mean_r = sum(mstr_rets) / len(mstr_rets)
-                    var = sum((r - mean_r) ** 2 for r in mstr_rets) / max(1, len(mstr_rets) - 1)
-                    sigma_mstr = max(0.35, math.sqrt(var) * math.sqrt(252.0))
-                    neg_r = [r for r in mstr_rets if r < 0.0]
-                    sigma_down = math.sqrt(sum(r ** 2 for r in neg_r) / len(mstr_rets)) * math.sqrt(252.0) if neg_r else sigma_mstr
-                else:
-                    sigma_mstr = 0.65
-                    sigma_down = 0.65
+                mstr_rets = [math.log(mstr_closes[i] / mstr_closes[i - 1]) for i in range(max(1, len(mstr_closes) - 60), len(mstr_closes))]
+                mean_r = sum(mstr_rets) / len(mstr_rets)
+                var = sum((r - mean_r) ** 2 for r in mstr_rets) / max(1, len(mstr_rets) - 1)
+                sigma_mstr = max(0.35, math.sqrt(var) * math.sqrt(252.0))
+                neg_r = [r for r in mstr_rets if r < 0.0]
+                sigma_down = math.sqrt(sum(r ** 2 for r in neg_r) / len(mstr_rets)) * math.sqrt(252.0) if neg_r else sigma_mstr
                 return m_fast, m_med, m_slow, sigma_mstr, sigma_down
-            record_layer1_failure("Dataset Historis CSV (Volatilitas/Drift)", f"Data tidak mencukupi ({len(btc_closes)} < 90)", "Yahoo Finance Multi-Asset API")
+            record_layer1_failure("Dataset Historis CSV (Volatilitas/Drift)", f"Data tidak mencukupi (BTC: {len(btc_closes)}/90, MSTR: {len(mstr_closes)}/30)", "Yahoo Finance Multi-Asset API")
         except Exception as exc:
             record_layer1_failure("Dataset Historis CSV (Volatilitas/Drift)", str(exc), "Yahoo Finance Multi-Asset API")
     else:
@@ -869,30 +875,25 @@ def fetch_btc_multi_moments() -> tuple[float, float, float, float, float]:
             m_slow = compute_ema_drift(log_ret_btc, 252)
 
             # Query MSTR specifically for authentic equity volatility and Sortino downside
-            sigma_mstr = 0.81
-            sigma_down = 0.56
-            try:
-                req_mstr = Request("https://query1.finance.yahoo.com/v8/finance/chart/MSTR?range=1y&interval=1d", headers=HEADERS)
-                with urlopen(req_mstr, timeout=5) as resp_mstr:
-                    payload_m = json.loads(resp_mstr.read().decode("utf-8"))
-                    quote_m = payload_m["chart"]["result"][0]["indicators"]["quote"][0]["close"]
-                    closes_m = [float(x) for x in quote_m if x is not None]
-                    if len(closes_m) >= 30:
-                        m_rets = [math.log(closes_m[i] / closes_m[i - 1]) for i in range(max(1, len(closes_m) - 60), len(closes_m))]
-                        mean_m = sum(m_rets) / len(m_rets)
-                        var_m = sum((r - mean_m) ** 2 for r in m_rets) / max(1, len(m_rets) - 1)
-                        sigma_mstr = max(0.35, math.sqrt(var_m) * math.sqrt(252.0))
-                        neg_m = [r for r in m_rets if r < 0.0]
-                        sigma_down = math.sqrt(sum(r ** 2 for r in neg_m) / len(m_rets)) * math.sqrt(252.0) if neg_m else sigma_mstr
-            except Exception:
-                pass
-
-            return m_fast, m_med, m_slow, sigma_mstr, sigma_down
+            req_mstr = Request("https://query1.finance.yahoo.com/v8/finance/chart/MSTR?range=1y&interval=1d", headers=HEADERS)
+            with urlopen(req_mstr, timeout=5) as resp_mstr:
+                payload_m = json.loads(resp_mstr.read().decode("utf-8"))
+                quote_m = payload_m["chart"]["result"][0]["indicators"]["quote"][0]["close"]
+                closes_m = [float(x) for x in quote_m if x is not None]
+                if len(closes_m) >= 30:
+                    m_rets = [math.log(closes_m[i] / closes_m[i - 1]) for i in range(max(1, len(closes_m) - 60), len(closes_m))]
+                    mean_m = sum(m_rets) / len(m_rets)
+                    var_m = sum((r - mean_m) ** 2 for r in m_rets) / max(1, len(m_rets) - 1)
+                    sigma_mstr = max(0.35, math.sqrt(var_m) * math.sqrt(252.0))
+                    neg_m = [r for r in m_rets if r < 0.0]
+                    sigma_down = math.sqrt(sum(r ** 2 for r in neg_m) / len(m_rets)) * math.sqrt(252.0) if neg_m else sigma_mstr
+                    return m_fast, m_med, m_slow, sigma_mstr, sigma_down
     except Exception:
         pass
 
-    # Layer 3: High-growth empirical defaults
-    return 1.82, 0.97, 0.04, 0.81, 0.81
+    raise RuntimeError(
+        "Data harga historis tidak mencukupi untuk menghitung drift dan volatilitas secara empiris (CSV dan Yahoo Finance gagal); menolak fallback hardcode."
+    )
 
 
 def fetch_btc_12m_metrics() -> tuple[float, float]:
@@ -1145,21 +1146,21 @@ def sync_daily_historical_csv(
             rows_by_date = {r["Date"]: r for r in reader if r.get("Date")}
 
         ratio = snapshot.mstr_price / max(1e-6, snapshot.btc_price)
-        rows_by_date[today_date] = {
+
+        # Build chronological BTC price series to calculate true rolling 365D metrics
+        temp_rows = dict(rows_by_date)
+        temp_rows[today_date] = {
             "Date": today_date,
             "BTC_Price_USD": f"{snapshot.btc_price:.2f}",
             "MSTR_Price_USD": f"{snapshot.mstr_price:.2f}",
-            "BTC_Momentum_12M": "0.1800",
-            "BTC_Volatility_12M": "0.6500",
             "MSTR_to_BTC_Ratio": f"{ratio:.6f}",
         }
 
-        # Build chronological BTC price series to calculate true rolling 365D metrics
-        sorted_dates = sorted(rows_by_date.keys())
+        sorted_dates = sorted(temp_rows.keys())
         btc_prices = []
         date_indices = []
         for d in sorted_dates:
-            val_str = rows_by_date[d].get("BTC_Price_USD")
+            val_str = temp_rows[d].get("BTC_Price_USD")
             if val_str:
                 try:
                     p = float(val_str)
@@ -1169,19 +1170,32 @@ def sync_daily_historical_csv(
                 except (ValueError, TypeError):
                     pass
 
-        if today_date in date_indices:
-            idx = date_indices.index(today_date)
-            if idx >= 1:
-                log_rets = [math.log(btc_prices[i] / btc_prices[i - 1]) for i in range(1, idx + 1)]
-                window_rets = log_rets[max(0, len(log_rets) - 365) :]
-                k = len(window_rets)
-                if k >= 90:
-                    mom = math.exp(sum(window_rets)) - 1.0
-                    mean_r = sum(window_rets) / k
-                    var_r = sum((r - mean_r) ** 2 for r in window_rets) / (k - 1)
-                    vol = math.sqrt(var_r) * math.sqrt(365.0)
-                    rows_by_date[today_date]["BTC_Momentum_12M"] = f"{mom:.4f}"
-                    rows_by_date[today_date]["BTC_Volatility_12M"] = f"{vol:.4f}"
+        if today_date not in date_indices:
+            raise ValueError(f"Snapshot price for {today_date} could not be parsed; refusing to sync.")
+
+        idx = date_indices.index(today_date)
+        if idx < 1:
+            raise ValueError(f"Insufficient history ({idx} returns) to compute rolling metrics; refusing hardcoded fill.")
+
+        log_rets = [math.log(btc_prices[i] / btc_prices[i - 1]) for i in range(1, idx + 1)]
+        window_rets = log_rets[max(0, len(log_rets) - 365) :]
+        k = len(window_rets)
+        if k < 90:
+            raise ValueError(f"Insufficient history ({k} < 90 returns) to compute rolling metrics; refusing hardcoded fill.")
+
+        mom = math.exp(sum(window_rets)) - 1.0
+        mean_r = sum(window_rets) / k
+        var_r = sum((r - mean_r) ** 2 for r in window_rets) / (k - 1)
+        vol = math.sqrt(var_r) * math.sqrt(365.0)
+
+        rows_by_date[today_date] = {
+            "Date": today_date,
+            "BTC_Price_USD": f"{snapshot.btc_price:.2f}",
+            "MSTR_Price_USD": f"{snapshot.mstr_price:.2f}",
+            "BTC_Momentum_12M": f"{mom:.4f}",
+            "BTC_Volatility_12M": f"{vol:.4f}",
+            "MSTR_to_BTC_Ratio": f"{ratio:.6f}",
+        }
 
         fieldnames = ["Date", "BTC_Price_USD", "MSTR_Price_USD", "BTC_Momentum_12M", "BTC_Volatility_12M", "MSTR_to_BTC_Ratio"]
         with open(csv_path, "w", encoding="utf-8", newline="") as f:
@@ -1197,6 +1211,8 @@ def sync_daily_historical_csv(
         except Exception:
             pass
         return True
+    except ValueError:
+        raise
     except Exception as exc:
         print(f"Warning: Could not sync historical CSV: {exc}", file=sys.stderr)
         return False
@@ -1537,7 +1553,7 @@ def send_telegram_message(message: str) -> bool:
 
 
 def fetch_v2_portfolio_snapshot() -> dict[str, Any] | None:
-    """3-layer fallback for authoritative portfolio snapshot: Cloudflare V2 -> Local Mirror -> Verified Baseline."""
+    """Authoritative portfolio snapshot: Cloudflare V2 -> Local Mirror -> Fail cleanly (None)."""
     # Layer 1: Live Cloudflare V2 Worker API
     try:
         import requests  # type: ignore
@@ -1549,11 +1565,11 @@ def fetch_v2_portfolio_snapshot() -> dict[str, Any] | None:
                 overview = payload.get("documents", {}).get("overview")
                 if isinstance(overview, dict) and "portfolio" in overview:
                     return overview
-            record_layer1_failure("Portofolio V2 (Cloudflare Worker API)", "Format JSON overview/portfolio tidak ditemukan", "Local Audit Mirror / Baseline")
+            record_layer1_failure("Portofolio V2 (Cloudflare Worker API)", "Format JSON overview/portfolio tidak ditemukan", "Local Audit Mirror")
         else:
-            record_layer1_failure("Portofolio V2 (Cloudflare Worker API)", f"HTTP {response.status_code}", "Local Audit Mirror / Baseline")
+            record_layer1_failure("Portofolio V2 (Cloudflare Worker API)", f"HTTP {response.status_code}", "Local Audit Mirror")
     except Exception as exc:
-        record_layer1_failure("Portofolio V2 (Cloudflare Worker API)", str(exc), "Local Audit Mirror / Baseline")
+        record_layer1_failure("Portofolio V2 (Cloudflare Worker API)", str(exc), "Local Audit Mirror")
         print(f"::notice::Remote V2 snapshot fetch failed ({exc}), trying Layer 2 local mirror...", file=sys.stderr)
 
     # Layer 2: Local public audit mirror
@@ -1561,20 +1577,9 @@ def fetch_v2_portfolio_snapshot() -> dict[str, Any] | None:
         try:
             return json.loads(LOCAL_OVERVIEW_PATH.read_text(encoding="utf-8"))
         except Exception as exc:
-            print(f"::warning::Layer 2 local mirror read failed: {exc}, using Layer 3 baseline...", file=sys.stderr)
+            print(f"::warning::Layer 2 local mirror read failed: {exc}", file=sys.stderr)
 
-    # Layer 3: Verified baseline fallback
-    return {
-        "portfolio": {
-            "cash_usd": 965.27,
-            "cash_idr": 0.0,
-            "mstr_quantity": 0.0,
-            "mstr_average_cost": 0.0,
-            "mstr_cost_basis": 0.0,
-            "net_contributions_usd": 788.86,
-        },
-        "market": {"usd_idr": 17600.0},
-    }
+    return None
 
 
 def format_portfolio_recommendation(
@@ -1597,8 +1602,9 @@ def format_portfolio_recommendation(
     unrealized_pct = (unrealized_pl / mstr_cost_basis * 100) if mstr_cost_basis > 0 else 0.0
 
     total_usd = cash_usd + mstr_market_val
-    usd_idr = float(market.get("usd_idr", 0) or 17600)
-    total_idr = total_usd * usd_idr
+    usd_idr = float(market.get("usd_idr", 0) or 0)
+    total_idr = total_usd * usd_idr if usd_idr > 0 else 0.0
+    idr_suffix = f"\n   (~Rp {total_idr:,.0f})" if usd_idr > 0 else ""
 
     cash_alloc = (cash_usd / total_usd * 100) if total_usd > 0 else 0.0
     mstr_alloc = (mstr_market_val / total_usd * 100) if total_usd > 0 else 0.0
@@ -1734,8 +1740,7 @@ Asset: MSTR | Challenge V2
 🏷 Avg Beli: {_fmt_usd(mstr_avg_cost)} / saham
 💰 Nilai Pasar: {_fmt_usd(mstr_market_val)}
 📊 Floating P/L: {pl_sign}{_fmt_usd(unrealized_pl)} ({pl_sign}{unrealized_pct:.2f}%)
-💼 Total Nilai: {_fmt_usd(total_usd)}
-   (~Rp {total_idr:,.0f})
+💼 Total Nilai: {_fmt_usd(total_usd)}{idr_suffix}
 📊 Total Return: {ret_sign}{total_return_pct:.2f}%
    (Modal Bersih: {_fmt_usd(net_contributions)})
 ⚖️ Alokasi: {cash_alloc:.1f}% Kas | {mstr_alloc:.1f}% MSTR
