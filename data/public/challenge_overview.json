@@ -1,37 +1,35 @@
 {
   "audit": {
-    "generated_at": "2026-10-09T06:21:02.115Z",
+    "generated_at": "2026-10-09T13:51:52.568Z",
     "ledger_hash": "564752a86b573c874763e219479ebdc3e9c198933c22793607aae21b62b9d115",
     "source_commit_sha": "2208b5baf9ab8d111252df46a7a29dc3d1743fe8"
   },
   "challenge": {
     "id": "mstr-live-thesis-v1",
     "include_legacy_position": false,
-    "last_updated_at": "2026-10-09T06:21:02.115Z",
+    "last_updated_at": "2026-10-09T13:51:52.568Z",
     "name": "MSTR Live Thesis Challenge",
     "start_at": "2026-06-26T22:13:45+00:00",
     "status": "active"
   },
   "disclaimer": "Public ledger history is not broker verification and is not investment advice.",
-  "generated_at": "2026-10-09T06:21:02.115Z",
+  "generated_at": "2026-10-09T13:51:52.568Z",
   "market": {
-    "btc_as_of": "2026-10-09T06:21:02.115Z",
-    "btc_price": "82355.78",
-    "fetched_at": "2026-10-09T06:21:02.115Z",
-    "freshness": "fallback",
-    "fx_as_of": "2026-10-08",
-    "market_status": "CLOSED",
-    "mstr_price": "151.47",
-    "price_as_of": "2026-10-09T06:21:02.115Z",
+    "btc_as_of": "2026-10-09T13:51:52.568Z",
+    "btc_price": "82623.15",
+    "fetched_at": "2026-10-09T13:51:52.568Z",
+    "freshness": "fresh",
+    "fx_as_of": "2026-10-09",
+    "market_status": "OPEN",
+    "mstr_price": "152.0789",
+    "price_as_of": "2026-10-09T13:51:52.568Z",
     "sources": {
       "BTC": "Strategy",
       "MSTR": "Strategy",
       "USD_IDR": "Bank Indonesia JISDOR"
     },
-    "usd_idr": "17890",
-    "warnings": [
-      "USD/IDR is using the last successful Bank Indonesia JISDOR value"
-    ]
+    "usd_idr": "17884",
+    "warnings": []
   },
   "portfolio": {
     "absolute_pl_usd": "176.412",
@@ -47,7 +45,7 @@
     "net_contributions_usd": "830.788",
     "realized_pl_usd": "176.412",
     "setup_required": false,
-    "total_portfolio_idr": "18018808",
+    "total_portfolio_idr": "18012764.8",
     "total_portfolio_usd": "1007.2",
     "total_return_pct": "21.23429803993317188019085494735118947313",
     "unrealized_pl_usd": "0"
