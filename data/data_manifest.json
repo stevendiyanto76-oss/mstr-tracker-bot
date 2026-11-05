@@ -1,8 +1,8 @@
 {
   "dataset": "historical_mstr_btc_2020_2026.csv",
-  "sha256": "E24EDAF707D7EA66CC9D6FEDE8C2886632BE5C27313FE823B613E52363293E5A",
-  "rows": 1736,
-  "date_range": "2020-01-02 to 2026-11-04",
+  "sha256": "238B6F4C12B4779C402BE243228B6EBFB88BEFCEA8B063D9211BAA6473335ED5",
+  "rows": 1737,
+  "date_range": "2020-01-02 to 2026-11-05",
   "columns": [
     "Date",
     "BTC_Price_USD",
@@ -14,6 +14,6 @@
   "governance": {
     "immutability": "VERIFIED",
     "source": "Consolidated SEC Form 8-K / Strategy.com / Yahoo / CoinGecko",
-    "last_audited": "2026-11-04"
+    "last_audited": "2026-11-05"
   }
 }
