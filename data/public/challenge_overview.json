@@ -1,28 +1,28 @@
 {
   "audit": {
-    "generated_at": "2026-11-11T00:42:35.379Z",
+    "generated_at": "2026-11-11T07:15:48.595Z",
     "ledger_hash": "dd17187c6c2112befb3af25eeac7f30af7f1a4be49f3ca94bddbebb42f046085",
     "source_commit_sha": "2208b5baf9ab8d111252df46a7a29dc3d1743fe8"
   },
   "challenge": {
     "id": "mstr-live-thesis-v1",
     "include_legacy_position": false,
-    "last_updated_at": "2026-11-11T00:42:35.379Z",
+    "last_updated_at": "2026-11-11T07:15:48.595Z",
     "name": "MSTR Live Thesis Challenge",
     "start_at": "2026-06-26T22:13:45+00:00",
     "status": "active"
   },
   "disclaimer": "Public ledger history is not broker verification and is not investment advice.",
-  "generated_at": "2026-11-11T00:42:35.379Z",
+  "generated_at": "2026-11-11T07:15:48.595Z",
   "market": {
-    "btc_as_of": "2026-11-11T00:42:35.379Z",
-    "btc_price": "73541.48",
-    "fetched_at": "2026-11-11T00:42:35.379Z",
+    "btc_as_of": "2026-11-11T07:15:48.595Z",
+    "btc_price": "73487.49",
+    "fetched_at": "2026-11-11T07:15:48.595Z",
     "freshness": "fresh",
     "fx_as_of": "2026-11-10",
     "market_status": "CLOSED",
     "mstr_price": "121.07",
-    "price_as_of": "2026-11-11T00:42:35.379Z",
+    "price_as_of": "2026-11-11T07:15:48.595Z",
     "sources": {
       "BTC": "Strategy",
       "MSTR": "Strategy",
