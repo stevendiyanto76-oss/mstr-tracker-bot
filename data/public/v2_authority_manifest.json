@@ -1,11 +1,11 @@
 {
   "authority": "V2_D1",
-  "event_count": 20,
-  "latest_event_id": "CH-000020",
-  "ledger_hash": "564752a86b573c874763e219479ebdc3e9c198933c22793607aae21b62b9d115",
-  "mirrored_at": "2026-11-10T19:51:41.601917+00:00",
+  "event_count": 21,
+  "latest_event_id": "CH-000021",
+  "ledger_hash": "dd17187c6c2112befb3af25eeac7f30af7f1a4be49f3ca94bddbebb42f046085",
+  "mirrored_at": "2026-11-11T00:42:37.414257+00:00",
   "role": "backup_audit_mirror",
   "schema_version": 1,
-  "snapshot_generated_at": "2026-11-10T19:51:39.431Z",
+  "snapshot_generated_at": "2026-11-11T00:42:35.379Z",
   "source_endpoint": "mstr-challenge-v2-production"
 }
