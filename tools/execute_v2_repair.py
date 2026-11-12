@@ -9,14 +9,19 @@ WEBHOOK_URL = "https://mstr-challenge-v2-production.nevets-steven.workers.dev/te
 def main():
     chat_id = os.environ.get("TELEGRAM_CHAT_ID", "7061999032")
     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    owner_token = os.environ.get("OWNER_ADMIN_TOKEN", "")
+    web_sync_token = os.environ.get("MSTR_WEB_SYNC_TOKEN", "")
     
-    print(f"Chat ID: {chat_id}, Bot token length: {len(bot_token)}")
+    tokens = {
+        "OWNER_ADMIN_TOKEN": owner_token,
+        "MSTR_WEB_SYNC_TOKEN": web_sync_token,
+        "BOT_TOKEN": bot_token,
+    }
     
-    # Try sending a Telegram update to the webhook
     update = {
-        "update_id": 99999901,
+        "update_id": 99999902,
         "message": {
-            "message_id": 99999901,
+            "message_id": 99999902,
             "date": int(time.time()),
             "chat": {
                 "id": int(chat_id),
@@ -31,14 +36,19 @@ def main():
         }
     }
     
-    headers = {
-        "Content-Type": "application/json",
-        "User-Agent": "TelegramBot"
-    }
-    
-    print("\n--- Sending /portfolio test update to webhook ---")
-    resp = requests.post(WEBHOOK_URL, headers=headers, json=update, timeout=10)
-    print(f"Status: {resp.status_code}, Body: {resp.text}")
+    for name, tok in tokens.items():
+        if not tok: continue
+        headers = {
+            "Content-Type": "application/json",
+            "X-Telegram-Bot-Api-Secret-Token": tok,
+            "User-Agent": "TelegramBot"
+        }
+        print(f"Testing X-Telegram-Bot-Api-Secret-Token with {name}...")
+        resp = requests.post(WEBHOOK_URL, headers=headers, json=update, timeout=10)
+        print(f"Status: {resp.status_code}, Body: {resp.text}")
+        if resp.ok:
+            print(f"SUCCESS with {name}!")
+            return
 
 if __name__ == "__main__":
     main()

@@ -26,5 +26,6 @@ jobs:
           OWNER_ADMIN_TOKEN: ${{ secrets.OWNER_ADMIN_TOKEN }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MSTR_WEB_SYNC_TOKEN: ${{ secrets.MSTR_WEB_SYNC_TOKEN }}
         run: |
           python tools/execute_v2_repair.py
