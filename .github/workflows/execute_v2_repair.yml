@@ -4,8 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       commands_json:
-        description: 'JSON array of command objects'
-        required: true
+        description: 'Optional JSON array of command objects (defaults to tools/repair_commands.json)'
+        required: false
+        default: ""
         type: string
 
 permissions:

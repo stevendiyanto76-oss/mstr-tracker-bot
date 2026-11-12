@@ -3,6 +3,7 @@ import sys
 import json
 import uuid
 import time
+from pathlib import Path
 import requests
 
 ADMIN_URL = "https://mstr-challenge-v2-production.nevets-steven.workers.dev/admin/v2/command"
@@ -13,12 +14,17 @@ def main():
         print("ERROR: OWNER_ADMIN_TOKEN is missing!", file=sys.stderr)
         sys.exit(1)
         
-    commands_json = os.environ.get("COMMANDS_JSON", "")
-    if not commands_json:
-        print("ERROR: COMMANDS_JSON is empty!", file=sys.stderr)
-        sys.exit(1)
+    commands_file = Path("tools/repair_commands.json")
+    if commands_file.exists():
+        print(f"Reading commands from {commands_file}")
+        commands = json.loads(commands_file.read_text(encoding="utf-8"))
+    else:
+        commands_json = os.environ.get("COMMANDS_JSON", "")
+        if not commands_json:
+            print("ERROR: Neither tools/repair_commands.json nor COMMANDS_JSON is provided!", file=sys.stderr)
+            sys.exit(1)
+        commands = json.loads(commands_json)
         
-    commands = json.loads(commands_json)
     print(f"Loaded {len(commands)} commands to execute.")
     
     headers = {
