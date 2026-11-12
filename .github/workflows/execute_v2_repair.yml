@@ -15,6 +15,7 @@ permissions:
 jobs:
   execute:
     runs-on: ubuntu-latest
+    environment: mstr-production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
