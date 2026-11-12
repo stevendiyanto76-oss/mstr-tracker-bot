@@ -2,12 +2,6 @@ name: Execute V2 Repair
 
 on:
   workflow_dispatch:
-    inputs:
-      commands_json:
-        description: 'Optional JSON array of command objects (defaults to tools/repair_commands.json)'
-        required: false
-        default: ""
-        type: string
 
 permissions:
   contents: read
@@ -15,7 +9,6 @@ permissions:
 jobs:
   execute:
     runs-on: ubuntu-latest
-    environment: mstr-production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,6 +24,7 @@ jobs:
       - name: Run repair script
         env:
           OWNER_ADMIN_TOKEN: ${{ secrets.OWNER_ADMIN_TOKEN }}
-          COMMANDS_JSON: ${{ inputs.commands_json }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           python tools/execute_v2_repair.py

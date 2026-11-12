@@ -1,58 +1,44 @@
 import os
 import sys
 import json
-import uuid
 import time
-from pathlib import Path
 import requests
 
-ADMIN_URL = "https://mstr-challenge-v2-production.nevets-steven.workers.dev/admin/v2/command"
+WEBHOOK_URL = "https://mstr-challenge-v2-production.nevets-steven.workers.dev/telegram/webhook"
 
 def main():
-    token = os.environ.get("OWNER_ADMIN_TOKEN")
-    if not token:
-        print("ERROR: OWNER_ADMIN_TOKEN is missing!", file=sys.stderr)
-        sys.exit(1)
-        
-    print(f"Token length: {len(token)}, prefix: {token[:3]}..., suffix: ...{token[-3:]}")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "7061999032")
+    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     
-    commands_file = Path("tools/repair_commands.json")
-    commands = json.loads(commands_file.read_text(encoding="utf-8"))
+    print(f"Chat ID: {chat_id}, Bot token length: {len(bot_token)}")
     
-    cmd = commands[0]["command"]
-    
-    # Try different auth methods:
-    methods = [
-        ("Bearer Header", {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}, {}),
-        ("Raw Header", {"Authorization": token, "Content-Type": "application/json"}, {}),
-        ("X-Admin-Token Header", {"X-Admin-Token": token, "Content-Type": "application/json"}, {}),
-        ("X-Owner-Token Header", {"X-Owner-Token": token, "Content-Type": "application/json"}, {}),
-        ("Secret-Token Header", {"X-Telegram-Bot-Api-Secret-Token": token, "Content-Type": "application/json"}, {}),
-        ("Payload token", {"Content-Type": "application/json"}, {"token": token}),
-        ("Payload admin_token", {"Content-Type": "application/json"}, {"admin_token": token}),
-        ("URL query token", {"Content-Type": "application/json"}, {}),
-    ]
-    
-    for name, headers, extra_payload in methods:
-        headers["User-Agent"] = "Mozilla/5.0"
-        payload = {
-            "command": cmd,
-            "idempotency_key": f"diag-{uuid.uuid4().hex[:12]}"
+    # Try sending a Telegram update to the webhook
+    update = {
+        "update_id": 99999901,
+        "message": {
+            "message_id": 99999901,
+            "date": int(time.time()),
+            "chat": {
+                "id": int(chat_id),
+                "type": "private"
+            },
+            "from": {
+                "id": int(chat_id),
+                "is_bot": False,
+                "first_name": "Steven"
+            },
+            "text": "/portfolio"
         }
-        payload.update(extra_payload)
-        url = ADMIN_URL
-        if name == "URL query token":
-            url += f"?token={token}"
-            
-        print(f"\n--- Testing auth method: {name} ---")
-        try:
-            resp = requests.post(url, headers=headers, json=payload, timeout=10)
-            print(f"Status: {resp.status_code}, Body: {resp.text}")
-            if resp.ok:
-                print(f"SUCCESS with {name}!")
-                return
-        except Exception as e:
-            print(f"Error: {e}")
+    }
+    
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "TelegramBot"
+    }
+    
+    print("\n--- Sending /portfolio test update to webhook ---")
+    resp = requests.post(WEBHOOK_URL, headers=headers, json=update, timeout=10)
+    print(f"Status: {resp.status_code}, Body: {resp.text}")
 
 if __name__ == "__main__":
     main()
