@@ -12,6 +12,11 @@ on:
     - cron: "25 22 * * *"
 
   workflow_dispatch:
+    inputs:
+      custom_file:
+        description: 'Path to custom report file to send to Telegram'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -47,9 +52,16 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python mstr_bot.py
+          CUSTOM_FILE: ${{ github.event.inputs.custom_file }}
+        run: |
+          if [ -n "$CUSTOM_FILE" ] && [ -f "$CUSTOM_FILE" ]; then
+            python mstr_bot.py --send-custom-file "$CUSTOM_FILE"
+          else
+            python mstr_bot.py
+          fi
 
       - name: Persist MSTR State and Dataset
+        if: ${{ !github.event.inputs.custom_file }}
         shell: bash
         run: |
           STATE_FILE="mstr_decision_engine_v2_state.json"

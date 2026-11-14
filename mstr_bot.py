@@ -1526,30 +1526,64 @@ Internal use only
 def send_telegram_message(message: str) -> bool:
     if not (bot_token := os.getenv("TELEGRAM_BOT_TOKEN")) or not (chat_id := os.getenv("TELEGRAM_CHAT_ID")):
         return False
-    # Layer 1: requests
-    try:
-        import requests  # type: ignore
 
-        response = requests.post(
-            f"https://api.telegram.org/bot{bot_token}/sendMessage", json={"chat_id": chat_id, "text": message, "disable_web_page_preview": True}, timeout=15
-        )
-        response.raise_for_status()
-        return True
-    except Exception as exc:
-        print(f"::warning::Telegram send via requests failed: {exc}. Trying urllib safety fallback...", file=sys.stderr)
+    chunks: list[str] = []
+    separator = "\n\n" + "=" * 40 + "\n\n"
+    if separator in message:
+        chunks = [c.strip() for c in message.split(separator) if c.strip()]
+    elif len(message) > 4000:
+        lines = message.splitlines(keepends=True)
+        cur = ""
+        for line in lines:
+            if len(cur) + len(line) > 3800:
+                chunks.append(cur.strip())
+                cur = line
+            else:
+                cur += line
+        if cur.strip():
+            chunks.append(cur.strip())
+    else:
+        chunks = [message.strip()]
 
-    # Layer 2: standard library urllib fallback
-    try:
-        from urllib.request import Request, urlopen
-        data = json.dumps({"chat_id": chat_id, "text": message, "disable_web_page_preview": True}).encode("utf-8")
-        req = Request(f"https://api.telegram.org/bot{bot_token}/sendMessage", data=data, headers={"Content-Type": "application/json"})
-        with urlopen(req, timeout=15) as resp:
-            if 200 <= resp.status < 300:
-                return True
-    except Exception as exc2:
-        print(f"Telegram send via urllib fallback failed: {exc2}", file=sys.stderr)
+    import time
+    all_ok = True
+    for idx, chunk in enumerate(chunks):
+        if not chunk:
+            continue
+        if idx > 0:
+            time.sleep(1.5)
 
-    return False
+        sent = False
+        # Layer 1: requests
+        try:
+            import requests  # type: ignore
+
+            response = requests.post(
+                f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                json={"chat_id": chat_id, "text": chunk, "disable_web_page_preview": True},
+                timeout=15,
+            )
+            response.raise_for_status()
+            sent = True
+        except Exception as exc:
+            print(f"::warning::Telegram send via requests failed: {exc}. Trying urllib safety fallback...", file=sys.stderr)
+
+        # Layer 2: standard library urllib fallback
+        if not sent:
+            try:
+                from urllib.request import Request, urlopen
+                data = json.dumps({"chat_id": chat_id, "text": chunk, "disable_web_page_preview": True}).encode("utf-8")
+                req = Request(f"https://api.telegram.org/bot{bot_token}/sendMessage", data=data, headers={"Content-Type": "application/json"})
+                with urlopen(req, timeout=15) as resp:
+                    if 200 <= resp.status < 300:
+                        sent = True
+            except Exception as exc2:
+                print(f"Telegram send via urllib fallback failed: {exc2}", file=sys.stderr)
+
+        if not sent:
+            all_ok = False
+
+    return all_ok
 
 
 def fetch_v2_portfolio_snapshot() -> dict[str, Any] | None:
@@ -1822,6 +1856,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--audit-live", action="store_true", help="Print live source values and reconciliation without changing state.")
     parser.add_argument("--no-portfolio", action="store_true", help="Skip the personalized portfolio recommendation message.")
     parser.add_argument("--test-layer1-alert", action="store_true", help="Simulate a Layer 1 failure to verify warning dispatch.")
+    parser.add_argument("--send-custom-file", type=Path, default=None, help="Send custom report text file to Telegram and exit.")
     parser.add_argument("--state-file", type=Path, default=DEFAULT_STATE_FILE)
     return parser.parse_args(argv)
 
@@ -1836,6 +1871,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     configure_stdio()
     args = parse_args(argv)
     try:
+        if args.send_custom_file:
+            if not args.send_custom_file.exists():
+                print(f"Error: {args.send_custom_file} not found", file=sys.stderr)
+                return 1
+            content = args.send_custom_file.read_text(encoding="utf-8")
+            print(content)
+            if args.dry_run:
+                print("\n[DRY RUN] Custom message rendered, skipping Telegram dispatch.")
+                return 0
+            if send_telegram_message(content):
+                print("Custom report successfully sent to Telegram.")
+                return 0
+            else:
+                print("Failed to send custom report to Telegram.", file=sys.stderr)
+                return 1
+
         if args.audit_live:
             print(format_source_audit())
             return 0

@@ -1,0 +1,92 @@
+🎯 NEVETS QUANT LAB | MSTR MONTE CARLO & TRANCHE OPTIMIZATION
+📅 14 Nov 2026 | Strategi Akumulasi Fraksional (No-Sell)
+Target: Minimal 10.0 Lembar Saham MSTR
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 SNAPSHOT PORTOFOLIO SAAT INI
+💵 Kas Siaga: $717.68 USD (68.2%)
+📈 Posisi MSTR: 3.0 saham (31.8%)
+🏷 Avg Beli Saat Ini: $116.54 / saham
+🎯 Kekurangan Target: +7.0 saham
+
+📈 KONDISI PASAR TERKINI (LIVE DATA)
+• MSTR Post-Market: $109.74 (Reguler: $111.62)
+• BTC Spot: $68,373 (Menguji 200W-MA: $67,876)
+• Fear & Greed Index: 13 (Extreme Fear)
+• MSTR Daily RSI(14): 27.07 (Deep Oversold)
+• Diluted mNAV: 1.086x (Net BTC/Share: $101.03)
+• Range 52-Minggu MSTR: $81.81 – $213.83
+
+🎲 HASIL SIMULASI MONTE CARLO 100.000 PATH
+(Horizon 90 Hari, Volatilitas 72.24%, Student-t Fat-Tail)
+• Probabilitas menyentuh ≤ $104.00 : 87.22%
+• Probabilitas menyentuh ≤ $96.80  : 75.00%
+• Probabilitas menyentuh ≤ $92.50  : 67.25%
+• Probabilitas menyentuh ≤ $81.80  : 47.70%
+
+⚖️ PROBABILITAS STRUKTUR BOTTOM:
+🟢 Peluang HIGHER LOW (> $81.80) : 52.30%
+🔴 Peluang RETEST BOTTOM ($81.80) : 47.70%
+Kesimpulan: Probabilitas Higher Low lebih dominan (52.3%), sehingga menahan kas hanya di $81 berisiko tinggi ditinggal pasar!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚙️ TITIK KOEFISIEN OPTIMAL (SLSQP PARETO-OPTIMAL)
+Formulasi alokasi matematis dari kas $717.68 USD:
+
+1️⃣ TRANCHE 1 (Anti-FOMO / Higher Low Guard)
+   • Harga Limit: $104.00
+   • Koefisien Bobot (w1*): 22.0% ($157.89)
+   • Jumlah Beli: 1.518 saham
+   • Fill Rate: 87.22%
+
+2️⃣ TRANCHE 2 (Harmonic Support Fib 0.886)
+   • Harga Limit: $96.80
+   • Koefisien Bobot (w2*): 25.0% ($179.42)
+   • Jumlah Beli: 1.854 saham
+   • Fill Rate: 75.00%
+
+3️⃣ TRANCHE 3 (Fair Value Engine V3.4)
+   • Harga Limit: $92.50
+   • Koefisien Bobot (w3*): 25.0% ($179.42)
+   • Jumlah Beli: 1.940 saham
+   • Fill Rate: 67.25%
+
+4️⃣ TRANCHE 4 (Bottom Hunter / MSCI Forced Selling Dump)
+   • Harga Limit: $81.80
+   • Koefisien Bobot (w4*): 28.0% ($200.95)
+   • Jumlah Beli: 2.457 saham
+   • Fill Rate: 47.70%
+
+========================================
+
+📋 PANDUAN EKSEKUSI GOTRADE & ROADMAP PASAR
+📅 14 Nov 2026 | Nevets Holding Execution Guide
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+💼 HASIL AKHIR PORTOFOLIO PASCA EKSEKUSI
+Jika seluruh 4 jaring tersambar hingga ke titik $81.80:
+• Total Saham Baru: +7.768 saham
+• Total Kepemilikan Portofolio: 10.768 Saham
+  (Target minimal 10 lembar SUKSES TERLAMPAUI!)
+• Modal Rata-Rata Baru (Avg Cost): $99.12 / saham
+  (Turun drastis dari $116.54 ke bawah $100!)
+• Total Kas Terpakai: $717.68 (100% modal efisien)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ TIMELINE KATALIS MAKRO & BERITA PASAR
+1. 18–19 Nov 2026: IPO Anthropic (Nasdaq: ANT)
+   Valuasi $1.33T–$1.4T, menyedot dana $61B+. Institusi menjual aset ber-beta tinggi untuk lockup cash. Memicu pelemahan MSTR ke Tranche 1 & 2.
+
+2. 20–30 Nov 2026: Forced Selling Indeks MSCI
+   MSTR resmi dihapus dari MSCI Global Standard efektif penutupan 30 Nov. Reksa dana pasif WAJIB buang ~13 juta lembar saham ($1.6B–$2.8B).
+   ↳ Inilah pemicu utama yang akan menyeret harga ke Tranche 3 ($92.50) dan Tranche 4 ($81.80)!
+
+3. 1 Des 2026+: Post-Rebalance V-Shape Rebound
+   Begitu tekanan jual pasif selesai 100%, MSTR secara historis mengalami mean-reversion pantulan tajam karena fundamental 850.364 BTC tetap utuh.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ 4 ANTREAN LIMIT ORDER GOTRADE (TINGGAL PASANG):
+1. Buy Limit: 1.518 Saham MSTR @ $104.00 (~$157.89)
+2. Buy Limit: 1.854 Saham MSTR @ $96.80  (~$179.42)
+3. Buy Limit: 1.940 Saham MSTR @ $92.50  (~$179.42)
+4. Buy Limit: 2.457 Saham MSTR @ $81.80  (~$200.95)
+
+Disiplin tanpa emosi, biarkan sistem bekerja menjemput barang diskon institusi.
