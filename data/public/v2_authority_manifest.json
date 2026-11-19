@@ -3,9 +3,9 @@
   "event_count": 34,
   "latest_event_id": "CH-000034",
   "ledger_hash": "992945b1791dd077d67cd60cc4fbd966ab89234c34c7ec77c9ce03f0121348e5",
-  "mirrored_at": "2026-11-19T17:26:45.300684+00:00",
+  "mirrored_at": "2026-11-19T23:54:56.867118+00:00",
   "role": "backup_audit_mirror",
   "schema_version": 1,
-  "snapshot_generated_at": "2026-11-19T17:26:42.733Z",
+  "snapshot_generated_at": "2026-11-19T23:54:54.570Z",
   "source_endpoint": "mstr-challenge-v2-production"
 }
